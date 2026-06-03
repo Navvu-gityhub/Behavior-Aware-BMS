@@ -1,9 +1,25 @@
-.venv/
+# Python
 __pycache__/
 *.pyc
-.ipynb_checkpoints/
-.env
-.DS_Store
+.venv/
+venv/
 
-data/raw/
-data/processed/
+# Jupyter
+.ipynb_checkpoints/
+
+# Raw dataset files
+data/raw/**/*.zip
+data/raw/**/*.mat
+data/raw/**/*.csv
+data/raw/**/*.xlsx
+data/raw/**/*.xls
+
+# Interim and processed large files
+data/interim/**/*.csv
+data/interim/**/*.parquet
+data/processed/**/*.csv
+data/processed/**/*.parquet
+
+# OS files
+.DS_Store
+Thumbs.db
