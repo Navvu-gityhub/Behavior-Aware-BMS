@@ -1,0 +1,36 @@
+# Dataset source configuration for the Behavior-Aware BMS project.
+# URLs are intentionally placeholders because Day 3 focuses on ingestion structure.
+
+sources:
+  nasa:
+    folder: data/raw/nasa
+    accepted_formats: [zip, csv, xlsx, xls, txt]
+    expected_fields_any_of:
+      - voltage
+      - current
+      - temperature
+      - capacity
+      - cycle
+    day3_status: loader_created_and_smoke_tested
+
+  calce:
+    folder: data/raw/calce
+    accepted_formats: [zip, csv, xlsx, xls, txt]
+    expected_fields_any_of:
+      - voltage
+      - current
+      - temperature
+      - discharge_capacity
+      - cycle_index
+    day3_status: loader_created_and_smoke_tested
+
+  stanford:
+    folder: data/raw/stanford
+    accepted_formats: [zip, csv, xlsx, xls, txt]
+    day3_status: folder_supported_by_discovery_script_loader_pending
+
+output_paths:
+  manifest: data/interim/discovered_files.csv
+  failed_files: data/interim/failed_files.csv
+  processed_nasa_sample: data/processed/nasa/nasa_sample_processed.csv
+  processed_calce_sample: data/processed/calce/calce_sample_processed.csv
