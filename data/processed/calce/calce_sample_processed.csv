@@ -1,0 +1,4 @@
+cycle,voltage_v,current_a,temperature_c,capacity_ah,timestamp,soc,soh,source,source_file,power_w,mode_guess
+1,4.15,-0.8,27.0,1.1,,,,calce,data/raw/calce/calce_sample.xlsx,-3.3200000000000003,discharge
+1,4.08,-0.85,27.5,1.09,,,,calce,data/raw/calce/calce_sample.xlsx,-3.468,discharge
+2,3.95,-0.75,28.1,1.08,,,,calce,data/raw/calce/calce_sample.xlsx,-2.9625000000000004,discharge

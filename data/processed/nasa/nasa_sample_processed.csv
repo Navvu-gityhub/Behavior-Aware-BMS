@@ -1,0 +1,4 @@
+cycle,voltage_v,current_a,temperature_c,capacity_ah,timestamp,soc,soh,source,source_file,power_w,mode_guess
+1,4.1,-1.0,28.5,2.0,,,,nasa,data/raw/nasa/nasa_sample.csv,-4.1,discharge
+1,4.05,-1.1,29.0,1.99,,,,nasa,data/raw/nasa/nasa_sample.csv,-4.455,discharge
+2,3.98,-0.9,29.5,1.98,,,,nasa,data/raw/nasa/nasa_sample.csv,-3.582,discharge
