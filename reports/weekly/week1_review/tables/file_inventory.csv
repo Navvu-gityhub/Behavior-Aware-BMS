@@ -1,0 +1,5 @@
+stage,dataset,file,extension,size_kb
+interim,discovered_files.csv,interim/discovered_files.csv,.csv,0.74
+interim,failed_files.csv,interim/failed_files.csv,.csv,0.03
+processed,nasa,processed/nasa/nasa_sample_processed.csv,.csv,0.33
+processed,calce,processed/calce/calce_sample_processed.csv,.csv,0.37

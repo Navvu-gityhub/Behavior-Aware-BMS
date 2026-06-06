@@ -1,0 +1,13 @@
+discovered_at,source_guess,file_type,file_name,file_path,size_bytes,sha256_16,source,source_file,_stage,_dataset,cycle,voltage_v,current_a,temperature_c,capacity_ah,timestamp,soc,soh,power_w,mode_guess
+2026-06-04T15:12:10,calce,xlsx,calce_sample.xlsx,data/interim/extracted/calce_sample/calce/calce_sample.xlsx,5092.0,59ac31f9720109fc,discovered_files.csv,interim/discovered_files.csv,interim,discovered_files.csv,,,,,,,,,,
+2026-06-04T15:12:10,nasa,csv,nasa_sample.csv,data/interim/extracted/nasa_sample/nasa/nasa_sample.csv,134.0,32125ee86d6634d7,discovered_files.csv,interim/discovered_files.csv,interim,discovered_files.csv,,,,,,,,,,
+2026-06-04T15:12:10,calce,xlsx,calce_sample.xlsx,data/interim/loose_files/calce_sample.xlsx,5092.0,59ac31f9720109fc,discovered_files.csv,interim/discovered_files.csv,interim,discovered_files.csv,,,,,,,,,,
+2026-06-04T15:12:10,nasa,csv,nasa_sample.csv,data/interim/loose_files/nasa_sample.csv,134.0,32125ee86d6634d7,discovered_files.csv,interim/discovered_files.csv,interim,discovered_files.csv,,,,,,,,,,
+2026-06-04T15:12:10,calce,xlsx,calce_sample.xlsx,data/raw/calce/calce_sample.xlsx,5092.0,59ac31f9720109fc,discovered_files.csv,interim/discovered_files.csv,interim,discovered_files.csv,,,,,,,,,,
+2026-06-04T15:12:10,nasa,csv,nasa_sample.csv,data/raw/nasa/nasa_sample.csv,134.0,32125ee86d6634d7,discovered_files.csv,interim/discovered_files.csv,interim,discovered_files.csv,,,,,,,,,,
+,,,,,,,nasa,data/raw/nasa/nasa_sample.csv,processed,nasa,1.0,4.1,-1.0,28.5,2.0,,,,-4.1,discharge
+,,,,,,,nasa,data/raw/nasa/nasa_sample.csv,processed,nasa,1.0,4.05,-1.1,29.0,1.99,,,,-4.455,discharge
+,,,,,,,nasa,data/raw/nasa/nasa_sample.csv,processed,nasa,2.0,3.98,-0.9,29.5,1.98,,,,-3.582,discharge
+,,,,,,,calce,data/raw/calce/calce_sample.xlsx,processed,calce,1.0,4.15,-0.8,27.0,1.1,,,,-3.3200000000000003,discharge
+,,,,,,,calce,data/raw/calce/calce_sample.xlsx,processed,calce,1.0,4.08,-0.85,27.5,1.09,,,,-3.468,discharge
+,,,,,,,calce,data/raw/calce/calce_sample.xlsx,processed,calce,2.0,3.95,-0.75,28.1,1.08,,,,-2.9625000000000004,discharge
