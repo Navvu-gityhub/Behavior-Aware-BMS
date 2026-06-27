@@ -1,0 +1,4 @@
+battery_state,count
+DEGRADED,16
+WARNING,13
+CRITICAL,5
