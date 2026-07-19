@@ -1,35 +1,21 @@
 battery_id,avg_stress,avg_temp,fast_charge_duration,deep_discharge_duration,high_temp_duration,aggressive_discharge_count,avg_soc,risk_score,risk_level,risk_reason,recommended_action
-B0005,13.6704536416787,26.36970063096213,1250087084.173,12770538.935,3581775.549,45284,,70,HIGH,"deep discharge, frequent fast charging, aggressive discharge",Reduce fast charging frequency and follow 20-80 charging rule.
-B0006,11.407560300139654,26.42915375710223,1027942388.029,19318002.412,4680506.022,44512,,70,HIGH,"deep discharge, frequent fast charging, aggressive discharge",Reduce fast charging frequency and follow 20-80 charging rule.
-B0007,0.0651789814323248,26.11936256471238,621335.363,14283397.64,4420739.468,195,,63,HIGH,"deep discharge, frequent fast charging, aggressive discharge",Reduce fast charging frequency and follow 20-80 charging rule.
-B0018,14.44942855508523,25.9131992338774,696253328.092,10542310.751,0.0,32084,,70,HIGH,"deep discharge, frequent fast charging, aggressive discharge",Reduce fast charging frequency and follow 20-80 charging rule.
-B0025,16.337940549366117,28.48235563388605,269370149.451,11554824.172,2827773.483,4349,,70,HIGH,"deep discharge, frequent fast charging, aggressive discharge",Reduce fast charging frequency and follow 20-80 charging rule.
-B0026,15.71466250480215,28.409643565947107,259092519.563,12040928.258,1326695.799,4245,,70,HIGH,"deep discharge, frequent fast charging, aggressive discharge",Reduce fast charging frequency and follow 20-80 charging rule.
-B0027,0.9652699769496736,28.73978633827821,0.0,17679028.938,13512368.089,4380,,57,MEDIUM,"deep discharge, aggressive discharge",Avoid deep discharge and prolonged high SOC exposure.
-B0028,2.219207645024971,28.10658658350969,35827376.087,3311717.47,0.0,775,,70,HIGH,"deep discharge, frequent fast charging, aggressive discharge",Reduce fast charging frequency and follow 20-80 charging rule.
-B0029,37.54696299112113,45.87414120408369,344796467.291,1562537.741,985901207.929,6220,,100,CRITICAL,"high temperature, deep discharge, frequent fast charging, aggressive discharge",Immediate inspection recommended. Avoid fast charging and maintain 20-80 SOC.
-B0030,36.69060350991519,46.02763988515561,329619709.906,1494574.316,985901207.929,5979,,100,CRITICAL,"high temperature, deep discharge, frequent fast charging, aggressive discharge",Immediate inspection recommended. Avoid fast charging and maintain 20-80 SOC.
-B0031,18.486999284983757,45.76434850852099,17419.788,1249185.044,985901207.929,6286,,100,CRITICAL,"high temperature, deep discharge, frequent fast charging, aggressive discharge",Immediate inspection recommended. Avoid fast charging and maintain 20-80 SOC.
-B0032,19.97773276494067,45.78443570278495,26805751.409,2241295.649,985901207.929,6244,,100,CRITICAL,"high temperature, deep discharge, frequent fast charging, aggressive discharge",Immediate inspection recommended. Avoid fast charging and maintain 20-80 SOC.
-B0033,11.492163775896485,27.238503007917544,707510432.104,51917917.462,57064336.41,21144,,70,HIGH,"deep discharge, frequent fast charging, aggressive discharge",Reduce fast charging frequency and follow 20-80 charging rule.
-B0034,11.324880927799573,27.40108438647941,695238284.406,49184044.403,62862343.906,20983,,70,HIGH,"deep discharge, frequent fast charging, aggressive discharge",Reduce fast charging frequency and follow 20-80 charging rule.
-B0036,1.074402402092367,26.33128402410693,63108272.671,12236115.003,0.0,3648,,70,HIGH,"deep discharge, frequent fast charging, aggressive discharge",Reduce fast charging frequency and follow 20-80 charging rule.
-B0038,23.357018848023813,40.36826635342205,244608902.685,9478175.884,843950145.615,3239,,100,CRITICAL,"high temperature, deep discharge, frequent fast charging, aggressive discharge",Immediate inspection recommended. Avoid fast charging and maintain 20-80 SOC.
-B0039,12.379543139507163,39.81785923793559,17915.189,8055302.003,843091844.168,876,,90,CRITICAL,"high temperature, deep discharge, frequent fast charging, aggressive discharge",Immediate inspection recommended. Avoid fast charging and maintain 20-80 SOC.
-B0040,13.341241990131698,39.6950888760808,21296583.371,9754529.887,842939607.906,972,,90,CRITICAL,"high temperature, deep discharge, frequent fast charging, aggressive discharge",Immediate inspection recommended. Avoid fast charging and maintain 20-80 SOC.
-B0041,0.4849681837245289,6.297185813670048,7081525.101,13738733.726,0.0,219,,63,HIGH,"deep discharge, frequent fast charging, aggressive discharge",Reduce fast charging frequency and follow 20-80 charging rule.
-B0042,9.881392637549794,15.601415125478608,424346814.575,18583492.758,44625.108,14989,,70,HIGH,"deep discharge, frequent fast charging, aggressive discharge",Reduce fast charging frequency and follow 20-80 charging rule.
-B0043,0.0837570001732001,14.912445695603653,0.0,12587414.203,0.0,287,,50,MEDIUM,"deep discharge, aggressive discharge",Avoid deep discharge and prolonged high SOC exposure.
-B0044,0.268720880722822,15.003839161322992,8666681.524,12136053.995,0.0,245,,63,HIGH,"deep discharge, frequent fast charging, aggressive discharge",Reduce fast charging frequency and follow 20-80 charging rule.
-B0045,0.8283453667399827,6.855953346766228,8996729.851,31213932.78,0.0,0,,57,MEDIUM,"deep discharge, frequent fast charging",Avoid deep discharge and prolonged high SOC exposure.
-B0046,3.384522727997195,7.179649440900757,62278161.767,31412650.168,0.0,0,,57,MEDIUM,"deep discharge, frequent fast charging",Avoid deep discharge and prolonged high SOC exposure.
-B0047,0.305557202511874,6.6861018134930825,0.0,24206534.59,0.0,0,,44,MEDIUM,deep discharge,Avoid deep discharge and prolonged high SOC exposure.
-B0048,0.3901300564215358,6.5860901776002185,2315395.9,22099490.64,0.0,0,,57,MEDIUM,"deep discharge, frequent fast charging",Avoid deep discharge and prolonged high SOC exposure.
-B0049,4.892562157964349,6.962742015901989,56311175.488,6382122.416,0.0,4979,,70,HIGH,"deep discharge, frequent fast charging, aggressive discharge",Reduce fast charging frequency and follow 20-80 charging rule.
-B0050,7.502263168751744,6.773815941053559,53007927.67,122542402.957,0.0,3976,,70,HIGH,"deep discharge, frequent fast charging, aggressive discharge",Reduce fast charging frequency and follow 20-80 charging rule.
-B0051,0.0855402798170147,6.593545262414338,0.0,4224195.221,0.0,0,,44,MEDIUM,deep discharge,Avoid deep discharge and prolonged high SOC exposure.
-B0052,18.939626263484243,5.963321750801586,986415.675,714134633.336,0.0,0,,57,MEDIUM,"deep discharge, frequent fast charging",Avoid deep discharge and prolonged high SOC exposure.
-B0053,5.829251469454416,7.318231537686217,94568001.386,13870092.353,0.0,10978,,70,HIGH,"deep discharge, frequent fast charging, aggressive discharge",Reduce fast charging frequency and follow 20-80 charging rule.
-B0054,4.264354925796797,7.240312619638733,143074710.856,23402229.114,0.0,20184,,70,HIGH,"deep discharge, frequent fast charging, aggressive discharge",Reduce fast charging frequency and follow 20-80 charging rule.
-B0055,0.0823711360086391,6.673181900926906,0.0,13016074.979,0.0,1,,44,MEDIUM,deep discharge,Avoid deep discharge and prolonged high SOC exposure.
-B0056,0.2568864762712844,6.560871984458269,6925122.871,15123458.31,0.0,0,,57,MEDIUM,"deep discharge, frequent fast charging",Avoid deep discharge and prolonged high SOC exposure.
+SIM000,14.825,27.714335464439937,8,343,15,8,14.018145864494267,49.0,MEDIUM,"deep discharge, low SOC exposure",Avoid deep discharge and prolonged high SOC exposure.
+SIM001,21.975,29.572925592974258,19,396,52,39,4.537648519457142,49.0,MEDIUM,"deep discharge, low SOC exposure",Avoid deep discharge and prolonged high SOC exposure.
+SIM002,30.7625,32.62069126909442,49,386,117,87,5.970262020895119,65.0,HIGH,"high temperature, deep discharge, frequent fast charging, low SOC exposure",Reduce fast charging frequency and follow 20-80 charging rule.
+SIM003,16.1,27.6959935359902,6,378,14,10,6.7520157957456775,49.0,MEDIUM,"deep discharge, low SOC exposure",Avoid deep discharge and prolonged high SOC exposure.
+SIM004,19.6625,29.177248724262277,16,360,45,34,10.323831104959313,49.0,MEDIUM,"deep discharge, low SOC exposure",Avoid deep discharge and prolonged high SOC exposure.
+SIM005,33.1,33.60032553666434,55,396,134,95,3.972613185153668,65.0,HIGH,"high temperature, deep discharge, frequent fast charging, low SOC exposure",Reduce fast charging frequency and follow 20-80 charging rule.
+SIM006,17.0,28.2819462774566,11,374,22,14,7.3294680780875225,49.0,MEDIUM,"deep discharge, low SOC exposure",Avoid deep discharge and prolonged high SOC exposure.
+SIM007,22.775,30.083410038392998,30,397,59,36,3.6750042838461705,65.0,HIGH,"high temperature, deep discharge, frequent fast charging, low SOC exposure",Reduce fast charging frequency and follow 20-80 charging rule.
+SIM008,30.675,32.852968874210426,46,396,112,87,3.331788906818283,65.0,HIGH,"high temperature, deep discharge, frequent fast charging, low SOC exposure",Reduce fast charging frequency and follow 20-80 charging rule.
+SIM009,17.4625,28.15277921455258,7,383,22,18,6.287650073169661,49.0,MEDIUM,"deep discharge, low SOC exposure",Avoid deep discharge and prolonged high SOC exposure.
+SIM010,21.8375,29.437220261216726,25,400,51,32,2.662582722941764,55.0,MEDIUM,"deep discharge, frequent fast charging, low SOC exposure",Avoid deep discharge and prolonged high SOC exposure.
+SIM011,30.8875,32.69677719682587,49,391,116,87,3.6464520391694974,65.0,HIGH,"high temperature, deep discharge, frequent fast charging, low SOC exposure",Reduce fast charging frequency and follow 20-80 charging rule.
+SIM012,16.625,28.00818461049386,8,363,19,12,11.833571661923267,49.0,MEDIUM,"deep discharge, low SOC exposure",Avoid deep discharge and prolonged high SOC exposure.
+SIM013,22.9375,29.91072937656216,22,399,58,43,3.604006107818122,55.0,MEDIUM,"deep discharge, frequent fast charging, low SOC exposure",Avoid deep discharge and prolonged high SOC exposure.
+SIM014,31.375,32.7547904991991,51,398,118,87,2.6293655756844583,65.0,HIGH,"high temperature, deep discharge, frequent fast charging, low SOC exposure",Reduce fast charging frequency and follow 20-80 charging rule.
+SIM015,16.675,28.30519677722264,13,365,23,12,7.906873827750231,49.0,MEDIUM,"deep discharge, low SOC exposure",Avoid deep discharge and prolonged high SOC exposure.
+SIM016,22.3625,29.997777912521506,27,382,59,40,5.6868158396774655,55.0,MEDIUM,"deep discharge, frequent fast charging, low SOC exposure",Avoid deep discharge and prolonged high SOC exposure.
+SIM017,31.3625,32.81527160293527,42,395,122,91,2.8455030340845293,65.0,HIGH,"high temperature, deep discharge, frequent fast charging, low SOC exposure",Reduce fast charging frequency and follow 20-80 charging rule.
+SIM018,16.75,28.018515579251012,6,384,16,14,5.62205792828969,49.0,MEDIUM,"deep discharge, low SOC exposure",Avoid deep discharge and prolonged high SOC exposure.
+SIM019,22.55,29.990430819336897,26,381,61,42,7.676758862381258,55.0,MEDIUM,"deep discharge, frequent fast charging, low SOC exposure",Avoid deep discharge and prolonged high SOC exposure.
