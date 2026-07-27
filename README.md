@@ -193,7 +193,9 @@ Behavior-Aware-BMS-main/
 │   ├── io/
 │   │   ├── loader_common.py         # Shared column normalization helpers
 │   │   ├── load_nasa.py             # NASA dataset loader
-│   │   └── load_calce.py            # CALCE dataset loader
+│   │   ├── load_calce.py            # CALCE dataset loader
+│   │   ├── load_can_dbc.py          # Real-vehicle CAN/DBC adapter (see docs/can_dbc_adapter.md)
+│   │   └── dbc_examples/            # Bundled, real, sourced DBC example (see SOURCE.md)
 │   ├── preprocessing/
 │   │   └── schema.py                # Unified BMS schema, aliases, validation
 │   ├── features/
@@ -234,7 +236,8 @@ Behavior-Aware-BMS-main/
 │   ├── test_schema.py               # Unit tests for the unified schema
 │   ├── test_pipeline.py             # Full pipeline end-to-end tests
 │   ├── test_digital_twin.py         # Digital twin state/transition/timeline tests
-│   └── test_api.py                  # FastAPI endpoint integration tests
+│   ├── test_api.py                  # FastAPI endpoint integration tests
+│   └── test_can_dbc.py              # CAN/DBC adapter tests, verified against a real published source
 └── docs/                            # Documentation
 
 mern/                                 # Optional MERN layer -- see docs/mern.md
@@ -374,10 +377,15 @@ PyYAML>=6.0.0
 - Battery Guardian AI recommendations
 - Interactive HTML dashboard
 - Digital twin state/transitions and a REST API (`src/bms/digital_twin/`, `src/bms/api/` — see `docs/digital_twin.md`, `docs/api.md`)
+- A real-vehicle CAN/DBC decoding adapter, verified against a published external source (`src/bms/io/load_can_dbc.py` — see `docs/can_dbc_adapter.md`)
 
 ### Excluded (V1)
 - Embedded firmware / real BMS hardware
-- CAN/OBD integration
+- Broad multi-OEM CAN/OBD coverage, and live CAN bus reading — a real,
+  tested CAN/DBC decoding adapter exists (`src/bms/io/load_can_dbc.py`,
+  `docs/can_dbc_adapter.md`) verified against real published vehicle
+  protocol data, but it covers one message from one vehicle and decodes
+  frames handed to it, not a physical bus
 - Real-time vehicle deployment
 - Cloud deployment / persistent database (the API's fleet store is in-memory only)
 - Cell balancing circuits
