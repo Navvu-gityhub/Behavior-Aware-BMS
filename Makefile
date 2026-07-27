@@ -1,10 +1,16 @@
-.PHONY: install pipeline test smoke-day3 clean-day3
+.PHONY: install install-dev pipeline api test smoke-day3 clean-day3
 
 install:
 	pip install -r requirements.txt
 
+install-dev:
+	pip install -r requirements-dev.txt
+
 pipeline:
 	python main.py
+
+api:
+	uvicorn src.bms.api.app:app --reload
 
 test:
 	python -m pytest tests/ -v

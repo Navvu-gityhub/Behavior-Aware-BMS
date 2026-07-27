@@ -32,3 +32,8 @@ __pycache__/
 data/features/behavior_features_v3.csv
 data/features/behavior_features_v3_sample.csv
 data/raw/nasa/cleaned_dataset/
+
+# Node (mern/)
+node_modules/
+mern/client/dist/
+

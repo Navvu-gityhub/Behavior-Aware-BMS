@@ -96,6 +96,42 @@ def test_health_index_requires_expected_columns():
         compute_health_index(pd.DataFrame({"battery_id": ["X"]}))
 
 
+def test_scoring_fails_loudly_on_nan_inputs_instead_of_silently_defaulting():
+    # Regression test: NumPy comparisons against NaN (e.g. `NaN >= 40`)
+    # evaluate to False, which previously let a battery with missing data
+    # (e.g. CALCE telemetry with no temperature channel) silently score as
+    # low-risk instead of raising. See src/bms/risk/stress_score.py and
+    # src/bms/health/health_index.py.
+    import pytest
+    from src.bms.health.health_index import compute_health_index
+    from src.bms.risk.stress_score import compute_risk_assessment
+
+    summary = pd.DataFrame({
+        "battery_id": ["X"],
+        "avg_stress": [10.0],
+        "avg_temp": [float("nan")],
+        "deep_discharge_duration": [5],
+        "fast_charge_duration": [0],
+        "aggressive_discharge_count": [0],
+        "avg_soc": [60.0],
+    })
+    with pytest.raises(ValueError, match="NaN values"):
+        compute_risk_assessment(summary)
+    with pytest.raises(ValueError, match="NaN values"):
+        compute_health_index(summary)
+
+
+def test_health_index_v2_predictions_are_monotonic_in_temperature():
+    from src.bms.health.health_index_v2 import predict_capacity_loss_per_cycle
+    temps = pd.Series([15.0, 25.0, 35.0, 45.0])
+    preds = predict_capacity_loss_per_cycle(temps, cohort="RT_2A_CC_variedcutoff")
+    assert preds.is_monotonic_increasing
+
+    # Unknown cohort should use the documented fallback without raising.
+    preds_unknown = predict_capacity_loss_per_cycle(temps, cohort="SOME_NEW_FLEET")
+    assert len(preds_unknown) == 4
+
+
 if __name__ == "__main__":
     test_pipeline_end_to_end_runs_and_produces_valid_ranges()
     test_risk_and_health_state_boundaries_are_consistent_with_docs()

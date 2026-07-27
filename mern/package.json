@@ -1,0 +1,14 @@
+{
+  "name": "beacon-mern",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Convenience launcher for the MERN-layer (server + client) plus the existing Python pipeline they depend on.",
+  "scripts": {
+    "dev": "concurrently -n python,gateway,client -c blue,green,magenta \"cd .. && uvicorn src.bms.api.app:app --reload\" \"cd server && npm run dev\" \"cd client && npm run dev\"",
+    "install-all": "npm install --prefix server && npm install --prefix client",
+    "test-gateway": "npm test --prefix server"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

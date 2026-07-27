@@ -1,0 +1,5 @@
+horizon_cycles,n_cycle_obs,n_batteries,n_batteries_dropped,dropped_batteries,n_cohorts,in_sample_r2,trailing_avg_temp_coef,trailing_avg_temp_p,n_batteries_testable_lobo,lobo_mean_r2_vs_own_mean,lobo_median_r2_vs_own_mean,lobo_pct_beating_baseline,lobo_median_spearman_rho,lobo_pct_positive_rho
+1,2631,34,0,,9,0.015,0.00382,0.0,33,-0.0092,-0.0024,0.364,0.0656,0.667
+10,2343,33,1,B0052,9,0.2789,0.03532,0.0,33,-0.9388,-0.0545,0.424,0.3706,0.788
+20,2024,32,2,"B0050,B0052",9,0.4644,0.06432,0.0,30,-5.1794,-0.3645,0.3,0.243,0.8
+50,1277,19,15,"B0025,B0026,B0027,B0028,B0029,B0030,B0031,B0032,B0038,B0039,B0040,B0049,B0050,B0051,B0052",5,0.6335,0.11979,0.0,18,-23.6467,-0.5088,0.278,0.1954,0.833

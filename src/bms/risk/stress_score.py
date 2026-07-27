@@ -62,7 +62,7 @@ class StressScoreWeights:
     high_soc: float = 10.0
 
 
-def compute_stress_score(df: pd.DataFrame, weights: StressScoreWeights = StressScoreWeights()) -> pd.Series:
+def compute_stress_score(df: pd.DataFrame, weights: StressScoreWeights = StressScoreWeights(), rated_capacity_ah: float = 2.0, c_rate_threshold: float = 1.0) -> pd.Series:
     """Rule-based row-level stress score in [0, 100].
 
     Expects `current_a`, `temperature_c`, `soc` columns (unified schema).
@@ -70,14 +70,18 @@ def compute_stress_score(df: pd.DataFrame, weights: StressScoreWeights = StressS
     `fast_charge_flag`, `deep_discharge_flag`, `high_soc_flag`) already exist
     (e.g. from `features.behavior_features.compute_behavior_flags`), those are
     reused instead of being recomputed, so flag thresholds stay in one place.
+    The `rated_capacity_ah`/`c_rate_threshold` fallback thresholds below only
+    apply if flags haven't already been computed — see behavior_features.py
+    for why C-rate rather than a flat Amp threshold.
     """
     missing = [c for c in REQUIRED_ROW_COLUMNS if c not in df.columns]
     if missing:
         raise ValueError(f"compute_stress_score: missing required columns {missing}")
 
-    aggressive = df["aggressive_discharge_event"] if "aggressive_discharge_event" in df.columns else (df["current_a"] < -2.0)
+    c_rate = df["current_a"] / rated_capacity_ah
+    aggressive = df["aggressive_discharge_event"] if "aggressive_discharge_event" in df.columns else (c_rate < -c_rate_threshold)
     high_temp = df["high_temp_flag"] if "high_temp_flag" in df.columns else (df["temperature_c"] > 40.0)
-    fast_charge = df["fast_charge_flag"] if "fast_charge_flag" in df.columns else (df["current_a"] > 2.0)
+    fast_charge = df["fast_charge_flag"] if "fast_charge_flag" in df.columns else (c_rate > c_rate_threshold)
     deep_discharge = df["deep_discharge_flag"] if "deep_discharge_flag" in df.columns else (df["soc"] < 20.0)
     high_soc = df["high_soc_flag"] if "high_soc_flag" in df.columns else (df["soc"] > 90.0)
 
@@ -161,6 +165,19 @@ def compute_risk_assessment(battery_summary: pd.DataFrame, thresholds: RiskThres
     missing = [c for c in REQUIRED_SUMMARY_COLUMNS if c not in battery_summary.columns]
     if missing:
         raise ValueError(f"compute_risk_assessment: missing required columns {missing}")
+
+    nulls = {c: int(battery_summary[c].isna().sum()) for c in REQUIRED_SUMMARY_COLUMNS if battery_summary[c].isna().any()}
+    if nulls:
+        # NumPy comparisons against NaN (e.g. `NaN >= 40`) evaluate to False, which
+        # would otherwise silently fall through to the LOWEST-risk bucket for a
+        # battery whose data is actually missing, not actually healthy. Caught
+        # by src/bms/io/load_calce_capacity.py's data (no temperature channel
+        # recorded) — see docs/calce_dataset_note.md.
+        raise ValueError(
+            f"compute_risk_assessment: NaN values in required columns {nulls} — "
+            "would silently score as low-risk rather than reflect missing data. "
+            "Impute or explicitly exclude these rows/columns before scoring."
+        )
 
     out = battery_summary.copy()
 

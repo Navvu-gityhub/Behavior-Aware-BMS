@@ -56,6 +56,15 @@ def compute_health_index(battery_summary: pd.DataFrame) -> pd.DataFrame:
     if missing:
         raise ValueError(f"compute_health_index: missing required columns {missing}")
 
+    nulls = {c: int(battery_summary[c].isna().sum()) for c in REQUIRED_COLUMNS if battery_summary[c].isna().any()}
+    if nulls:
+        # See identical guard and rationale in risk.stress_score.compute_risk_assessment.
+        raise ValueError(
+            f"compute_health_index: NaN values in required columns {nulls} — "
+            "would silently score as low-risk rather than reflect missing data. "
+            "Impute or explicitly exclude these rows/columns before scoring."
+        )
+
     out = battery_summary.copy()
 
     budget = np.full(len(out), 100.0)

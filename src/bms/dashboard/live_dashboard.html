@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BEACON — Live Fleet Dashboard</title>
+<style>
+  :root {
+    --bg: #10131A;
+    --panel: #171B23;
+    --panel-2: #1D222C;
+    --border: #262C38;
+    --text: #E7EAEE;
+    --text-dim: #8B93A1;
+    --text-faint: #5B6270;
+    --accent: #4FD8C4;
+    --accent-dim: rgba(79, 216, 196, 0.14);
+    --normal: #33D17A;
+    --moderate: #F0B429;
+    --high: #F2823C;
+    --failure: #F0463C;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    --mono: ui-monospace, "SF Mono", "Cascadia Code", "Roboto Mono", Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--accent); }
+
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 28px;
+    border-bottom: 1px solid var(--border);
+    background: linear-gradient(180deg, #131720 0%, #10131A 100%);
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .brand { display: flex; align-items: baseline; gap: 10px; }
+  .brand .mark { color: var(--accent); font-size: 22px; }
+  .brand h1 { font-size: 18px; margin: 0; letter-spacing: 0.02em; font-weight: 700; }
+  .brand .tagline { color: var(--text-faint); font-size: 12px; font-family: var(--mono); }
+
+  .header-right { display: flex; align-items: center; gap: 16px; }
+  .live-status { display: flex; align-items: center; gap: 7px; font-family: var(--mono); font-size: 12px; color: var(--text-dim); }
+  .pulse { width: 8px; height: 8px; border-radius: 50%; background: var(--text-faint); position: relative; }
+  .pulse.on { background: var(--normal); }
+  .pulse.on::after {
+    content: ""; position: absolute; inset: -4px; border-radius: 50%;
+    border: 1px solid var(--normal); animation: pulse-ring 1.8s ease-out infinite;
+  }
+  @keyframes pulse-ring {
+    0% { transform: scale(0.6); opacity: 0.8; }
+    100% { transform: scale(1.8); opacity: 0; }
+  }
+  @media (prefers-reduced-motion: reduce) { .pulse.on::after { animation: none; } }
+
+  button {
+    font-family: var(--sans); font-size: 13px; font-weight: 600;
+    background: var(--accent-dim); color: var(--accent);
+    border: 1px solid rgba(79, 216, 196, 0.35); border-radius: 6px;
+    padding: 9px 16px; cursor: pointer; transition: background 0.15s ease;
+  }
+  button:hover { background: rgba(79, 216, 196, 0.24); }
+  button:active { transform: translateY(1px); }
+  button:disabled { opacity: 0.5; cursor: default; }
+  button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  input[type=number] {
+    font-family: var(--mono); background: var(--panel-2); color: var(--text);
+    border: 1px solid var(--border); border-radius: 5px; padding: 7px 8px; width: 68px; font-size: 12px;
+  }
+
+  .state-bar {
+    display: flex; gap: 1px; padding: 0 28px; margin: 16px 0 0;
+  }
+  .state-chip {
+    flex: 1; padding: 10px 14px; font-family: var(--mono); font-size: 12px;
+    display: flex; justify-content: space-between; align-items: center;
+    border-top: 2px solid transparent;
+  }
+  .state-chip .n { font-size: 18px; font-weight: 700; font-family: var(--sans); }
+  .state-chip.NORMAL { border-color: var(--normal); color: var(--normal); background: rgba(51,209,122,0.06); }
+  .state-chip.MODERATE_RISK { border-color: var(--moderate); color: var(--moderate); background: rgba(240,180,41,0.06); }
+  .state-chip.HIGH_RISK { border-color: var(--high); color: var(--high); background: rgba(242,130,60,0.06); }
+  .state-chip.FAILURE_IMMINENT { border-color: var(--failure); color: var(--failure); background: rgba(240,70,60,0.06); }
+
+  main {
+    display: grid; grid-template-columns: minmax(320px, 420px) 1fr;
+    gap: 16px; padding: 16px 28px 28px; align-items: start;
+  }
+  @media (max-width: 860px) { main { grid-template-columns: 1fr; } }
+
+  .panel {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
+    overflow: hidden;
+  }
+  .panel-title {
+    font-family: var(--mono); font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em;
+    color: var(--text-faint); padding: 12px 16px; border-bottom: 1px solid var(--border);
+  }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { text-align: left; font-family: var(--mono); font-size: 10.5px; color: var(--text-faint);
+       text-transform: uppercase; letter-spacing: 0.06em; padding: 8px 12px; font-weight: 500; }
+  td { padding: 9px 12px; border-top: 1px solid var(--border); }
+  tbody tr { cursor: pointer; }
+  tbody tr:hover { background: var(--panel-2); }
+  tbody tr.selected { background: var(--accent-dim); }
+  .bid { font-family: var(--mono); color: var(--text); }
+
+  .badge {
+    display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 11px;
+    font-family: var(--mono); font-weight: 600; white-space: nowrap;
+  }
+  .badge.NORMAL { color: var(--normal); background: rgba(51,209,122,0.12); }
+  .badge.MODERATE_RISK { color: var(--moderate); background: rgba(240,180,41,0.12); }
+  .badge.HIGH_RISK { color: var(--high); background: rgba(242,130,60,0.12); }
+  .badge.FAILURE_IMMINENT { color: var(--failure); background: rgba(240,70,60,0.12); }
+
+  .health-bar { width: 56px; height: 5px; border-radius: 3px; background: var(--panel-2); overflow: hidden; display: inline-block; vertical-align: middle; }
+  .health-bar > div { height: 100%; }
+
+  .empty-state {
+    padding: 48px 24px; text-align: center; color: var(--text-dim);
+  }
+  .empty-state p { font-size: 13px; max-width: 340px; margin: 8px auto 20px; line-height: 1.6; }
+
+  .detail-header { padding: 16px 18px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 10px; }
+  .detail-id { font-family: var(--mono); font-size: 15px; font-weight: 700; }
+  .detail-stats { display: flex; gap: 22px; padding: 14px 18px; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+  .stat { }
+  .stat .label { font-family: var(--mono); font-size: 10px; text-transform: uppercase; color: var(--text-faint); letter-spacing: 0.05em; }
+  .stat .value { font-size: 18px; font-weight: 700; font-family: var(--mono); margin-top: 2px; }
+
+  .report-box { margin: 14px 18px; padding: 12px 14px; background: var(--panel-2); border-left: 2px solid var(--accent); border-radius: 4px; font-size: 13px; line-height: 1.6; color: var(--text); }
+  .report-meta { margin: 0 18px 14px; font-size: 12px; color: var(--text-dim); line-height: 1.7; }
+  .report-meta b { color: var(--text); }
+
+  .traces { padding: 4px 18px 6px; }
+  .trace { margin-bottom: 4px; }
+  .trace-label { font-family: var(--mono); font-size: 11px; color: var(--text-dim); display: flex; justify-content: space-between; padding: 6px 0 2px; }
+  svg.chart { width: 100%; height: 64px; display: block; }
+  .grid-line { stroke: var(--border); stroke-width: 1; }
+  .trace-line { fill: none; stroke-width: 1.6; }
+  .trace-dot { }
+
+  .transitions { padding: 4px 18px 16px; }
+  .t-row { display: flex; align-items: center; gap: 8px; font-family: var(--mono); font-size: 11.5px; padding: 6px 0; border-top: 1px solid var(--border); color: var(--text-dim); }
+  .t-row:first-child { border-top: none; }
+  .t-row .arrow { color: var(--text-faint); }
+
+  footer {
+    padding: 16px 28px 28px; font-size: 11.5px; color: var(--text-faint); font-family: var(--mono);
+    border-top: 1px solid var(--border); margin-top: 8px; line-height: 1.7;
+  }
+
+  .toast {
+    position: fixed; bottom: 20px; right: 20px; background: var(--panel);
+    border: 1px solid var(--failure); color: var(--failure); padding: 12px 16px;
+    border-radius: 8px; font-size: 13px; max-width: 320px; display: none; font-family: var(--mono);
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <span class="mark">⚡</span>
+    <div>
+      <h1>BEACON — Live Fleet</h1>
+      <div class="tagline">rule-based diagnostics, not a validated predictive model</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="live-status"><span class="pulse" id="pulseDot"></span><span id="statusText">connecting…</span></div>
+    <label style="font-family: var(--mono); font-size: 11px; color: var(--text-dim);">
+      batteries <input type="number" id="nBatteries" value="12" min="1" max="200">
+    </label>
+    <button id="simulateBtn">Run Simulation</button>
+  </div>
+</header>
+
+<div class="state-bar" id="stateBar"></div>
+
+<main>
+  <div class="panel" id="fleetPanel">
+    <div class="panel-title">Fleet — click a battery for detail</div>
+    <div id="fleetBody">
+      <div class="empty-state">
+        <p>No batteries tracked yet. Run a simulation to populate the fleet.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" id="detailPanel">
+    <div class="panel-title">Battery Detail</div>
+    <div id="detailBody">
+      <div class="empty-state"><p>Select a battery from the fleet table to see its twin state, Guardian report, and health traces.</p></div>
+    </div>
+  </div>
+</main>
+
+<footer>
+  Every score here (health_index, risk_score, rul_cycles, failure_likelihood) is a hand-tuned heuristic,
+  not validated against measured capacity fade — see docs/final_report.md for what's actually been tested.
+  Twin state is a 1:1 relabel of health_index's own thresholds — see docs/digital_twin.md.
+</footer>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const STATE_COLOR = {
+  NORMAL: getCss('--normal'), MODERATE_RISK: getCss('--moderate'),
+  HIGH_RISK: getCss('--high'), FAILURE_IMMINENT: getCss('--failure'),
+};
+const STATE_ORDER = ['NORMAL', 'MODERATE_RISK', 'HIGH_RISK', 'FAILURE_IMMINENT'];
+const TRACE_COLOR = { stress_score: getCss('--accent'), soc: '#5B9DF0', temperature_c: '#F2823C' };
+
+function getCss(name) {
+  return getComputedStyle(document.documentElement).getPropertyValue(name).trim() || '#888';
+}
+
+let selectedId = null;
+
+async function fetchJSON(url, opts) {
+  const res = await fetch(url, opts);
+  if (!res.ok) {
+    let detail = res.statusText;
+    try { detail = (await res.json()).detail || detail; } catch (e) {}
+    throw new Error(`${res.status}: ${detail}`);
+  }
+  return res.json();
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.display = 'block';
+  clearTimeout(showToast._h);
+  showToast._h = setTimeout(() => { t.style.display = 'none'; }, 5000);
+}
+
+function setLiveStatus(ok, text) {
+  document.getElementById('pulseDot').classList.toggle('on', ok);
+  document.getElementById('statusText').textContent = text;
+}
+
+function renderStateBar(batteries) {
+  const counts = { NORMAL: 0, MODERATE_RISK: 0, HIGH_RISK: 0, FAILURE_IMMINENT: 0 };
+  batteries.forEach(b => { counts[b.twin_state] = (counts[b.twin_state] || 0) + 1; });
+  const bar = document.getElementById('stateBar');
+  bar.innerHTML = STATE_ORDER.map(s => `
+    <div class="state-chip ${s}">
+      <span>${s.replace('_', ' ')}</span><span class="n">${counts[s]}</span>
+    </div>`).join('');
+}
+
+function renderFleetTable(batteries) {
+  const body = document.getElementById('fleetBody');
+  if (!batteries.length) {
+    body.innerHTML = `<div class="empty-state"><p>No batteries tracked yet. Run a simulation to populate the fleet.</p></div>`;
+    return;
+  }
+  const rows = batteries.map(b => `
+    <tr data-id="${b.battery_id}" class="${b.battery_id === selectedId ? 'selected' : ''}">
+      <td class="bid">${b.battery_id}</td>
+      <td><span class="badge ${b.twin_state}">${b.twin_state.replace('_', ' ')}</span></td>
+      <td>
+        <span class="health-bar"><div style="width:${b.health_index}%; background:${STATE_COLOR[b.twin_state]}"></div></span>
+        ${b.health_index.toFixed(0)}
+      </td>
+      <td>${b.rul_cycles.toLocaleString()}</td>
+      <td>${b.replacement_policy}</td>
+    </tr>`).join('');
+  body.innerHTML = `
+    <table>
+      <thead><tr><th>Battery</th><th>Twin State</th><th>Health Idx</th><th>RUL (cycles)</th><th>Policy</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+  body.querySelectorAll('tbody tr').forEach(tr => {
+    tr.addEventListener('click', () => selectBattery(tr.dataset.id));
+  });
+}
+
+function sparkline(points, key, color, unit) {
+  if (!points.length) return '<div style="color:var(--text-faint); font-size:11px; padding:8px 0;">no data</div>';
+  const vals = points.map(p => p[key]);
+  const min = Math.min(...vals), max = Math.max(...vals);
+  const pad = (max - min) * 0.1 || 1;
+  const lo = min - pad, hi = max + pad;
+  const W = 600, H = 56, marginY = 6;
+  const xStep = W / Math.max(points.length - 1, 1);
+  const yFor = v => H - marginY - ((v - lo) / (hi - lo)) * (H - 2 * marginY);
+  const path = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${(i * xStep).toFixed(1)} ${yFor(p[key]).toFixed(1)}`).join(' ');
+  const last = points[points.length - 1];
+  const gridLines = [0.25, 0.5, 0.75].map(f =>
+    `<line class="grid-line" x1="0" x2="${W}" y1="${(H * f).toFixed(1)}" y2="${(H * f).toFixed(1)}"/>`).join('');
+  return `
+    <svg class="chart" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
+      ${gridLines}
+      <path class="trace-line" d="${path}" style="stroke:${color}; filter: drop-shadow(0 0 3px ${color}90);"/>
+      <circle class="trace-dot" cx="${W}" cy="${yFor(last[key]).toFixed(1)}" r="2.5" fill="${color}"/>
+    </svg>
+    <div style="display:flex; justify-content:space-between; font-family:var(--mono); font-size:10px; color:var(--text-faint); margin-top:-2px;">
+      <span>min ${min.toFixed(1)}${unit}</span><span>latest ${last[key].toFixed(1)}${unit}</span><span>max ${max.toFixed(1)}${unit}</span>
+    </div>`;
+}
+
+function renderDetail(detail, timeline) {
+  const body = document.getElementById('detailBody');
+  const t = detail.twin;
+  const transitions = detail.transitions.slice().reverse().map(tr => `
+    <div class="t-row">
+      <span>${new Date(tr.at).toLocaleString()}</span>
+      <span>${tr.from_state || 'first seen'}</span><span class="arrow">→</span><span>${tr.to_state}</span>
+    </div>`).join('') || '<div class="t-row">no transitions recorded</div>';
+
+  const tracesHtml = timeline.length ? `
+    <div class="trace">
+      <div class="trace-label"><span>Stress score</span><span>0–100</span></div>
+      ${sparkline(timeline, 'stress_score', TRACE_COLOR.stress_score, '')}
+    </div>
+    <div class="trace">
+      <div class="trace-label"><span>State of charge</span><span>%</span></div>
+      ${sparkline(timeline, 'soc', TRACE_COLOR.soc, '%')}
+    </div>
+    <div class="trace">
+      <div class="trace-label"><span>Temperature</span><span>°C</span></div>
+      ${sparkline(timeline, 'temperature_c', TRACE_COLOR.temperature_c, '°')}
+    </div>` : `<div style="padding:8px 0; color:var(--text-faint); font-size:12px;">
+      No timeline for this battery in the most recent run.</div>`;
+
+  body.innerHTML = `
+    <div class="detail-header">
+      <div class="detail-id">${detail.battery_id}</div>
+      <span class="badge ${t.twin_state}">${t.twin_state.replace('_', ' ')}</span>
+    </div>
+    <div class="detail-stats">
+      <div class="stat"><div class="label">Health Index</div><div class="value">${t.health_index.toFixed(0)}</div></div>
+      <div class="stat"><div class="label">Failure Likelihood</div><div class="value">${(t.failure_likelihood * 100).toFixed(0)}%</div></div>
+      <div class="stat"><div class="label">RUL</div><div class="value">${t.rul_cycles.toLocaleString()}</div></div>
+      <div class="stat"><div class="label">Risk</div><div class="value">${detail.risk_level}</div></div>
+      <div class="stat"><div class="label">Policy</div><div class="value" style="font-size:13px;">${t.replacement_policy}</div></div>
+    </div>
+    <div class="report-box">${detail.guardian_report}</div>
+    <div class="report-meta"><b>Primary causes:</b> ${detail.primary_causes}<br><b>Recommendation:</b> ${detail.recommendation}</div>
+    <div class="panel-title" style="border-top:1px solid var(--border);">Health Trace (by cycle)</div>
+    <div class="traces">${tracesHtml}</div>
+    <div class="panel-title" style="border-top:1px solid var(--border);">Twin State Transitions</div>
+    <div class="transitions">${transitions}</div>
+  `;
+}
+
+async function selectBattery(id) {
+  selectedId = id;
+  document.querySelectorAll('#fleetBody tbody tr').forEach(tr => tr.classList.toggle('selected', tr.dataset.id === id));
+  try {
+    const [detail, timeline] = await Promise.all([
+      fetchJSON(`/batteries/${encodeURIComponent(id)}`),
+      fetchJSON(`/batteries/${encodeURIComponent(id)}/timeline`).catch(() => []),
+    ]);
+    renderDetail(detail, timeline);
+  } catch (e) {
+    showToast(`Could not load ${id}: ${e.message}`);
+  }
+}
+
+async function loadFleet(preserveSelection) {
+  try {
+    const batteries = await fetchJSON('/batteries');
+    setLiveStatus(true, `connected · ${batteries.length} tracked`);
+    renderStateBar(batteries);
+    renderFleetTable(batteries);
+    if (batteries.length) {
+      const keep = preserveSelection && batteries.some(b => b.battery_id === selectedId);
+      await selectBattery(keep ? selectedId : batteries[0].battery_id);
+    }
+  } catch (e) {
+    setLiveStatus(false, 'API unreachable');
+    showToast(`Could not reach the API: ${e.message}`);
+  }
+}
+
+document.getElementById('simulateBtn').addEventListener('click', async () => {
+  const btn = document.getElementById('simulateBtn');
+  const n = parseInt(document.getElementById('nBatteries').value, 10) || 12;
+  btn.disabled = true; btn.textContent = 'Running…';
+  try {
+    await fetchJSON('/pipeline/simulate', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ n_batteries: n, rows_per_battery: 300 }),
+    });
+    await loadFleet(true);
+  } catch (e) {
+    showToast(`Simulation failed: ${e.message}`);
+  } finally {
+    btn.disabled = false; btn.textContent = 'Run Simulation';
+  }
+});
+
+loadFleet(false);
+</script>
+</body>
+</html>

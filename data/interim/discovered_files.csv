@@ -1,7 +1,0 @@
-discovered_at,source_guess,file_type,file_name,file_path,size_bytes,sha256_16
-2026-06-04T15:12:10,calce,xlsx,calce_sample.xlsx,data/interim/extracted/calce_sample/calce/calce_sample.xlsx,5092,59ac31f9720109fc
-2026-06-04T15:12:10,nasa,csv,nasa_sample.csv,data/interim/extracted/nasa_sample/nasa/nasa_sample.csv,134,32125ee86d6634d7
-2026-06-04T15:12:10,calce,xlsx,calce_sample.xlsx,data/interim/loose_files/calce_sample.xlsx,5092,59ac31f9720109fc
-2026-06-04T15:12:10,nasa,csv,nasa_sample.csv,data/interim/loose_files/nasa_sample.csv,134,32125ee86d6634d7
-2026-06-04T15:12:10,calce,xlsx,calce_sample.xlsx,data/raw/calce/calce_sample.xlsx,5092,59ac31f9720109fc
-2026-06-04T15:12:10,nasa,csv,nasa_sample.csv,data/raw/nasa/nasa_sample.csv,134,32125ee86d6634d7

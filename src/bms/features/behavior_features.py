@@ -17,14 +17,26 @@ import pandas as pd
 ROLLING_WINDOW = 50
 
 
-def compute_behavior_flags(df: pd.DataFrame) -> pd.DataFrame:
+def compute_behavior_flags(df: pd.DataFrame, rated_capacity_ah: float = 2.0, c_rate_threshold: float = 1.0) -> pd.DataFrame:
     """Add the five binary behavior flags from the README's feature catalog.
 
     Expects `current_a`, `temperature_c`, `soc` columns (unified schema).
+
+    `aggressive_discharge_event` and `fast_charge_flag` are defined by C-rate
+    (current / rated capacity), not a fixed Amp threshold. An earlier
+    version used a flat "> 2A" cutoff; validated against real NASA telemetry
+    (see scripts/calibrate_against_nasa.py), that threshold never fired —
+    observed currents topped out at 1.54A — because 2A was picked to match
+    this project's own synthetic simulator, not any real charge-rate
+    convention, and doesn't generalize across cells of different capacity.
+    `c_rate_threshold=1.0` (i.e. >1C) is still a heuristic choice, not
+    fit to data, but it is at least dimensionally correct and configurable
+    per dataset via `rated_capacity_ah`.
     """
     out = df.copy()
-    out["aggressive_discharge_event"] = (out["current_a"] < -2.0).astype(int)
-    out["fast_charge_flag"] = (out["current_a"] > 2.0).astype(int)
+    c_rate = out["current_a"] / rated_capacity_ah
+    out["aggressive_discharge_event"] = (c_rate < -c_rate_threshold).astype(int)
+    out["fast_charge_flag"] = (c_rate > c_rate_threshold).astype(int)
     out["high_temp_flag"] = (out["temperature_c"] > 40.0).astype(int)
     out["deep_discharge_flag"] = (out["soc"] < 20.0).astype(int)
     out["high_soc_flag"] = (out["soc"] > 90.0).astype(int)

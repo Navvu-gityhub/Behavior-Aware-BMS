@@ -1,0 +1,33 @@
+                            OLS Regression Results                            
+==============================================================================
+Dep. Variable:          capacity_loss   R-squared:                       0.015
+Model:                            OLS   Adj. R-squared:                  0.012
+Method:                 Least Squares   F-statistic:                     4.524
+Date:                Wed, 22 Jul 2026   Prob (F-statistic):           6.26e-06
+Time:                        10:14:13   Log-Likelihood:                 1638.2
+No. Observations:                2682   AIC:                            -3256.
+Df Residuals:                    2672   BIC:                            -3198.
+Df Model:                           9                                         
+Covariance Type:            nonrobust                                         
+===========================================================================================================
+                                              coef    std err          t      P>|t|      [0.025      0.975]
+-----------------------------------------------------------------------------------------------------------
+Intercept                                  -0.0209      0.009     -2.276      0.023      -0.039      -0.003
+C(cohort)[T.COLD4C_2A]                     -0.0025      0.011     -0.236      0.813      -0.023       0.018
+C(cohort)[T.COLD4C_2A_flagged]              0.0362      0.018      1.975      0.048       0.000       0.072
+C(cohort)[T.COLD4C_multiload]              -0.0246      0.011     -2.231      0.026      -0.046      -0.003
+C(cohort)[T.ELEV43C_4A_CC_variedcutoff]    -0.1473      0.029     -5.089      0.000      -0.204      -0.091
+C(cohort)[T.MIXED_24_44C_multiload]        -0.1386      0.026     -5.355      0.000      -0.189      -0.088
+C(cohort)[T.RT_2A_CC_variedcutoff]         -0.0749      0.016     -4.691      0.000      -0.106      -0.044
+C(cohort)[T.RT_CC_mixed_current]           -0.0815      0.016     -4.959      0.000      -0.114      -0.049
+C(cohort)[T.RT_SQWAVE_4A_variedcutoff]     -0.0841      0.021     -4.050      0.000      -0.125      -0.043
+trailing_avg_temp                           0.0038      0.001      5.766      0.000       0.002       0.005
+==============================================================================
+Omnibus:                     2137.089   Durbin-Watson:                   2.643
+Prob(Omnibus):                  0.000   Jarque-Bera (JB):          1795185.023
+Skew:                          -2.493   Prob(JB):                         0.00
+Kurtosis:                     129.647   Cond. No.                         450.
+==============================================================================
+
+Notes:
+[1] Standard Errors assume that the covariance matrix of the errors is correctly specified.
