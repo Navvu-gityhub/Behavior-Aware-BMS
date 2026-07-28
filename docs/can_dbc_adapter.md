@@ -83,4 +83,61 @@ with the same rigor as the rest of this codebase.
 
 ```bash
 python -m pytest tests/test_can_dbc.py -v
+python -m pytest tests/test_can_vehicle_registry.py -v
 ```
+
+## Multi-vehicle registry (`src/bms/io/can_vehicle_registry.py`)
+
+The single-DBC adapter above generalizes into a registry: multiple
+vehicles' DBC files can be registered, and given a batch of raw CAN
+frames, `VehicleDbcRegistry.decode_frames_auto()` identifies which
+registered vehicle they came from (by matching observed CAN IDs against
+each vehicle's known message IDs) and decodes accordingly — refusing to
+guess (raising `ValueError`) rather than silently picking a low-confidence
+match, the same stance this project takes elsewhere on ambiguous or
+missing data.
+
+**What's registered by default: exactly one real, verified vehicle
+(Twizy).** `default_registry(include_test_fixture=True)` can additionally
+register a synthetic, clearly-labeled test fixture
+(`TEST_FIXTURE_NOT_A_REAL_VEHICLE`) purely to exercise the multi-vehicle
+disambiguation logic in tests — it is never included by default, so
+application code can't accidentally treat it as real coverage.
+
+## Why not all OVMS vehicles — researched, not assumed
+
+This was asked directly, so it was actually checked rather than answered
+by intuition:
+
+1. **Most OVMS-supported vehicles (Tesla, Nissan Leaf, BMW i3, VW e-Golf,
+   and most of the 30+ others) aren't DBC-based at all.** OVMS's own docs
+   describe the generic DBC engine as being for "vehicles that don't have
+   a dedicated native adaption yet" — the rest have hand-written C++
+   decoders. There's no portable DBC file to extract for them; the
+   knowledge exists as vehicle-specific source code, not a spec this
+   registry format can represent without a rewrite of that code.
+2. **Community reverse-engineering for other vehicles exists, but isn't
+   something to build verified support on.** Checked directly: Nissan
+   Leaf and Kia Soul EV CAN decoding lives in scattered forum threads and
+   shared spreadsheets, with contributors themselves noting inconsistency
+   ("my car doesn't always agree with this spreadsheet," byte-offset
+   errors found and fixed after the fact). No independently-stated
+   worked example exists to verify against the way OVMS's Twizy primer
+   provided one.
+3. **A real DBC for the Kia/Hyundai EV platform exists — but isn't
+   usable here.** CSS Electronics documents building one covering ~60
+   signals (SoC, SoH, cell voltages, temperatures) for the Kia EV6,
+   reusable across Kia/Hyundai's shared platform. Checked directly: the
+   file itself isn't published (gated behind a lead-generation download),
+   it depends on **UDS multi-frame diagnostic requests** — a materially
+   more complex protocol than the plain broadcast-frame decoding this
+   module does, requiring ISO-TP reassembly and request/response
+   sequencing — and no independently-verifiable worked example is given.
+
+None of this is a soft "not yet" — it's a real, checked limitation with
+a specific concrete path forward if pursued: either an OEM data-sharing
+relationship, or the same kind of hands-on vehicle-by-vehicle reverse
+engineering (real hardware, OVMS's own RE toolkit, a worked example
+stated with enough precision to verify against) that produced the one
+vehicle this registry does support.
+

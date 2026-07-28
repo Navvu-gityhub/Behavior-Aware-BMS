@@ -195,6 +195,7 @@ Behavior-Aware-BMS-main/
 │   │   ├── load_nasa.py             # NASA dataset loader
 │   │   ├── load_calce.py            # CALCE dataset loader
 │   │   ├── load_can_dbc.py          # Real-vehicle CAN/DBC adapter (see docs/can_dbc_adapter.md)
+│   │   ├── can_vehicle_registry.py  # Multi-vehicle registry: auto-identify + decode by DBC
 │   │   └── dbc_examples/            # Bundled, real, sourced DBC example (see SOURCE.md)
 │   ├── preprocessing/
 │   │   └── schema.py                # Unified BMS schema, aliases, validation
@@ -237,7 +238,8 @@ Behavior-Aware-BMS-main/
 │   ├── test_pipeline.py             # Full pipeline end-to-end tests
 │   ├── test_digital_twin.py         # Digital twin state/transition/timeline tests
 │   ├── test_api.py                  # FastAPI endpoint integration tests
-│   └── test_can_dbc.py              # CAN/DBC adapter tests, verified against a real published source
+│   ├── test_can_dbc.py              # CAN/DBC adapter tests, verified against a real published source
+│   └── test_can_vehicle_registry.py # Multi-vehicle registry: auto-identify/disambiguate tests
 └── docs/                            # Documentation
 
 mern/                                 # Optional MERN layer -- see docs/mern.md
@@ -377,7 +379,7 @@ PyYAML>=6.0.0
 - Battery Guardian AI recommendations
 - Interactive HTML dashboard
 - Digital twin state/transitions and a REST API (`src/bms/digital_twin/`, `src/bms/api/` — see `docs/digital_twin.md`, `docs/api.md`)
-- A real-vehicle CAN/DBC decoding adapter, verified against a published external source (`src/bms/io/load_can_dbc.py` — see `docs/can_dbc_adapter.md`)
+- A real-vehicle CAN/DBC decoding adapter, verified against a published external source, generalized into a multi-vehicle registry (`src/bms/io/load_can_dbc.py`, `can_vehicle_registry.py` — see `docs/can_dbc_adapter.md` for exactly what is and isn't covered)
 
 ### Excluded (V1)
 - Embedded firmware / real BMS hardware
