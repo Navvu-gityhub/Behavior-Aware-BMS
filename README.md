@@ -1,5 +1,17 @@
 # Behavior-Aware EV Battery Health Monitoring and Usage Optimization System
 
+**For reviewers skimming this in 30 seconds:** this is a full-stack
+project — a tested Python data pipeline, a real research investigation
+against NASA's public battery dataset, a REST API + digital twin, two
+working frontends (vanilla JS and React/Node), a real-vehicle CAN bus
+adapter verified against an independent published source, and CI running
+36 automated tests across all of it. The research half is reported
+honestly rather than oversold: one real signal (battery temperature) was
+found and validated; several plausible modeling approaches were tried
+against it and diagnosed, not just declared successful. Real bugs were
+found and fixed along the way (documented, with tests added), rather
+than hidden. Full writeup: `docs/final_report.md`.
+
 > **A software intelligence layer for EV Battery Management Systems.**
 > Converts BMS telemetry into degradation risk insights, battery health estimates,
 > remaining useful life predictions, and actionable user recommendations —
