@@ -163,6 +163,8 @@ def get_battery(battery_id: str) -> BatteryDetailOut:
         primary_causes=record.guardian_row["primary_causes"],
         recommendation=record.guardian_row["recommendation"],
         guardian_report=record.guardian_row["guardian_report"],
+        evidence_confidence=record.guardian_row["evidence_confidence"],
+        evidence_note=record.guardian_row["evidence_note"],
         risk_level=record.guardian_row["risk_level"],
         risk_score=record.guardian_row["risk_score"],
         transitions=[_transition_out(t) for t in record.transitions],

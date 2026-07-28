@@ -71,6 +71,8 @@ def test_simulate_then_list_and_detail(client):
     assert detail["battery_id"] == battery_id
     assert detail["twin"]["twin_state"] == summaries[0]["twin_state"]
     assert len(detail["transitions"]) == 1
+    assert detail["evidence_confidence"] in ("VALIDATED", "HEURISTIC", "MIXED", "N/A")
+    assert isinstance(detail["evidence_note"], str)
 
 
 def test_unknown_battery_returns_404(client):
