@@ -22,6 +22,14 @@ from src.bms.adaptive.cohort import (
     DriftReport,
     InDistribution,
 )
+from src.bms.adaptive.datasets import (
+    CallableDatasetLoader,
+    CsvDatasetLoader,
+    DatasetManifest,
+    DatasetRegistry,
+    SuitabilityReport,
+    assess_suitability,
+)
 from src.bms.adaptive.store import (
     Decision,
     ModelStore,
@@ -40,6 +48,12 @@ __all__ = [
     "CohortSpec",
     "DriftReport",
     "InDistribution",
+    "CallableDatasetLoader",
+    "CsvDatasetLoader",
+    "DatasetManifest",
+    "DatasetRegistry",
+    "SuitabilityReport",
+    "assess_suitability",
     "Decision",
     "ModelStore",
     "ModelVersion",
