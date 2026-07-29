@@ -22,6 +22,12 @@ from src.bms.adaptive.cohort import (
     DriftReport,
     InDistribution,
 )
+from src.bms.adaptive.store import (
+    Decision,
+    ModelStore,
+    ModelVersion,
+    StabilityError,
+)
 from src.bms.adaptive.validation import (
     CrossValidationResult,
     FoldResult,
@@ -34,6 +40,10 @@ __all__ = [
     "CohortSpec",
     "DriftReport",
     "InDistribution",
+    "Decision",
+    "ModelStore",
+    "ModelVersion",
+    "StabilityError",
     "CrossValidationResult",
     "FoldResult",
     "Validator",

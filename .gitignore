@@ -37,3 +37,6 @@ data/raw/nasa/cleaned_dataset/
 node_modules/
 mern/client/dist/
 
+
+# Adaptive calibration runtime store (versions + decision log are run artifacts)
+models/adaptive/
