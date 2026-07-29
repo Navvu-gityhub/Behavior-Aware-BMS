@@ -1,0 +1,9 @@
+feature,target,n,spearman_rho,p_value
+health_index,fade_rate_ah_per_cycle,33,-0.2688160581528023,0.13035899139763665
+risk_score,fade_rate_ah_per_cycle,33,-0.2688160581528023,0.13035899139763665
+avg_stress,fade_rate_ah_per_cycle,33,-0.1002673796791444,0.5787679823624802
+estimated_total_cycles,cycles_to_eol,24,-0.25300803127685473,0.2329312442342449
+avg_temp,fade_rate_ah_per_cycle,33,-0.2142379679144385,0.23122425592154808
+deep_discharge_duration,fade_rate_ah_per_cycle,33,-0.10561497326203209,0.5585759882590494
+fast_charge_duration,fade_rate_ah_per_cycle,33,,
+aggressive_discharge_count,fade_rate_ah_per_cycle,33,0.0164251104562121,0.9277128026351158

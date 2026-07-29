@@ -1,0 +1,5 @@
+spec,converged,random_effect_variance,n_warnings,warning_types,status
+battery_random_intercept_powell,True,7.955360852988408e-10,2,ConvergenceWarning,OK
+battery_random_intercept_nm,True,6.607738120926183e-10,2,ConvergenceWarning,OK
+battery_random_intercept_cg,False,0.017301314221713913,4,ConvergenceWarning,DID_NOT_CONVERGE
+battery_nested_in_cohort_variance_component,True,,49,ConvergenceWarning;RuntimeWarning;UserWarning,OK

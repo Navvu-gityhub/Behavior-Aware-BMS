@@ -1,0 +1,7 @@
+feature
+stress_rolling_mean
+stress_rolling_std
+temp_rolling_mean
+temp_rolling_max
+battery_age_factor
+cycle_stress_index

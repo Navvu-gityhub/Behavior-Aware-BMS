@@ -1,0 +1,13 @@
+,missing_percent
+timestamp,100.0
+soh,100.0
+soc,100.0
+cycle,50.0
+current_a,50.0
+voltage_v,50.0
+capacity_ah,50.0
+temperature_c,50.0
+power_w,50.0
+mode_guess,50.0
+source,0.0
+source_file,0.0

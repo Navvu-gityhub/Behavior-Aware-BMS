@@ -1,0 +1,13 @@
+score,term,feature,feature_min,feature_max,penalty_levels_possible,penalty_levels_observed,unreachable_penalty_levels,observed_penalty_min,observed_penalty_max,penalty_std,modal_band_share,status
+risk_score,stress,avg_stress,1.706618962432916,33.37758112094395,3,1,"20.0, 30.0",10.0,10.0,0.0,1.0,DEGENERATE
+risk_score,temperature,avg_temp,5.179876883390289,46.778762496951934,3,3,none,5.0,25.0,5.878818254475281,0.0947054436987323,ACTIVE
+risk_score,deep_discharge,deep_discharge_duration,77.0,3768.0,3,2,5.0,10.0,20.0,0.3343252595315466,0.9988814317673378,PARTIAL
+risk_score,fast_charge,fast_charge_duration,0.0,0.0,3,1,"8.0, 15.0",2.0,2.0,0.0,1.0,DEGENERATE
+risk_score,aggressive_discharge,aggressive_discharge_count,0.0,546.0,3,3,none,2.0,15.0,2.980353539898025,0.0003728560775540641,ACTIVE
+risk_score,soc_extremes,avg_soc,0.4314039392487859,68.78068690266025,2,2,none,0.0,10.0,2.3197561583303927,0.05704697986577181,ACTIVE
+health_index,stress,avg_stress,1.706618962432916,33.37758112094395,3,1,"20.0, 30.0",10.0,10.0,0.0,1.0,DEGENERATE
+health_index,temperature,avg_temp,5.179876883390289,46.778762496951934,3,3,none,5.0,25.0,5.878818254475281,0.0947054436987323,ACTIVE
+health_index,deep_discharge,deep_discharge_duration,77.0,3768.0,3,2,5.0,10.0,20.0,0.3343252595315466,0.9988814317673378,PARTIAL
+health_index,fast_charge,fast_charge_duration,0.0,0.0,3,1,"8.0, 15.0",2.0,2.0,0.0,1.0,DEGENERATE
+health_index,aggressive_discharge,aggressive_discharge_count,0.0,546.0,3,3,none,2.0,15.0,2.978243979721567,0.0003728560775540641,ACTIVE
+health_index,soc_extremes,avg_soc,0.4314039392487859,68.78068690266025,2,2,none,0.0,10.0,2.3197561583303927,0.05704697986577181,ACTIVE

@@ -1,0 +1,10 @@
+cohort,battery_ids,n_batteries_present,n_cycle_obs,trailing_avg_stress__pooled_rho,trailing_avg_stress__pooled_p,trailing_avg_stress__n_batteries_testable,trailing_avg_stress__n_positive_sign,trailing_avg_temp__pooled_rho,trailing_avg_temp__pooled_p,trailing_avg_temp__n_batteries_testable,trailing_avg_temp__n_positive_sign,trailing_deep_discharge_duration__pooled_rho,trailing_deep_discharge_duration__pooled_p,trailing_deep_discharge_duration__n_batteries_testable,trailing_deep_discharge_duration__n_positive_sign,trailing_aggressive_discharge_count__pooled_rho,trailing_aggressive_discharge_count__pooled_p,trailing_aggressive_discharge_count__n_batteries_testable,trailing_aggressive_discharge_count__n_positive_sign
+RT_2A_CC_variedcutoff,"B0005,B0006,B0007,B0018",4,628,0.203,0.0,4,3,-0.024,0.5499,4,1,-0.1,0.0125,4,1,0.226,0.0,4,4
+RT_SQWAVE_4A_variedcutoff,"B0025,B0026,B0027,B0028",4,104,-0.037,0.7099,4,1,-0.047,0.6334,4,2,-0.041,0.676,4,2,-0.108,0.277,4,1
+ELEV43C_4A_CC_variedcutoff,"B0029,B0030,B0031,B0032",4,152,0.056,0.4926,4,2,0.122,0.134,4,3,-0.039,0.634,4,1,0.066,0.4206,4,3
+RT_CC_mixed_current,"B0033,B0034,B0036",3,585,0.133,0.0013,3,3,0.21,0.0,3,3,0.077,0.0613,3,1,0.115,0.0053,3,2
+MIXED_24_44C_multiload,"B0038,B0039,B0040",3,135,-0.11,0.2049,3,1,0.03,0.7294,3,2,-0.337,0.0001,3,0,0.095,0.2743,3,2
+COLD4C_multiload,"B0041,B0042,B0043,B0044",4,392,-0.363,0.0,4,0,0.216,0.0,4,4,-0.29,0.0,4,0,-0.371,0.0,4,0
+COLD4C_1A,"B0045,B0046,B0047,B0048",4,269,0.023,0.711,4,4,0.077,0.2061,4,4,-0.003,0.9618,4,3,,,0,0
+COLD4C_2A_flagged,"B0049,B0050,B0051,B0052",4,64,0.133,0.2937,3,3,0.206,0.1023,3,3,-0.063,0.6191,3,1,0.098,0.4418,2,2
+COLD4C_2A,"B0053,B0054,B0055,B0056",4,353,-0.002,0.9654,4,0,0.037,0.4897,4,2,0.064,0.2324,4,3,0.014,0.7928,3,2

@@ -1,0 +1,6 @@
+-r requirements.txt
+pytest>=8.0.0
+httpx>=0.27.0
+# Optional: CAN/DBC vehicle integration (src/bms/io/load_can_dbc.py, tests/test_can_dbc.py)
+# Only needed if you're working with real vehicle CAN data or running those tests.
+cantools>=4.4.0

@@ -1,0 +1,12 @@
+{
+  "task_a_v1_spearman": -0.2688160581528023,
+  "task_a_v1_significant": false,
+  "task_a_v2_spearman_lobo_refit": 0.8412433155080213,
+  "task_a_v2_significant_lobo_refit": true,
+  "task_a_v2_spearman_loco_refit": -0.29512032085561496,
+  "task_a_v2_significant_loco_refit": false,
+  "task_b_v2_generalises_out_of_sample": false,
+  "task_b_lobo_pct_beating_global_mean": 0.7272727272727273,
+  "task_b_loco_pct_beating_global_mean": 0.1111111111111111,
+  "decision": "CONDITIONAL: v2 becomes the recommended ranking signal ONLY when the battery's operating protocol is represented in training data (LOBO-refit rho=0.841, p<0.001). It must NOT be used for an unseen protocol, where its ranking collapses to rho=-0.295 \u2014 statistically indistinguishable from noise and pointing the wrong way. v1 REMAINS the pipeline default because it needs no cohort label, but v1's own ranking is itself non-significant and negative (rho=-0.269), so it is retained as a transparent threshold-alerting heuristic and must not be presented as a validated fade ranking."
+}
