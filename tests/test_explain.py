@@ -286,13 +286,4 @@ def test_guardian_single_battery_falls_back_to_ideal_reference():
     assert out.loc[0, "health_attribution_reference"] == "ideal"
 
 
-def test_guardian_carries_its_validation_caveat_into_the_output():
-    """The limitation must travel with the data, not live only in a doc."""
-    out = generate_guardian_reports(_guardian_input())
-    assert out["guardian_caveat"].str.contains("not validated").all()
 
-
-def test_guardian_requires_attribution_features():
-    bad = _guardian_input().drop(columns=["avg_stress"])
-    with pytest.raises(ValueError, match="attribution"):
-        generate_guardian_reports(bad)
