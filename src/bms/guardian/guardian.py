@@ -236,13 +236,46 @@ def generate_guardian_reports(
 
         out["primary_causes"] = out["health_top_causes"]
         out["dominant_cause"] = out["health_dominant_cause"]
+        out["attribution_method"] = "exact_shapley"
     else:
-        # Fallback: use evidence-based cause naming when attribution features absent
+        # Fallback for callers holding only the legacy summary columns.
+        #
+        # This path uses `_primary_causes`, whose cut points (avg_temp > 35,
+        # fast_charge_duration > 50) appear nowhere else in the codebase and
+        # do not match the bands the scores are actually computed from. ADR
+        # 0003 documents why that is a correctness bug: it can name a cause
+        # that contributed nothing and omit the term that dominated.
+        #
+        # It is retained only for backward compatibility, and it is NOT
+        # silent. `attribution_method` marks every affected row, and
+        # `guardian_caveat` says so in plain language, so a downstream reader
+        # can never mistake a threshold guess for an exact decomposition.
         out["primary_causes"] = out.apply(_primary_causes, axis=1)
         out["dominant_cause"] = out["primary_causes"]
+        out["attribution_method"] = "threshold_fallback"
 
     out["evidence_confidence"] = out["primary_causes"].apply(_evidence_confidence)
     out["evidence_note"] = out["primary_causes"].apply(_evidence_note)
+
+    # The validation limitation travels with the data, not only in a document
+    # beside it. A CSV of these rows read on its own must still carry the
+    # caveat, because that is how these outputs actually get looked at.
+    _CAVEAT_EXACT = (
+        "Causes explain the rule-based score, which is not a validated predictor of "
+        "capacity fade (Spearman rho=-0.27, p=0.12, n=33 vs measured NASA fade). "
+        "Attribution is exact with respect to the score; the score does not explain "
+        "degradation physics. See docs/adr/0003-explainability-layer.md."
+    )
+    _CAVEAT_FALLBACK = (
+        "DEGRADED ATTRIBUTION: summary features were absent, so causes came from "
+        "legacy thresholds that do not match the score's own bands and may name a "
+        "cause contributing nothing. Not an exact decomposition. The underlying "
+        "score is also not a validated predictor of capacity fade. "
+        "See docs/adr/0003-explainability-layer.md."
+    )
+    out["guardian_caveat"] = out["attribution_method"].map(
+        {"exact_shapley": _CAVEAT_EXACT, "threshold_fallback": _CAVEAT_FALLBACK}
+    )
     out["guardian_status"] = out["battery_state"].map(_SEVERITY_MESSAGE).fillna("Unknown state")
     out["recommendation"] = out["battery_state"].map(_STATE_RECOMMENDATION).fillna(
         "No recommendation available"

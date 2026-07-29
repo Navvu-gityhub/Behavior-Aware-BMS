@@ -287,3 +287,46 @@ def test_guardian_single_battery_falls_back_to_ideal_reference():
 
 
 
+
+
+# ---------------------------------------------------------------------------
+# The limitation must travel with the data
+# ---------------------------------------------------------------------------
+
+def test_guardian_carries_its_validation_caveat_into_the_output():
+    """Every row must carry the caveat, because CSVs get read without the docs."""
+    out = generate_guardian_reports(_guardian_input())
+    assert "guardian_caveat" in out.columns
+    assert out["guardian_caveat"].notna().all()
+    assert out["guardian_caveat"].str.contains("not a validated predictor").all()
+
+
+def test_guardian_labels_the_attribution_method_it_actually_used():
+    """Exact decomposition and threshold guesswork must be distinguishable.
+
+    Restored after an earlier fix made the fallback silent. A downstream
+    reader given only this table has to be able to tell which path produced
+    the causes, since the fallback uses cut points that do not match the
+    score's own bands (ADR 0003).
+    """
+    out = generate_guardian_reports(_guardian_input())
+    assert (out["attribution_method"] == "exact_shapley").all()
+
+
+def test_guardian_marks_the_fallback_path_as_degraded():
+    """Missing summary features must degrade loudly, not silently.
+
+    The project's stated principle is explicit failure over silent
+    degradation. The legacy path is allowed to run for backward
+    compatibility, but it must announce itself in the data.
+    """
+    legacy = _guardian_input().drop(
+        columns=["avg_stress", "aggressive_discharge_count", "avg_soc"]
+    )
+    out = generate_guardian_reports(legacy)
+
+    assert (out["attribution_method"] == "threshold_fallback").all()
+    assert out["guardian_caveat"].str.contains("DEGRADED ATTRIBUTION").all()
+    # The fallback cannot produce a Shapley decomposition, so it must not
+    # emit columns that would imply one.
+    assert not [c for c in out.columns if c.startswith("health_shap_")]
