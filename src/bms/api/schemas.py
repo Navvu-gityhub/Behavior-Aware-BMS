@@ -53,8 +53,6 @@ class BatteryDetailOut(BaseModel):
     primary_causes: str
     recommendation: str
     guardian_report: str
-    evidence_confidence: str
-    evidence_note: str
     risk_level: str
     risk_score: float
     transitions: list[TransitionOut]

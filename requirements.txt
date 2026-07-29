@@ -1,6 +1,10 @@
 pandas>=2.0.0
 numpy>=1.24.0
 scikit-learn>=1.3.0
+# TreeSHAP for the attribution model in scripts/fit_shap_attribution_model.py.
+# NOT needed by the pipeline itself: the rule-score explainer in
+# src/bms/explain/attribution.py uses an exact closed form (see ADR 0003).
+shap>=0.44.0
 statsmodels>=0.14.0
 joblib>=1.3.0
 matplotlib>=3.7.0
@@ -10,4 +14,3 @@ PyYAML>=6.0.0
 fastapi>=0.110.0
 uvicorn>=0.29.0
 pydantic>=2.0.0
-cantools>=39.0.0

@@ -1,0 +1,6 @@
+rule_term,mapped_feature,rule_max_penalty_points,shap_mean_abs,shap_rank,rule_rank
+stress,avg_stress,30.0,0.00604795972376992,6,1
+temperature,avg_temp,25.0,0.009068615163619608,4,2
+deep_discharge,deep_discharge_duration,20.0,0.007954708665078601,5,3
+fast_charge,fast_charge_duration,15.0,0.0,12,4
+aggressive_discharge,aggressive_discharge_count,15.0,0.01675174273144035,1,4

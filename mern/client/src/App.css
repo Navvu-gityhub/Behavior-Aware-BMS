@@ -96,13 +96,6 @@ tbody tr.selected { background: var(--accent-dim); }
 .report-box { margin: 14px 18px; padding: 12px 14px; background: var(--panel-2); border-left: 2px solid var(--accent); border-radius: 4px; font-size: 13px; line-height: 1.6; color: var(--text); }
 .report-meta { margin: 0 18px 14px; font-size: 12px; color: var(--text-dim); line-height: 1.7; }
 .report-meta b { color: var(--text); }
-.evidence-row { margin: 0 18px 14px; display: flex; align-items: flex-start; gap: 8px; }
-.evidence-badge { flex-shrink: 0; padding: 2px 8px; border-radius: 20px; font-size: 10.5px; font-family: var(--mono); font-weight: 700; white-space: nowrap; margin-top: 1px; }
-.evidence-badge.VALIDATED { color: var(--normal); background: rgba(51,209,122,0.14); }
-.evidence-badge.HEURISTIC { color: var(--moderate); background: rgba(240,180,41,0.14); }
-.evidence-badge.MIXED { color: var(--high); background: rgba(242,130,60,0.14); }
-.evidence-badge.NA { color: var(--text-faint); background: var(--panel-2); }
-.evidence-text { font-size: 11.5px; color: var(--text-dim); line-height: 1.6; }
 
 .traces { padding: 4px 18px 6px; }
 .trace { margin-bottom: 4px; }

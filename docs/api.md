@@ -84,22 +84,8 @@ until at least one `/pipeline/simulate` call has been made.
 ### `GET /batteries/{battery_id}`
 
 Full detail for one battery: twin snapshot, Guardian's plain-language
-report, risk level/score, the complete transition history for that
-battery across all runs, and `evidence_confidence`/`evidence_note`. 404
-if the battery isn't in the store.
-
-`evidence_confidence` is one of `VALIDATED` / `HEURISTIC` / `MIXED` /
-`N/A` — whether the causes Guardian identified for this battery are
-backed by the calibration work in `docs/final_report.md` Section 4, or
-are still unconfirmed hand-picked thresholds. Only temperature exposure
-is currently `VALIDATED` (real, cohort-controlled signal, coefficient
-0.0038 Ah/°C — see `src/bms/guardian/guardian.py` for the exact citation).
-Current-based causes (fast charging, deep discharge) and health_index
-itself are `HEURISTIC` — Section 4 found the former doesn't transfer
-across conditions and the latter has no significant relationship with
-real fade rate at all. This doesn't change what Guardian detects or how
-severity is classified; it changes what the system says about its own
-certainty, which previously wasn't visible anywhere in the output.
+report, risk level/score, and the complete transition history for that
+battery across all runs. 404 if the battery isn't in the store.
 
 ### `GET /batteries/{battery_id}/timeline`
 

@@ -22,7 +22,7 @@ from src.bms.digital_twin import (
 
 def _fleet_and_guardian():
     raw = simulate_fleet(SimulationConfig(n_batteries=6, rows_per_battery=120, seed=7))
-    guardian = run_pipeline(raw)
+    guardian = run_pipeline(raw).guardian
     return raw, guardian
 
 

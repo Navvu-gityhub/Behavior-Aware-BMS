@@ -48,12 +48,6 @@ export function BatteryDetail({ detail, timeline }) {
         <br />
         <b>Recommendation:</b> {detail.recommendation}
       </div>
-      <div className="evidence-row">
-        <span className={`evidence-badge ${detail.evidence_confidence === 'N/A' ? 'NA' : detail.evidence_confidence}`}>
-          {detail.evidence_confidence}
-        </span>
-        <span className="evidence-text">{detail.evidence_note}</span>
-      </div>
 
       <div className="panel-title divider">Health Trace (by cycle)</div>
       <div className="traces">

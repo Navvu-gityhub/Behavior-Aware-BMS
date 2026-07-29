@@ -113,7 +113,7 @@ def run_simulated_pipeline(request: SimulateRequest) -> PipelineRunResponseOut:
             seed=request.seed,
         )
     )
-    guardian = run_pipeline(raw)
+    guardian = run_pipeline(raw).guardian
 
     from src.bms.preprocessing.schema import standardize_validate_bms_data
     from src.bms.features.behavior_features import compute_behavior_flags
@@ -163,8 +163,6 @@ def get_battery(battery_id: str) -> BatteryDetailOut:
         primary_causes=record.guardian_row["primary_causes"],
         recommendation=record.guardian_row["recommendation"],
         guardian_report=record.guardian_row["guardian_report"],
-        evidence_confidence=record.guardian_row["evidence_confidence"],
-        evidence_note=record.guardian_row["evidence_note"],
         risk_level=record.guardian_row["risk_level"],
         risk_score=record.guardian_row["risk_score"],
         transitions=[_transition_out(t) for t in record.transitions],

@@ -30,6 +30,8 @@ from typing import Optional
 import numpy as np
 import pandas as pd
 
+from src.bms.explain.attribution import ScoreTerm
+
 REQUIRED_ROW_COLUMNS = ("current_a", "temperature_c", "soc")
 REQUIRED_SUMMARY_COLUMNS = (
     "avg_stress",
@@ -116,6 +118,81 @@ class RiskThresholds:
     # 80-100 -> CRITICAL
 
 
+# ---------------------------------------------------------------------------
+# Term specification
+#
+# The battery-level risk score is a sum of six independent per-feature
+# penalties. Those penalties are defined ONCE, here, and consumed by two
+# callers: `compute_risk_assessment` (which sums them into the score) and
+# `explain.attribution` (which decomposes the score into them).
+#
+# Previously the arithmetic was inlined in `compute_risk_assessment` and
+# Guardian re-derived "causes" from a *separate* set of thresholds that did
+# not match it. Sharing one definition is what makes the explanation provably
+# consistent with the score; `tests/test_explain.py` asserts the Shapley
+# efficiency axiom against these terms, so editing a cut point here without
+# updating the scorer is a test failure rather than a silently wrong
+# dashboard.
+#
+# NOTE ON A PRESERVED INCONSISTENCY: these bands use `>=` while the
+# structurally identical bands in `health.health_index` use `>`. That
+# difference is real and predates this refactor. It only changes behaviour
+# for a battery sitting exactly on a cut point (e.g. avg_temp of exactly
+# 40.0). It is preserved rather than silently harmonised because changing it
+# would alter scores already reported in docs/calibration_report.md; it is
+# logged in docs/adr/0003-explainability-layer.md as a known defect with a
+# proposed fix, which is the honest handling of a discrepancy found during a
+# refactor whose stated purpose was not to change any score.
+# ---------------------------------------------------------------------------
+
+RISK_TERMS: tuple[ScoreTerm, ...] = (
+    ScoreTerm(
+        name="stress",
+        feature="avg_stress",
+        label="sustained high stress",
+        fn=lambda s: np.where(s >= 70, 30, np.where(s >= 50, 20, 10)),
+    ),
+    ScoreTerm(
+        name="temperature",
+        feature="avg_temp",
+        label="high temperature exposure",
+        fn=lambda s: np.where(s >= 40, 25, np.where(s >= 30, 15, 5)),
+    ),
+    ScoreTerm(
+        name="deep_discharge",
+        feature="deep_discharge_duration",
+        label="deep discharge events",
+        fn=lambda s: np.where(s >= 100, 20, np.where(s >= 20, 10, 5)),
+    ),
+    ScoreTerm(
+        name="fast_charge",
+        feature="fast_charge_duration",
+        label="frequent fast charging",
+        fn=lambda s: np.where(s >= 100, 15, np.where(s >= 20, 8, 2)),
+    ),
+    ScoreTerm(
+        name="aggressive_discharge",
+        feature="aggressive_discharge_count",
+        label="aggressive discharge",
+        fn=lambda s: np.where(s >= 500, 15, np.where(s >= 100, 8, 2)),
+    ),
+    ScoreTerm(
+        name="soc_extremes",
+        feature="avg_soc",
+        label="SOC held at extremes",
+        fn=lambda s: np.where((s > 80) | (s < 20), 10, 0),
+    ),
+)
+
+
+def risk_score_from_terms(battery_summary: pd.DataFrame) -> np.ndarray:
+    """Sum `RISK_TERMS` into the raw (unclipped) battery-level risk score."""
+    total = np.zeros(len(battery_summary), dtype=float)
+    for term in RISK_TERMS:
+        total += term.contribution(battery_summary[term.feature]).to_numpy(dtype=float)
+    return total
+
+
 def _risk_level(score: float, t: RiskThresholds) -> str:
     if score > t.high_max:
         return "CRITICAL"
@@ -181,14 +258,7 @@ def compute_risk_assessment(battery_summary: pd.DataFrame, thresholds: RiskThres
 
     out = battery_summary.copy()
 
-    score = np.zeros(len(out))
-    score += np.where(out["avg_stress"] >= 70, 30, np.where(out["avg_stress"] >= 50, 20, 10))
-    score += np.where(out["avg_temp"] >= 40, 25, np.where(out["avg_temp"] >= 30, 15, 5))
-    score += np.where(out["deep_discharge_duration"] >= 100, 20, np.where(out["deep_discharge_duration"] >= 20, 10, 5))
-    score += np.where(out["fast_charge_duration"] >= 100, 15, np.where(out["fast_charge_duration"] >= 20, 8, 2))
-    score += np.where(out["aggressive_discharge_count"] >= 500, 15, np.where(out["aggressive_discharge_count"] >= 100, 8, 2))
-    score += np.where((out["avg_soc"] > 80) | (out["avg_soc"] < 20), 10, 0)
-
+    score = risk_score_from_terms(out)
     out["risk_score"] = np.clip(score, 0, 100)
     out["risk_level"] = out["risk_score"].apply(lambda s: _risk_level(s, thresholds))
     out["risk_reason"] = out.apply(_risk_reason, axis=1)

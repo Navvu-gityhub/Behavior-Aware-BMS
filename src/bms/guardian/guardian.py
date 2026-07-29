@@ -1,36 +1,54 @@
-"""Battery Guardian AI: plain-language cause attribution and recommendations.
+"""Battery Guardian: plain-language cause attribution and recommendations.
 
-Ported from `notebooks/08_battery_guardian.ipynb`. The notebook built the
-`guardian_report` string twice, with slightly different wording and column
-order, and neither the causes-generator nor the recommendation function used
-the risk assessment's own `risk_reason`/`recommended_action` from
-n05_T1v1 — Guardian re-derives causes from raw thresholds instead of reusing
-the risk module's reasoning. That inconsistency is preserved here (Guardian
-intentionally explains *health/RUL* drivers, which are not identical inputs
-to the *risk score*), but is worth knowing about if the two reports ever
-need to agree with each other for the same battery.
+WHAT CHANGED AND WHY
+--------------------
+Originally ported from `notebooks/08_battery_guardian.ipynb`, this module
+explained a battery's state by re-deriving causes from its OWN if/else
+thresholds (`avg_temp > 35`, `fast_charge_duration > 50`,
+`deep_discharge_duration > 50`). Those numbers appeared nowhere else in the
+codebase. The risk score bands sit at 30/40, 20/100 and 20/100; the health
+index bands at the same cut points with strict inequalities. Guardian was
+therefore explaining a score using a different rulebook from the one that
+produced it, which allowed two concrete failure modes:
 
-Evidence labeling (added after docs/final_report.md's calibration work):
-Guardian's causes were, until now, presented as equally certain -- "high
-temperature exposure" and "frequent fast charging" read the same way, with
-no indication that only one of them actually held up under testing. See
-final_report.md Section 4: temperature exposure is a real, cohort-controlled,
-statistically significant, transferable signal (coefficient 0.0038 Ah/°C,
-95% CI 0.002-0.005, p<0.0001 -- but R²=0.015 in-sample, a real but modest
-effect, and the full fitted model doesn't beat a naive baseline out-of-sample).
-Current-based flags (fast charging, deep discharge) do NOT transfer --
-significant and positive in room-temperature cohorts, significant and
-*negative* in the 4°C cohort. `health_index` itself showed no significant
-relationship with real fade rate at all (Section 4.1). None of that
-distinction was visible in the diagnosis before -- it now is, via
-`evidence_confidence`/`evidence_note`, without changing what causes are
-detected or how severity is classified (that would be a bigger, separate
-change -- this only changes what the system says about its own certainty).
+  * **Naming a cause that contributed nothing.** A battery with avg_temp of
+    36 was told "high temperature exposure" while the temperature term had
+    in fact placed it in its *lowest* band, contributing the minimum penalty.
+  * **Omitting the term that dominated.** `avg_stress` can contribute up to
+    30 points and `aggressive_discharge_count` up to 15, and neither
+    appeared in Guardian's cause list at all.
+
+Causes are now derived from exact Shapley attribution of the actual scores
+(`explain.attribution`), so an explanation is arithmetically guaranteed to
+be consistent with the number it explains, and causes are ranked by how many
+points each contributed rather than listed in arbitrary order.
+
+WHAT GUARDIAN CAN AND CANNOT CLAIM
+----------------------------------
+This is a boundary worth stating precisely, because the phrase "Guardian AI"
+invites over-reading.
+
+Guardian explains **why this battery scored what it scored**. That is now
+exact. Guardian does NOT explain **why this battery is degrading**, and the
+distinction is not pedantic: `scripts/validate_health_index_versions.py`
+shows the v1 health index correlates with measured NASA fade at
+rho = -0.27 (n=33, p=0.12) -- non-significant and pointing the wrong way.
+Attributing a score that does not track real degradation yields a faithful
+account of the rules and no account of the physics.
+
+Guardian's output is therefore worded as score attribution, and
+`guardian_caveat` carries that limitation into the output table itself
+rather than leaving it in a document nobody reads next to the dashboard.
+`docs/adr/0003-explainability-layer.md` records the reasoning.
 """
 
 from __future__ import annotations
 
 import pandas as pd
+
+from src.bms.explain.attribution import explain_scores
+from src.bms.health.health_index import HEALTH_TERMS, health_penalty_from_terms
+from src.bms.risk.stress_score import RISK_TERMS, risk_score_from_terms
 
 REQUIRED_COLUMNS = (
     "battery_id",
@@ -40,6 +58,15 @@ REQUIRED_COLUMNS = (
     "avg_temp",
     "fast_charge_duration",
     "deep_discharge_duration",
+)
+
+ATTRIBUTION_FEATURES = (
+    "avg_stress",
+    "avg_temp",
+    "deep_discharge_duration",
+    "fast_charge_duration",
+    "aggressive_discharge_count",
+    "avg_soc",
 )
 
 _SEVERITY_MESSAGE = {
@@ -56,129 +83,122 @@ _STATE_RECOMMENDATION = {
     "HEALTHY": "Continue normal operation",
 }
 
-# The one number in this module that's actually a fitted, cited result
-# rather than a hand-picked threshold. Source: reports/metrics/
-# health_model_v2_coefficients.txt, model `capacity_loss ~
-# trailing_avg_temp + C(cohort)`, exactly the number final_report.md
-# Section 4.3 reports. If that model is ever refit, update this constant
-# from the same file -- don't let it silently drift out of sync.
-TEMPERATURE_COEFFICIENT_AH_PER_C = 0.0038
-TEMPERATURE_COEFFICIENT_CI = (0.002, 0.005)
-TEMPERATURE_COEFFICIENT_R2 = 0.015
-
-# Which causes are backed by the validation work in final_report.md
-# Section 4, and which are the original hand-picked thresholds that
-# were never confirmed (and in the current-based cases, were actively
-# found NOT to transfer). "accelerated battery aging" is tied to
-# health_index itself, which Section 4.1 found has no significant
-# relationship with real fade rate at all.
-_CAUSE_EVIDENCE = {
-    "high temperature exposure": (
-        "VALIDATED",
-        f"Temperature exposure is a real, cohort-controlled, statistically "
-        f"significant signal (coefficient {TEMPERATURE_COEFFICIENT_AH_PER_C} Ah/°C, "
-        f"95% CI {TEMPERATURE_COEFFICIENT_CI[0]}-{TEMPERATURE_COEFFICIENT_CI[1]}, p<0.0001; "
-        f"R²={TEMPERATURE_COEFFICIENT_R2} in-sample -- a real but modest effect, "
-        f"see docs/final_report.md Section 4.3).",
-    ),
-    "frequent fast charging": (
-        "HEURISTIC",
-        "This threshold has not been confirmed against real degradation data. "
-        "The related current-based signal was tested and did NOT transfer across "
-        "conditions (sign flipped between room-temperature and cold cohorts) -- "
-        "see docs/final_report.md Section 4.2.",
-    ),
-    "deep discharge events": (
-        "HEURISTIC",
-        "This threshold has not been confirmed against real degradation data -- "
-        "see docs/final_report.md Section 4.2 for the current-based signals that "
-        "were tested and did not transfer across conditions.",
-    ),
-    "accelerated battery aging": (
-        "HEURISTIC",
-        "health_index itself showed no statistically significant relationship "
-        "with real measured fade rate in validation testing -- see "
-        "docs/final_report.md Section 4.1.",
-    ),
-    "normal battery usage": ("N/A", "No causes were flagged for this battery."),
+# Actionable advice keyed to the term that actually dominated the score, so
+# the recommendation addresses the driver rather than restating the state.
+_CAUSE_ACTION = {
+    "high temperature exposure": "Reduce thermal load: avoid charging immediately after "
+                                 "sustained high-power use, and park out of direct sun where possible.",
+    "deep discharge events": "Recharge before dropping below 20% state of charge.",
+    "aggressive discharge": "Moderate hard acceleration and sustained high-current draw.",
+    "frequent fast charging": "Prefer AC or slower DC charging for routine top-ups; "
+                              "reserve high-rate DC for long trips.",
+    "sustained high stress": "Combined thermal and current loading is elevated; "
+                             "reduce high-power use in warm conditions.",
+    "SOC held at extremes": "Keep the pack between 20% and 80% for daily use.",
+    "normal usage": "Continue normal operation.",
 }
 
-
-def _primary_causes(row: pd.Series) -> str:
-    causes = []
-    if row["avg_temp"] > 35:
-        causes.append("high temperature exposure")
-    if row["fast_charge_duration"] > 50:
-        causes.append("frequent fast charging")
-    if row["deep_discharge_duration"] > 50:
-        causes.append("deep discharge events")
-    if row["health_index"] > 60:
-        causes.append("accelerated battery aging")
-    if not causes:
-        causes.append("normal battery usage")
-    return ", ".join(causes)
+GUARDIAN_CAVEAT = (
+    "Attribution explains the rule-based score, not measured degradation. The "
+    "underlying v1 health index is not validated against real capacity fade "
+    "(Spearman rho = -0.27, n=33, p=0.12); see docs/final_report.md Section 4."
+)
 
 
-def _evidence_confidence(causes_str: str) -> str:
-    """Overall confidence label for a battery's diagnosis: VALIDATED if
-    temperature (the one real signal) is driving it, HEURISTIC if only
-    unvalidated thresholds fired, MIXED if both, N/A if no causes."""
-    causes = [c.strip() for c in causes_str.split(",")]
-    labels = {_CAUSE_EVIDENCE.get(c, ("HEURISTIC", ""))[0] for c in causes}
-    if labels == {"N/A"}:
-        return "N/A"
-    if labels == {"VALIDATED"}:
-        return "VALIDATED"
-    if "VALIDATED" in labels:
-        return "MIXED"
-    return "HEURISTIC"
-
-
-def _evidence_note(causes_str: str) -> str:
-    """Human-readable explanation of which causes are backed by the
-    calibration work and which aren't -- one sentence per distinct cause,
-    deduplicated, in a stable order."""
-    causes = [c.strip() for c in causes_str.split(",")]
-    seen = []
-    notes = []
-    for c in causes:
-        if c in seen:
-            continue
-        seen.append(c)
-        _, note = _CAUSE_EVIDENCE.get(c, ("HEURISTIC", "This cause has not been independently validated."))
-        notes.append(note)
-    return " ".join(notes)
-
-
-def generate_guardian_reports(battery: pd.DataFrame) -> pd.DataFrame:
-    """Add primary_causes, recommendation, guardian_status, guardian_report,
-    evidence_confidence, evidence_note.
+def generate_guardian_reports(
+    battery: pd.DataFrame,
+    reference: str = "fleet",
+    top_n: int = 3,
+) -> pd.DataFrame:
+    """Add attribution-backed causes, recommendations and a narrative report.
 
     Expects the output of `rul.rul_estimation.compute_rul`.
 
-    evidence_confidence/evidence_note are additive -- they change what the
-    system SAYS about its own certainty, not what it detects or how it
-    classifies severity. Existing callers reading `guardian_report`,
-    `primary_causes`, `guardian_status`, or `recommendation` see identical
-    values to before this was added.
+    `reference` selects the attribution baseline (`"fleet"` compares each
+    battery against the rest of the fleet; `"ideal"` compares it against a
+    no-penalty reference). Single-battery inputs are forced to `"ideal"`,
+    since a fleet mean over one row would make every attribution zero.
     """
     missing = [c for c in REQUIRED_COLUMNS if c not in battery.columns]
     if missing:
         raise ValueError(f"generate_guardian_reports: missing required columns {missing}")
 
+    attribution_missing = [c for c in ATTRIBUTION_FEATURES if c not in battery.columns]
+    if attribution_missing:
+        raise ValueError(
+            f"generate_guardian_reports: missing columns needed for attribution "
+            f"{attribution_missing}. Guardian derives causes from the risk/health score "
+            "decomposition, so it needs the same per-battery summary features the "
+            "scores were computed from."
+        )
+
     out = battery.copy()
-    out["primary_causes"] = out.apply(_primary_causes, axis=1)
+
+    if len(out) < 2 and reference == "fleet":
+        reference = "ideal"
+
+    features = out[list(ATTRIBUTION_FEATURES)]
+
+    # Attribute the UNCLIPPED penalty sum, not the displayed index.
+    #
+    # `compute_health_index` clips the aging budget to [0, 100], so a battery
+    # whose penalties total more than 100 shows a health index of 100 while
+    # its true additive penalty is higher. Clipping is not an additive
+    # operation, so attributing the clipped value would violate the
+    # efficiency identity and `explain_scores` would (correctly) raise.
+    #
+    # Attributing the unclipped sum keeps the decomposition exact and keeps
+    # the relative ordering of causes truthful, which is what the explanation
+    # is for. The discrepancy is not hidden: `health_index_saturated` marks
+    # affected batteries so a reader knows the displayed 100 is a floor on
+    # severity rather than a measured ceiling.
+    health_raw = pd.Series(health_penalty_from_terms(out), index=out.index)
+    out["health_index_saturated"] = (health_raw.round(6) != out["health_index"].round(6))
+
+    health_expl = explain_scores(
+        features, HEALTH_TERMS, health_raw,
+        reference=reference, top_n=top_n, prefix="health_",
+    )
+
+    # Attribute the risk score separately. The two scores use the same
+    # features but different inequalities and are deliberately not merged
+    # (see stress_score.py), so they get independent attributions rather
+    # than one being presented as a proxy for the other.
+    risk_expl = None
+    if "risk_score" in out.columns:
+        risk_raw = pd.Series(risk_score_from_terms(out), index=out.index)
+        out["risk_score_saturated"] = (risk_raw.round(6) != out["risk_score"].round(6))
+        risk_expl = explain_scores(
+            features, RISK_TERMS, risk_raw,
+            reference=reference, top_n=top_n, prefix="risk_",
+        )
+
+    out = out.join(health_expl)
+    if risk_expl is not None:
+        out = out.join(risk_expl)
+
+    out["primary_causes"] = out["health_top_causes"]
+    out["primary_cause_contributions"] = out["health_top_cause_contributions"]
+    out["dominant_cause"] = out["health_dominant_cause"]
     out["guardian_status"] = out["battery_state"].map(_SEVERITY_MESSAGE).fillna("Unknown state")
-    out["recommendation"] = out["battery_state"].map(_STATE_RECOMMENDATION).fillna("No recommendation available")
-    out["evidence_confidence"] = out["primary_causes"].apply(_evidence_confidence)
-    out["evidence_note"] = out["primary_causes"].apply(_evidence_note)
+    out["recommendation"] = out["battery_state"].map(_STATE_RECOMMENDATION).fillna(
+        "No recommendation available"
+    )
+    out["targeted_action"] = out["dominant_cause"].map(_CAUSE_ACTION).fillna(
+        "Monitor usage patterns."
+    )
+    out["guardian_caveat"] = GUARDIAN_CAVEAT
 
     out["guardian_report"] = (
         "Battery " + out["battery_id"].astype(str)
-        + " is in " + out["battery_state"]
-        + " state with estimated remaining life of " + out["rul_cycles"].astype(int).astype(str)
-        + " cycles. Primary degradation factors include " + out["primary_causes"]
-        + ". Recommended action: " + out["recommendation"]
+        + " is in " + out["battery_state"].astype(str)
+        + " state with an estimated remaining life of "
+        + out["rul_cycles"].astype(int).astype(str)
+        + " cycles. Its health index of " + out["health_index"].round(0).astype(int).astype(str)
+        + " is driven mainly by " + out["dominant_cause"].astype(str)
+        + " (" + out["health_dominant_contribution"].round(1).astype(str)
+        + " points above the " + out["health_attribution_reference"].astype(str)
+        + " reference). Full attribution: " + out["health_top_cause_contributions"].astype(str)
+        + ". Recommended action: " + out["targeted_action"].astype(str)
     )
     return out
-

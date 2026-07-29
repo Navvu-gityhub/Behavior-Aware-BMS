@@ -1,17 +1,5 @@
 # Behavior-Aware EV Battery Health Monitoring and Usage Optimization System
 
-**For reviewers skimming this in 30 seconds:** this is a full-stack
-project — a tested Python data pipeline, a real research investigation
-against NASA's public battery dataset, a REST API + digital twin, two
-working frontends (vanilla JS and React/Node), a real-vehicle CAN bus
-adapter verified against an independent published source, and CI running
-36 automated tests across all of it. The research half is reported
-honestly rather than oversold: one real signal (battery temperature) was
-found and validated; several plausible modeling approaches were tried
-against it and diagnosed, not just declared successful. Real bugs were
-found and fixed along the way (documented, with tests added), rather
-than hidden. Full writeup: `docs/final_report.md`.
-
 > **A software intelligence layer for EV Battery Management Systems.**
 > Converts BMS telemetry into degradation risk insights, battery health estimates,
 > remaining useful life predictions, and actionable user recommendations —
@@ -191,6 +179,83 @@ Open `http://localhost:5173`.
 
 ---
 
+---
+
+## What is validated, and what is not
+
+This table is the honest summary. `docs/final_report.md` has the derivations;
+`docs/adr/` records the decisions that follow from them.
+
+| Claim | Evidence | Verdict |
+|---|---|---|
+| Guardian's attribution matches the score it explains | Shapley efficiency axiom, asserted on every call | **Exact** |
+| Trailing temperature relates to measured capacity fade | rho 0.21–0.22, p < 0.0001, correct sign in 7/7 cells across independent cohorts | **Supported** |
+| Fitted v2 ranks an unseen cell within a **known** protocol | Spearman rho = 0.841, p < 0.001 (LOBO-refit, n=33) | **Supported** |
+| Fitted v2 ranks a cell from an **unseen** protocol | rho = −0.295, p = 0.10 (LOCO-refit) | **Refuted** |
+| v1 health index ranks batteries by real fade | rho = −0.269, p = 0.124, 6 distinct values across 33 cells | **Not supported** |
+| Rule weights reflect what drives fade | 61% of the score is constant across the fleet; rule-vs-SHAP rank correlation −0.103 | **Not supported** |
+| Fast-charge penalty is calibrated | `fast_charge_duration` is identically zero in all 2,682 observations | **Unvalidatable on this data** |
+| Cross-dataset (NASA → CALCE) generalisation | Not run — supplied CALCE data is single-cycle, no fade target (ADR 0001) | **Not tested** |
+| SHAP importance reflects degradation drivers | Model fails its gate: LOBO R² = −0.096, LOCO R² = −1.61 | **Inadmissible** |
+
+**The short version:** the pipeline's engineering is sound and its
+explanations are exact with respect to the scores they decompose. The scores
+themselves are not validated predictors of capacity fade, and the project says
+so in the report, in the module docstrings, and on the dashboard's own front
+page. The main contribution is a rigorously diagnosed account of *why* they
+fail, with a specific, costed path to fixing it — not a working predictor.
+
+### The three findings worth knowing
+
+1. **Most of the score is a constant.** Several hand-chosen thresholds sit
+   outside the range real data occupies — `avg_stress` maxes at 33 against
+   bands at 50/70, and `fast_charge_duration` is always zero. 61% of the mean
+   risk score is identical for every battery. This explains mechanically why
+   earlier calibration found no correlation: a constant cannot correlate with
+   anything. The behavioural premise was never actually tested.
+   → `python scripts/audit_threshold_reachability.py`
+
+2. **The fitted model memorises protocols, it does not learn physics.**
+   Ranking ability of rho = 0.84 within a known protocol collapses to −0.30
+   on an unseen one. It lives in the fitted per-cohort intercepts, not the
+   temperature coefficient. Leave-one-battery-out could never have shown this,
+   because it always leaves the held-out cell's cohort siblings in training.
+   → `python scripts/validate_health_index_versions.py`
+
+3. **SHAP is gated on out-of-sample skill, and the gate failed.** SHAP
+   attributes a model's predictions to its inputs and says nothing about
+   whether those predictions are any good. Run on a model with no
+   generalisation, it produces a confident-looking ranking of how the model
+   fit noise. The gate is computed, not assumed, and the ranking is published
+   with an explicit bar on citing it as evidence.
+   → `python scripts/fit_shap_attribution_model.py`
+
+---
+
+## The BEACON dashboard
+
+`python main.py` writes a self-contained `dashboard.html` — no server, no
+external requests, opens from the filesystem.
+
+It renders **only values the pipeline computes.** The visual design was
+mocked up with placeholder readings (state of health 92.4%, internal
+resistance 24.6 mΩ, "up 1.3% vs last week"); several of those are quantities
+this pipeline cannot produce, and they render as an explicit unavailable
+state rather than a plausible substitute. State of health in particular is
+computed only from measured per-cycle capacity and is **never** derived from
+the aging budget, which is a heuristic severity score on an unrelated scale.
+
+A simulated run carries a banner saying so. The evidence panel puts
+rho = −0.27 on the same page as the headline number it qualifies. See
+ADR 0004 for the reasoning and `tests/test_beacon_dashboard.py` for the
+guarantees that are actually enforced.
+
+```bash
+python main.py                                     # simulated fleet
+python main.py --data path/to.csv --source measured --dataset-label "NASA cleaned"
+```
+
+
 ## Project Structure
 
 ```
@@ -205,10 +270,7 @@ Behavior-Aware-BMS-main/
 │   ├── io/
 │   │   ├── loader_common.py         # Shared column normalization helpers
 │   │   ├── load_nasa.py             # NASA dataset loader
-│   │   ├── load_calce.py            # CALCE dataset loader
-│   │   ├── load_can_dbc.py          # Real-vehicle CAN/DBC adapter (see docs/can_dbc_adapter.md)
-│   │   ├── can_vehicle_registry.py  # Multi-vehicle registry: auto-identify + decode by DBC
-│   │   └── dbc_examples/            # Bundled, real, sourced DBC example (see SOURCE.md)
+│   │   └── load_calce.py            # CALCE dataset loader
 │   ├── preprocessing/
 │   │   └── schema.py                # Unified BMS schema, aliases, validation
 │   ├── features/
@@ -219,8 +281,10 @@ Behavior-Aware-BMS-main/
 │   │   └── health_index.py          # Battery Health Index via aging-budget model
 │   ├── rul/
 │   │   └── rul_estimation.py        # RUL via Equivalent Aging Factor
+│   ├── explain/
+│   │   └── attribution.py           # Exact closed-form Shapley attribution for the additive rule scores (see ADR 0003)
 │   ├── guardian/
-│   │   └── guardian.py              # Battery Guardian AI reports
+│   │   └── guardian.py              # Cause attribution + recommendations, derived from the score decomposition
 │   ├── digital_twin/
 │   │   └── twin.py                  # Twin state, transitions, health timeline (see docs/digital_twin.md)
 │   ├── api/
@@ -228,7 +292,9 @@ Behavior-Aware-BMS-main/
 │   │   ├── store.py                 # In-memory fleet store, non-persistent
 │   │   └── schemas.py               # Pydantic request/response models
 │   └── dashboard/
-│       ├── dashboard.py             # Static, no-server HTML dashboard (used by main.py)
+│       ├── beacon.py                # BEACON dashboard renderer (used by main.py)
+│       ├── beacon_data.py           # Pipeline-output -> display-value mapping, unit-tested (see ADR 0004)
+│       ├── dashboard_legacy.py      # Previous matplotlib/base64 dashboard, kept for reference
 │       └── live_dashboard.html      # Live dashboard served at API's / (see docs/api.md)
 │
 ├── configs/
@@ -244,15 +310,20 @@ Behavior-Aware-BMS-main/
 ├── reports/
 │   └── metrics/                     # Distribution CSV reports, generated by main.py
 ├── scripts/                         # CLI utility scripts
-├── tests/
+│   ├── audit_threshold_reachability.py     # Are the rule cut points reachable in real data? (Section 4.7)
+│   ├── validate_health_index_versions.py   # v1 vs v2, LOBO + LOCO, version decision (Section 4.8)
+│   ├── fit_shap_attribution_model.py       # SHAP vs measured fade, gated on skill (Section 4.9)
+│   └── ...                                 # calibration, loaders, figure generation
+├── tests/                           # 57 tests
 │   ├── smoke_day3.py                # Day 3 data ingestion smoke test
 │   ├── test_schema.py               # Unit tests for the unified schema
 │   ├── test_pipeline.py             # Full pipeline end-to-end tests
+│   ├── test_explain.py              # Shapley exactness, drift detection, Guardian consistency
+│   ├── test_beacon_dashboard.py     # Nothing-is-invented + provenance guarantees
 │   ├── test_digital_twin.py         # Digital twin state/transition/timeline tests
-│   ├── test_api.py                  # FastAPI endpoint integration tests
-│   ├── test_can_dbc.py              # CAN/DBC adapter tests, verified against a real published source
-│   └── test_can_vehicle_registry.py # Multi-vehicle registry: auto-identify/disambiguate tests
+│   └── test_api.py                  # FastAPI endpoint integration tests
 └── docs/                            # Documentation
+    └── adr/                         # Architecture decision records (0001-0004)
 
 mern/                                 # Optional MERN layer -- see docs/mern.md
 ├── server/                          # Express gateway (proxies to the Python API, no pipeline logic)
@@ -391,15 +462,10 @@ PyYAML>=6.0.0
 - Battery Guardian AI recommendations
 - Interactive HTML dashboard
 - Digital twin state/transitions and a REST API (`src/bms/digital_twin/`, `src/bms/api/` — see `docs/digital_twin.md`, `docs/api.md`)
-- A real-vehicle CAN/DBC decoding adapter, verified against a published external source, generalized into a multi-vehicle registry (`src/bms/io/load_can_dbc.py`, `can_vehicle_registry.py` — see `docs/can_dbc_adapter.md` for exactly what is and isn't covered)
 
 ### Excluded (V1)
 - Embedded firmware / real BMS hardware
-- Broad multi-OEM CAN/OBD coverage, and live CAN bus reading — a real,
-  tested CAN/DBC decoding adapter exists (`src/bms/io/load_can_dbc.py`,
-  `docs/can_dbc_adapter.md`) verified against real published vehicle
-  protocol data, but it covers one message from one vehicle and decodes
-  frames handed to it, not a physical bus
+- CAN/OBD integration
 - Real-time vehicle deployment
 - Cloud deployment / persistent database (the API's fleet store is in-memory only)
 - Cell balancing circuits

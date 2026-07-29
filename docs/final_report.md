@@ -31,7 +31,22 @@ statistically significant relationship; and a fitted regression model
 built on that signal, while statistically valid in-sample, performs no
 better than a naive per-battery-average baseline out-of-sample.
 Lengthening the prediction horizon (Section 4.5) improves out-of-sample
-*rank* correlation but not R² against that baseline. That pointed at the
+*rank* correlation but not R² against that baseline. Three further results
+were added in the final pass. A threshold-reachability audit (Section 4.7)
+found that 61% of the mean risk score comes from terms that are constant
+across the entire calibration set, because their hand-chosen cut points sit
+outside the range real data occupies — which explains mechanically why the
+scores showed no resolution, and reframes the earlier null result as a
+calibration-design fault rather than a failure of the behavioural premise.
+Leave-one-cohort-out validation (Section 4.8), substituted for a
+cross-dataset test that the available CALCE data makes impossible, showed
+that the fitted model's apparent battery-ranking ability (rho = 0.84) is
+carried almost entirely by its per-cohort intercepts and collapses to
+rho = −0.30 on an unseen protocol. An explainability layer (Section 4.9)
+replaced the previous threshold-based cause attribution with exact
+closed-form Shapley values over the score terms, and a SHAP analysis against
+measured fade was gated on out-of-sample skill, which it failed — so its
+importance ranking is reported as describing model fitting, not physics. That pointed at the
 fixed cohort intercept as the likely cause, but a mixed-effects model
 built to test that directly (Section 4.6) is not identifiable with only
 3-4 batteries per cohort — closing that modeling line on this dataset and
@@ -366,6 +381,153 @@ concrete acceptance criterion for dataset selection rather than "more data
 would help," which is worth having when evaluating Stanford/Severson or
 CALCE CS2/CX2 as the next dataset.
 
+### 4.7 Threshold reachability: most of the score is a constant (Level 4)
+
+Sections 4.1–4.3 established that the heuristic scores do not correlate with
+measured fade. They did not explain *why*. Extracting the score terms into
+shared, auditable specifications (Section 4.9) made that question answerable,
+and the answer is mechanical rather than conceptual.
+
+`scripts/audit_threshold_reachability.py` compares each term's hand-chosen cut
+points against the range its input feature actually occupies in the 2,682
+cycle-level NASA observations:
+
+| Term | Feature | Observed range | Bands at | Status |
+|---|---|---|---|---|
+| stress | `avg_stress` | 1.71 – 33.38 | 50, 70 | **DEGENERATE** |
+| fast charge | `fast_charge_duration` | 0.00 – 0.00 | 20, 100 | **DEGENERATE** |
+| deep discharge | `deep_discharge_duration` | 77 – 3,768 | 20, 100 | PARTIAL (99.9% in one band) |
+| temperature | `avg_temp` | 5.18 – 46.78 | 30, 40 | ACTIVE |
+| aggressive discharge | `aggressive_discharge_count` | 0 – 546 | 100, 500 | ACTIVE |
+| SOC extremes | `avg_soc` | 0.43 – 68.78 | <20, >80 | ACTIVE (low branch only) |
+
+Two terms never leave a single band, so they emit a constant. Decomposed per
+battery across the 33 calibration cells:
+
+| Term | Mean points | Std | Distinct values |
+|---|---|---|---|
+| stress | 10.0 | 0.0 | 1 |
+| deep discharge | 20.0 | 0.0 | 1 |
+| fast charge | 2.0 | 0.0 | 1 |
+| temperature | 8.6 | 7.4 | 3 |
+| aggressive discharge | 11.4 | 5.4 | 3 |
+| SOC extremes | 0.3 | 1.7 | 2 |
+
+**Of a mean risk score of 52.3 points, 32.0 points (61%) come from terms that
+are identical for every battery in the dataset**, and therefore carry zero
+discriminative information.
+
+Two consequences follow.
+
+First, this reframes Section 4.1. The scores did not fail to correlate with
+fade because the behavioural hypothesis was wrong. They failed because most of
+the score was a constant, and a constant cannot correlate with anything. Those
+are different diagnoses with different fixes: the first would call for
+abandoning the behavioural premise, the second calls for cut points placed
+against observed distributions rather than guessed.
+
+Second, `fast_charge_duration` is identically zero across all 2,682
+observations — NASA's protocols contain no charging event this pipeline's
+C-rate threshold classifies as fast. The 15-point fast-charge penalty is
+therefore not merely unvalidated but **unvalidatable** on this dataset. No
+amount of further analysis of NASA can constrain it. Stating that is more
+useful than reporting a null result that implies the question was tested.
+
+### 4.8 Leave-one-cohort-out: the fitted model's ranking is cohort memorisation
+
+A cross-dataset test (train NASA, test CALCE) is the standard next step and
+**cannot be run** — the supplied CALCE files are single-cycle baseline
+characterisations with no fade target (Section 4.4, ADR 0001). Leave-one-cohort-out
+(LOCO) across NASA's 9 experimental protocols was substituted. It is a weaker
+claim (same laboratory, chemistry and instrumentation) but a real distribution
+shift in ambient temperature, discharge current, load profile and cutoff voltage.
+
+It produced the most important result in this report.
+
+Ranking the 33 cells by measured `fade_rate_ah_per_cycle`, Spearman rho,
+permutation-tested with 5,000 resamples:
+
+| Candidate | rho | p | Distinct outputs |
+|---|---|---|---|
+| v1 rule-based health index | −0.269 | 0.124 | 6 of 33 |
+| v2 fitted OLS, **in-sample** | 0.870 | 0.0002 | 33 |
+| v2, **LOBO-refit** (unseen cell, known protocol) | **0.841** | 0.0002 | 33 |
+| v2, **LOCO-refit** (unseen protocol) | **−0.295** | 0.097 | 33 |
+
+The in-sample row is inadmissible and is shown only to make the gap visible:
+v2's shipped coefficients include a fitted intercept per cohort, estimated on
+these same cells, and fade rate varies strongly by cohort. Refitting inside
+each fold is what makes the other rows meaningful.
+
+Per-cycle regression, same folds:
+
+| Split | Median R² vs global mean | Folds beating baseline |
+|---|---|---|
+| LOBO | +0.008 | 73% |
+| LOCO | −0.167 | 11% |
+
+**The model's ranking ability lives almost entirely in its fitted cohort
+intercepts, not in its temperature coefficient.** Within a known protocol it
+ranks cells well; on an unseen protocol it is indistinguishable from noise and
+points the wrong way.
+
+LOBO alone could never have shown this, because LOBO always leaves the
+held-out cell's cohort siblings in training. This is a concrete instance of the
+generalisation gap the review literature names as a field-wide problem, found
+in our own model by running the harder split.
+
+It also sharpens Section 4.6's conclusion. That section closed the
+mixed-effects line because 3–4 batteries per cohort could not identify random
+effects. LOCO shows what that unidentifiability costs: the cohort term is
+carrying the predictive load, and there is not enough data to model it as
+anything but a fixed intercept fitted to the cohorts we happen to have.
+
+### 4.9 Explainability: exact attribution, and a gate on what SHAP may claim
+
+The Guardian module claimed to "explain causes" using if/else thresholds
+(`avg_temp > 35`, `fast_charge_duration > 50`) that **appear nowhere else in
+the codebase**. It was explaining a score using a different rulebook from the
+one that produced it, which allowed it to name causes contributing nothing and
+omit terms that dominated.
+
+**Exact Shapley attribution.** The rule scores are additive by construction,
+`f(x) = Σᵢ fᵢ(xᵢ)`. For an additive model the Shapley value has a closed form,
+`φᵢ = fᵢ(xᵢ) − E[fᵢ(Xᵢ)]`, because the marginal contribution of a feature is
+independent of the coalition it joins. This is exact rather than sampled, and
+— unlike KernelSHAP's interventional estimate — requires **no feature-independence
+assumption**, which matters because temperature, C-rate and SOC exposure are
+strongly correlated in this data. Term definitions are now shared between
+scorer and explainer, and the efficiency identity `Σφᵢ = f(x) − E[f(X)]` is
+asserted on every call, doubling as a drift test. The extraction was verified
+bit-identical on all 33 NASA batteries against the pre-refactor outputs.
+
+**SHAP against measured fade, and why its ranking is not evidence.** Attribution
+of the rules is circular: it restates what the rules assert and cannot say
+whether they weight the right things. A gradient-boosted model was fitted to
+measured capacity loss and attributed with TreeSHAP — the correct tool, since
+that model genuinely is non-additive. Leakage columns were excluded:
+`capacity_ah` (target is derived from it), `n_rows` (a file artifact), and
+`battery_age_factor`, which is `cycle / max(cycle for this battery)` and so
+leaks the cell's eventual lifetime into every early-cycle row.
+
+The model **fails its validation gate**: LOBO median R² = −0.096 (42% of folds
+beat baseline), LOCO median R² = −1.61 (11%). The script therefore reports its
+SHAP ranking as describing internal fitting behaviour only, not as evidence
+about degradation drivers.
+
+This gate is the methodological contribution. SHAP attributes a model's
+predictions to its inputs and says nothing about whether those predictions are
+any good. Run on a model without out-of-sample skill, it yields a
+confident-looking importance ranking that describes how the model fit noise —
+worse than no analysis, because it looks like evidence. The gate is computed,
+not chosen in advance, and the ranking is published rather than suppressed.
+
+Rank correlation between the rules' weighting and the model's importance
+ranking: **−0.103**. The defensible reading is not "the rules are wrong and
+SHAP is right", but that this dataset supports neither weighting — consistent
+with Section 4.7, where most of the rule score turns out to be constant.
+
+
 ## 5. Limitations
 
 - **Sample size.** 34 NASA batteries split across 9 protocol cohorts of
@@ -383,14 +545,43 @@ CALCE CS2/CX2 as the next dataset.
   data suggested a legitimate calendar-aging question (storage SOC/temp/
   duration vs. capacity loss) but the specific files available couldn't
   answer it.
-- **No fast-charge validation.** NASA's charge protocol never exceeds
-  ~0.75C, so the `fast_charge_flag` fix (C-rate-based) is dimensionally
-  correct but untested against any dataset that actually varies charge
-  rate.
+- **The fast-charge penalty is unvalidatable on this data, not merely
+  unvalidated.** `fast_charge_duration` is identically zero across all 2,682
+  cycle observations (Section 4.7): NASA's charge protocol never exceeds
+  ~0.75C, so no event in the dataset trips the C-rate threshold. The
+  15-point penalty the rules assign to it cannot be constrained by any
+  further analysis of NASA. This is a structural gap in the calibration
+  evidence, and it is the strongest single argument for acquiring a dataset
+  with charge-rate variation.
 - **The temperature-resistance interaction is unresolved, not disproven.**
   p=0.098 with n=2,682 autocorrelated cycle-observations (33 independent
   batteries) is underpowered for a subtle interaction effect; "not
   significant" here should not be read as "the hypothesis is wrong."
+- **Most of the rule-based score is a constant.** 61% of the mean risk score
+  comes from terms that take an identical value for every battery in the
+  calibration set (Section 4.7). The score has six distinct values across 33
+  cells. Any claim about what the score "measures" is a claim about the three
+  active terms, not the six nominal ones.
+- **The v1 health index ranks batteries slightly backwards.** Spearman
+  rho = −0.269 against measured fade (n=33, p=0.124). Non-significant, so this
+  is not evidence that it is systematically inverted — but it is emphatically
+  not evidence that it works, and it is now stated on the dashboard itself.
+- **v2's ranking ability does not survive a protocol change.** rho = 0.841
+  within a known protocol, −0.295 on an unseen one (Section 4.8). The signal
+  lives in fitted cohort intercepts. Any deployment outside the nine NASA
+  protocols is unsupported by this evidence.
+- **Attribution is exact with respect to the score, not to reality.** The
+  Shapley decomposition in Section 4.9 is provably consistent with the number
+  it explains. Since that number is not a validated fade predictor, the
+  explanation is a faithful account of the rules and not an account of
+  degradation physics.
+- **The SHAP importance ranking is not usable as evidence.** The model
+  underlying it fails its out-of-sample gate (Section 4.9). It is reported for
+  completeness and explicitly barred from supporting claims about degradation
+  drivers.
+- **Cross-dataset validation was not performed and could not be.** LOCO across
+  NASA protocols was substituted (ADR 0001). It rules out protocol-specific
+  overfitting; it does not rule out NASA-specific overfitting.
 - **Single dataset carries the entire quantitative case.** Every
   significant result in this report comes from NASA. Independent
   replication on a second cycling dataset (Stanford/Severson, or CALCE
@@ -517,6 +708,18 @@ python scripts/fit_mixed_effects_model.py
 
 # Regenerate this report's figures from the already-computed CSVs above
 python scripts/generate_report_figures.py
+
+# Level 4: threshold reachability audit (Section 4.7)
+python scripts/audit_threshold_reachability.py
+
+# Health index v1 vs v2, LOBO + LOCO, with the version decision (Section 4.8)
+python scripts/validate_health_index_versions.py
+
+# SHAP attribution against measured fade, with the skill gate (Section 4.9)
+python scripts/fit_shap_attribution_model.py
+
+# Explainability + dashboard test suites
+python -m pytest tests/test_explain.py tests/test_beacon_dashboard.py -v
 
 # Build the polished .docx version of this report (reports/final_report.docx)
 ./scripts/build_report_docx.sh
