@@ -79,6 +79,7 @@ class FoldResult:
     r2_vs_global_mean: float
     r2_vs_own_mean_oracle: float
     spearman_rho: float
+    r2_vs_confound_baseline: float = float("nan")
     error: str | None = None
 
     @property
@@ -107,6 +108,12 @@ class CrossValidationResult:
     @property
     def median_spearman(self) -> float:
         values = [f.spearman_rho for f in self.completed]
+        finite = [v for v in values if np.isfinite(v)]
+        return float(np.median(finite)) if finite else float("nan")
+
+    @property
+    def median_r2_vs_confound(self) -> float:
+        values = [f.r2_vs_confound_baseline for f in self.completed]
         finite = [v for v in values if np.isfinite(v)]
         return float(np.median(finite)) if finite else float("nan")
 
@@ -176,6 +183,7 @@ class Validator:
         data: pd.DataFrame,
         target: str,
         cohort_col: str = "cohort",
+        confound_fit: FitFn | None = None,
     ) -> None:
         for column in (target, cohort_col):
             if column not in data.columns:
@@ -185,6 +193,7 @@ class Validator:
         self.data = data
         self.target = target
         self.cohort_col = cohort_col
+        self.confound_fit = confound_fit
 
     def cross_validate(
         self,
@@ -234,6 +243,23 @@ class Validator:
             own_mean = np.full_like(y, float(y.mean()))
             rho = pd.Series(pred).corr(pd.Series(y), method="spearman")
 
+            # Compare against the confound baseline as well, refitted on the
+            # same fold. See the class docstring: beating a constant is a low
+            # bar when both features and target rise with cycle count.
+            confound_r2 = float("nan")
+            if self.confound_fit is not None:
+                try:
+                    confound_pred = np.asarray(
+                        self.confound_fit(train)(test), dtype=float
+                    )
+                    if confound_pred.shape == y.shape:
+                        confound_r2 = r2_against(y, pred, confound_pred)
+                except Exception:
+                    # A baseline that cannot be fitted is not the candidate's
+                    # fault; leave the metric undefined rather than failing
+                    # the fold or, worse, silently passing it.
+                    confound_r2 = float("nan")
+
             folds.append(FoldResult(
                 split=split,
                 held_out=str(group),
@@ -243,6 +269,7 @@ class Validator:
                 r2_vs_global_mean=r2_against(y, pred, global_mean),
                 r2_vs_own_mean_oracle=r2_against(y, pred, own_mean),
                 spearman_rho=float(rho) if rho is not None and np.isfinite(rho) else float("nan"),
+                r2_vs_confound_baseline=confound_r2,
             ))
 
         return CrossValidationResult(split=split, group_col=group_col, folds=folds)
@@ -335,6 +362,23 @@ class Validator:
                 f"{self.MIN_LOCO_FRACTION_BEATING:.0%}. Median skill carried by a "
                 f"minority of cohorts is not generalisation."
             )
+
+        # Beating a constant is a weak claim when the target and every feature
+        # both rise with cycle count. If a confound baseline was supplied, the
+        # candidate must beat that too, or its apparent skill is age.
+        for label, result in (("LOBO", lobo), ("LOCO", loco)):
+            confound_r2 = result.median_r2_vs_confound
+            if not np.isfinite(confound_r2):
+                continue
+            metrics[f"{label.lower()}_median_r2_vs_confound"] = confound_r2
+            if confound_r2 <= 0:
+                promote = False
+                reasons.append(
+                    f"{label} median R2 against the confound baseline is "
+                    f"{confound_r2:.4g}, not above 0. The candidate does not "
+                    f"improve on predicting the target from cycle count alone, "
+                    f"so its apparent skill is age rather than behaviour."
+                )
 
         # A large LOBO/LOCO gap is the signature of cohort memorisation even
         # when both clear their thresholds, so it is reported either way.

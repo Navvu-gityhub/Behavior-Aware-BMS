@@ -232,6 +232,64 @@ fail, with a specific, costed path to fixing it — not a working predictor.
 
 ---
 
+---
+
+## Adaptive calibration
+
+`src/bms/adaptive/` is a governed calibration system: it screens datasets,
+cross-validates candidate models, and promotes only what survives. **The gate
+is the product, not the model** — the default answer is REJECT. See ADR 0005.
+
+```bash
+python -m src.bms.adaptive screen                    # which datasets can answer the question
+python -m src.bms.adaptive calibrate --dataset nasa  # validate candidates, promote survivors
+python -m src.bms.adaptive status                    # active models and the decision log
+python -m src.bms.adaptive rollback --cohort GLOBAL  # revert, deleting nothing
+```
+
+Five components, each owning one decision and each able to refuse:
+
+| Module | Owns | Refuses when |
+|---|---|---|
+| `datasets.py` | Can this data answer the question? | No fade target, or a fade rate that cannot be estimated |
+| `cohort.py` | Have we seen these conditions? | Operating point outside every observed envelope |
+| `validation.py` | Does this candidate generalise? | Fails LOBO, LOCO, or the age baseline |
+| `store.py` | Is this fit stable enough to deploy? | Coefficient flips sign or moves >50% |
+| `calibrator.py` | Orchestration only | Delegates every judgement above |
+
+### Current state: nothing is promoted
+
+```
+temp_only        REJECTED  (LOBO R2=-0.0016, LOCO R2=-0.0012, vs-age R2=-0.0009)
+temp_and_stress  REJECTED  (LOBO R2=-0.0147, LOCO R2=-0.0168, vs-age R2=-0.0133)
+No candidate was promoted. No cohort has an active model.
+```
+
+That is the correct outcome on current evidence, and `score()` refuses rather
+than falling back to a rejected candidate or to the v1 rule-based index
+(rho = -0.269 against measured fade). The binding constraint is data: every
+verdict here is worth re-running on a second multi-cycle dataset.
+
+### The gate caught a false positive its author did not anticipate
+
+As first built, the system **promoted** a candidate it should not have.
+`temp_stress_soc` cleared the original gate with LOCO R2 = +0.0125 against a
+constant baseline. Investigating rather than accepting it showed `avg_soc` has
+a median within-cell correlation of **-0.73 with cycle index** — it is largely
+a proxy for how far through its life a cell is.
+
+Every behavioural feature in this dataset drifts with cycle count, because a
+degrading cell genuinely does run hotter and discharge deeper. So beating a
+constant is a weak claim: a model can clear it by learning "later cycle, more
+loss" and nothing else. Every candidate is now also scored against a baseline
+that predicts the target from cycle count alone. Against that, the same
+candidate scores **-0.0053** — all of its apparent skill was age.
+
+This is age confounding rather than clean leakage, so the fix is a harder
+baseline, not a smaller feature set: excluding every age-correlated feature
+would remove temperature, the one transferable signal this project found.
+
+
 ## The BEACON dashboard
 
 `python main.py` writes a self-contained `dashboard.html` — no server, no

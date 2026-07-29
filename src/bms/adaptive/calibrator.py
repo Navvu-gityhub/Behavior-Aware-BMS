@@ -117,8 +117,13 @@ class CalibrationRun:
             marker = "PROMOTED" if outcome.promoted else "REJECTED"
             lobo = outcome.lobo.median_r2
             loco = outcome.loco.median_r2 if outcome.loco else float("nan")
+            confound = (
+                outcome.loco.median_r2_vs_confound if outcome.loco else float("nan")
+            )
+            extra = "" if not np.isfinite(confound) else f", vs-age R2={confound:+.4f}"
             lines.append(
-                f"  {outcome.name}: {marker} (LOBO R2={lobo:+.4f}, LOCO R2={loco:+.4f})"
+                f"  {outcome.name}: {marker} "
+                f"(LOBO R2={lobo:+.4f}, LOCO R2={loco:+.4f}{extra})"
             )
             for reason in outcome.verdict.reasons:
                 lines.append(f"      - {reason}")
@@ -168,12 +173,20 @@ class AdaptiveCalibrator:
         target: str = "capacity_loss",
         cohort_col: str = "cohort",
         cell_col: str = "cell_id",
+        confound_col: str | None = "cycle",
     ) -> None:
         self.store = store
         self.datasets = datasets
         self.target = target
         self.cohort_col = cohort_col
         self.cell_col = cell_col
+        # Every behavioural feature in this dataset drifts with cycle count,
+        # because a degrading cell genuinely does run hotter and discharge
+        # deeper. That makes "beat a constant" a weak test: a model can clear
+        # it by learning age alone. The confound baseline predicts the target
+        # from cycle count and nothing else, so a candidate has to show it
+        # knows something age does not.
+        self.confound_col = confound_col
         self.cohorts = CohortRegistry()
 
     # -- calibration --------------------------------------------------------
@@ -207,7 +220,10 @@ class AdaptiveCalibrator:
 
         registered = self._learn_cohorts(data, source=dataset_name)
 
-        validator = Validator(data, target=self.target, cohort_col=self.cohort_col)
+        validator = Validator(
+            data, target=self.target, cohort_col=self.cohort_col,
+            confound_fit=self._confound_fit(data),
+        )
         outcomes = [
             self._evaluate(candidate, validator, data)
             for candidate in candidates
@@ -220,6 +236,20 @@ class AdaptiveCalibrator:
             outcomes=tuple(outcomes),
             cohorts_registered=tuple(registered),
         )
+
+    def _confound_fit(self, data: pd.DataFrame) -> FitFn | None:
+        """A predictor using only the confounding variable (cycle count)."""
+        column = self.confound_col
+        if column is None or column not in data.columns:
+            return None
+
+        def fit(train: pd.DataFrame):
+            slope, intercept = np.polyfit(
+                train[column].to_numpy(float), train[self.target].to_numpy(float), 1
+            )
+            return lambda test: intercept + slope * test[column].to_numpy(float)
+
+        return fit
 
     def _learn_cohorts(self, data: pd.DataFrame, source: str) -> list[str]:
         if self.cohort_col not in data.columns:

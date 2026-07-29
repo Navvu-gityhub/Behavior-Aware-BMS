@@ -307,3 +307,49 @@ def test_nothing_is_promoted_on_the_real_nasa_data(tmp_path):
     # Rejections are still recorded, which is the point of the log.
     decisions = list(calibrator.store.decisions("GLOBAL"))
     assert decisions == [] or all(d.outcome == "REJECT" for d in decisions)
+
+
+@pytest.mark.skipif(not NASA_TRAINING.exists(), reason="NASA training frame not present")
+def test_a_candidate_whose_skill_is_age_is_rejected(tmp_path):
+    """Beating a constant is a weak claim when everything rises with cycle count.
+
+    `avg_soc` has a median within-cell Spearman correlation of -0.73 with
+    cycle index (27 of 32 cells above 0.5 in magnitude), so it is largely a
+    proxy for how far through its life a cell is. Adding it produced a
+    candidate that cleared the original mean-baseline gate: LOCO R2 = +0.0125.
+
+    Against a baseline that predicts the target from cycle count alone, the
+    same candidate scores -0.0053. All of its apparent skill was age. This
+    test exists because that candidate was briefly promoted before the
+    confound baseline was added.
+    """
+    datasets = DatasetRegistry()
+    datasets.register(CallableDatasetLoader("nasa", lambda: pd.read_csv(NASA_TRAINING)))
+    calibrator = AdaptiveCalibrator(store=ModelStore(tmp_path / "s"), datasets=datasets)
+
+    run = calibrator.calibrate("nasa", [
+        linear_candidate("temp_stress_soc",
+                         ["trailing_avg_temp", "avg_stress", "avg_soc"]),
+    ])
+    outcome = run.outcomes[0]
+
+    # It still beats a constant - that is exactly why the constant is too weak.
+    assert outcome.loco.median_r2 > 0
+    # But not the age baseline, so it must be rejected.
+    assert outcome.loco.median_r2_vs_confound < 0
+    assert outcome.promoted is False
+    assert any("age rather than behaviour" in r for r in outcome.verdict.reasons)
+
+
+def test_the_confound_baseline_can_be_disabled_for_datasets_without_cycles(tmp_path):
+    """A dataset with no cycle column simply has no confound baseline."""
+    datasets = DatasetRegistry()
+    datasets.register(CallableDatasetLoader("learnable", _learnable))
+    calibrator = AdaptiveCalibrator(
+        store=ModelStore(tmp_path / "s"), datasets=datasets, confound_col=None,
+    )
+    run = calibrator.calibrate(
+        "learnable", [linear_candidate("temp_only", ["trailing_avg_temp"])]
+    )
+    assert np.isnan(run.outcomes[0].loco.median_r2_vs_confound)
+    assert run.outcomes[0].promoted is True
