@@ -16,6 +16,15 @@ beats a naive baseline out-of-sample on a held-out *protocol*, not merely a
 held-out cell, and only when its coefficients are stable across the refit.
 """
 
+from src.bms.adaptive.calibrator import (
+    AdaptiveCalibrator,
+    CalibrationRun,
+    CandidateOutcome,
+    CandidateSpec,
+    Scored,
+    ScoringRefusal,
+    linear_candidate,
+)
 from src.bms.adaptive.cohort import (
     CohortRegistry,
     CohortSpec,
@@ -44,6 +53,13 @@ from src.bms.adaptive.validation import (
 )
 
 __all__ = [
+    "AdaptiveCalibrator",
+    "CalibrationRun",
+    "CandidateOutcome",
+    "CandidateSpec",
+    "Scored",
+    "ScoringRefusal",
+    "linear_candidate",
     "CohortRegistry",
     "CohortSpec",
     "DriftReport",
