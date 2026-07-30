@@ -1,0 +1,5 @@
+digital_twin_state,count
+MODERATE_RISK,14
+NORMAL,13
+FAILURE_IMMINENT,5
+HIGH_RISK,2
