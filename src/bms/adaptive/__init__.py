@@ -25,11 +25,27 @@ from src.bms.adaptive.calibrator import (
     ScoringRefusal,
     linear_candidate,
 )
+from src.bms.adaptive.commensurability import (
+    CommensurabilityReport,
+    FeatureVariation,
+    assess_commensurability,
+    measure_variation,
+)
 from src.bms.adaptive.cohort import (
     CohortRegistry,
     CohortSpec,
     DriftReport,
     InDistribution,
+)
+from src.bms.adaptive.dataset_specs import (
+    Axis,
+    DatasetSpec,
+    FeasibilityPrediction,
+    Variation,
+    VariationProfile,
+    feasibility_matrix,
+    get_spec,
+    predict_transfer_feasibility,
 )
 from src.bms.adaptive.datasets import (
     CallableDatasetLoader,
@@ -44,6 +60,13 @@ from src.bms.adaptive.store import (
     ModelStore,
     ModelVersion,
     StabilityError,
+)
+from src.bms.adaptive.transfer import (
+    CompatibilityReport,
+    DomainShift,
+    TransferResult,
+    TransferValidator,
+    transfer_summary,
 )
 from src.bms.adaptive.validation import (
     CrossValidationResult,
@@ -60,10 +83,22 @@ __all__ = [
     "Scored",
     "ScoringRefusal",
     "linear_candidate",
+    "CommensurabilityReport",
+    "FeatureVariation",
+    "assess_commensurability",
+    "measure_variation",
     "CohortRegistry",
     "CohortSpec",
     "DriftReport",
     "InDistribution",
+    "Axis",
+    "DatasetSpec",
+    "FeasibilityPrediction",
+    "Variation",
+    "VariationProfile",
+    "feasibility_matrix",
+    "get_spec",
+    "predict_transfer_feasibility",
     "CallableDatasetLoader",
     "CsvDatasetLoader",
     "DatasetManifest",
@@ -74,6 +109,11 @@ __all__ = [
     "ModelStore",
     "ModelVersion",
     "StabilityError",
+    "CompatibilityReport",
+    "DomainShift",
+    "TransferResult",
+    "TransferValidator",
+    "transfer_summary",
     "CrossValidationResult",
     "FoldResult",
     "Validator",

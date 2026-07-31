@@ -24,6 +24,12 @@ import pandas as pd
 sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
 
 from src.bms.adaptive.calibrator import AdaptiveCalibrator, linear_candidate
+from src.bms.adaptive.commensurability import assess_commensurability
+from src.bms.adaptive.dataset_specs import (
+    REGISTRY as SPEC_REGISTRY,
+    get_spec,
+    predict_transfer_feasibility,
+)
 from src.bms.adaptive.datasets import CallableDatasetLoader, DatasetRegistry
 from src.bms.adaptive.store import ModelStore
 
@@ -126,6 +132,80 @@ def cmd_calibrate(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_feasibility(args: argparse.Namespace) -> int:
+    """Report which transfers are scientifically admissible.
+
+    Two modes. Without --measured it compares published metadata and runs
+    before any download. With --measured it measures a loaded frame, which is
+    the authoritative check.
+    """
+    source_spec = get_spec(args.source)
+
+    if not args.measured:
+        rows = []
+        for name in sorted(SPEC_REGISTRY):
+            if name == args.source:
+                continue
+            prediction = predict_transfer_feasibility(source_spec, get_spec(name))
+            rows.append({
+                "target": name,
+                "status": prediction.status,
+                "usable_axes": ", ".join(a.value for a in prediction.usable_axes) or "NONE",
+                "marginal": ", ".join(a.value for a in prediction.marginal_axes) or "-",
+            })
+        print(pd.DataFrame(rows).to_string(index=False))
+
+        if args.verbose:
+            for name in sorted(SPEC_REGISTRY):
+                if name == args.source:
+                    continue
+                print()
+                print(predict_transfer_feasibility(source_spec, get_spec(name)).render())
+        print()
+        print("Predicted from published metadata. Re-run with --measured once "
+              "the files are present.")
+        return 0
+
+    # Measured mode: screen NASA's own protocol groups against each other,
+    # which is the only cross-group comparison this repository can currently
+    # make from real data.
+    registry = build_registry()
+    if args.dataset not in registry:
+        print(f"Unknown dataset '{args.dataset}'. Available: {registry.names}")
+        return 1
+
+    data, _ = registry.load(args.dataset)
+    if "cohort" not in data.columns:
+        print(f"'{args.dataset}' has no cohort column, so there are no groups "
+              f"to compare.")
+        return 1
+
+    features = [f for f in args.features.split(",") if f.strip()]
+    groups = sorted(data["cohort"].unique())
+    reference = groups[0] if args.reference is None else args.reference
+    if reference not in groups:
+        print(f"Unknown cohort '{reference}'. Available: {groups}")
+        return 1
+
+    source = data[data["cohort"] == reference]
+    rows = []
+    for group in groups:
+        if group == reference:
+            continue
+        report = assess_commensurability(
+            source, data[data["cohort"] == group], features, reference, group,
+        )
+        rows.append({
+            "target": group,
+            "status": report.status,
+            "usable": ", ".join(report.usable_features) or "NONE",
+            "constant_in_target": ", ".join(report.constant_in_target) or "-",
+        })
+    print(f"source cohort: {reference}")
+    print(pd.DataFrame(rows).to_string(index=False))
+    return 0
+
+
 def cmd_status(args: argparse.Namespace) -> int:
     store = ModelStore(args.store)
     summary = store.summary()
@@ -179,6 +259,24 @@ def main(argv: list[str] | None = None) -> int:
     calibrate = sub.add_parser("calibrate", help="validate candidates and offer them")
     calibrate.add_argument("--dataset", default="nasa")
     calibrate.set_defaults(func=cmd_calibrate)
+
+    feasibility = sub.add_parser(
+        "feasibility", help="which transfers are scientifically admissible"
+    )
+    feasibility.add_argument("--source", default="nasa")
+    feasibility.add_argument(
+        "--measured", action="store_true",
+        help="measure loaded data instead of predicting from metadata",
+    )
+    feasibility.add_argument("--dataset", default="nasa",
+                             help="dataset to measure (with --measured)")
+    feasibility.add_argument("--reference", default=None,
+                             help="cohort to treat as source (with --measured)")
+    feasibility.add_argument(
+        "--features",
+        default="trailing_avg_temp,avg_stress,avg_soc,deep_discharge_duration",
+    )
+    feasibility.set_defaults(func=cmd_feasibility)
 
     status = sub.add_parser("status", help="show the store and decision log")
     status.add_argument("--tail", type=int, default=20)
