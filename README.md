@@ -290,6 +290,135 @@ baseline, not a smaller feature set: excluding every age-correlated feature
 would remove temperature, the one transferable signal this project found.
 
 
+### Transfer targets are screened before they are loaded
+
+A transfer needs a feature that varies in **both** datasets. Constant in the
+source and no coefficient can be fitted; constant in the target and the
+coefficient has nothing to act on. `TransferValidator` refuses to produce a
+metric when nothing survives (ADR 0006).
+
+```bash
+python -m src.bms.adaptive feasibility          # predict from published metadata
+python -m src.bms.adaptive feasibility --measured --dataset nasa   # measure loaded data
+```
+
+Predicted feasibility with NASA as the training source:
+
+| Target | Status | Usable axes |
+|---|---|---|
+| `calce_cs2` | FEASIBLE | cutoff voltage, depth of discharge, discharge rate |
+| `calce_cx2` | FEASIBLE | cutoff voltage, depth of discharge, discharge rate |
+| `calce_cx2_4_thermal` | FEASIBLE | **ambient temperature**, depth of discharge, discharge rate |
+| `stanford_severson` | MARGINAL | internal resistance only |
+
+Three consequences worth stating plainly:
+
+- **NASA to CALCE is well posed on depth of discharge, not temperature.** CS2's
+  15 cells were all cycled at room temperature on one charge profile, so they
+  cannot receive NASA's temperature coefficient. They do vary depth of
+  discharge, discharge rate and cutoff voltage, and so does NASA.
+- **NASA to Stanford is not well posed on either dataset's designed axis.**
+  Severson holds temperature at 30 C in a chamber and varies charge policy;
+  NASA varies temperature and has `fast_charge_duration` identically zero in
+  all 2,682 observations. The axes are orthogonal.
+- **CX2_4 is the only thermally admissible CALCE target, and it is n=1.** It was
+  cycled at 25, 35, 45 and 55 C. One cell can characterise a temperature
+  relationship but cannot support a cell-level generalisation claim.
+
+Adding a dataset is configuration, not code: a `DatasetSpec` with a column map
+and a variation profile.
+
+
+---
+
+---
+
+## Interactive client
+
+The React client in `mern/client` has five views, all bound to real pipeline
+output — no mocked data anywhere.
+
+| View | Shows |
+|---|---|
+| Fleet | simulated fleet, twin state, health traces |
+| CAN Replay | replay a CAN log; cycles, capacity yield, refusals, Guardian explanation |
+| Digital Twin | twin state, snapshot history, state transitions |
+| Thermal | pack temperature over cycle and discharge progress |
+| Transfer Validation | which cross-dataset experiments are admissible, and why not |
+
+```bash
+python -m uvicorn src.bms.api.app:app --port 8000   # Python API
+cd mern/server && npm start                          # Express gateway
+cd mern/client && npm run dev                        # React client
+```
+
+**The pack visualisation shows only what is measured.** The unified schema
+carries one aggregate temperature channel, so cells are drawn greyed with a
+legend separating instrumented from uninstrumented channels. Colouring them
+individually would mean interpolating dozens of values from one measurement
+(ADR 0004). The thermal view uses cycle and discharge progress as its axes for
+the same reason — both are measured; a per-cell axis would not be.
+
+
+---
+
+## CALCE integration
+
+CS2/CX2 cycling archives load through `io/load_calce_cycling.py` and score
+through the same stages as NASA. See `docs/calce_integration.md`.
+
+```python
+from src.bms.io.calce_analysis import analyze_calce_cell
+print(analyze_calce_cell("data/raw/calce/CS2_33").render())
+```
+
+**CALCE records neither temperature nor state of charge.** CS2/CX2 Arbin
+exports carry seventeen columns and none is thermal — the cells were cycled at
+room temperature, which was a property of the room rather than a channel.
+
+So a CS2 cell yields **measured SOH and capacity fade**, and no behavioural risk
+score. Filling `temperature_c` with 23.0 would satisfy the schema and produce a
+thermal stress score for a quantity nobody measured; since a constant cannot
+raise `high_temp_flag`, every CALCE cell would read as thermally unstressed
+regardless of what happened to it.
+
+CX2_4 is the exception: cycled at 25/35/45/55 C with separate thermocouple
+files, which `load_calce_cell(temperature_dir=...)` joins on test time. The
+pipeline follows the instrumentation, not the dataset label.
+
+
+## Real BMS telemetry
+
+Recorded CAN logs and live buses run through the same scoring stages as the
+dataset pipeline. See `docs/telemetry_pipeline.md`.
+
+```python
+import cantools
+from src.bms.telemetry import replay_log
+
+dbc = cantools.database.load_file("src/bms/io/dbc_examples/beacon_reference_pack.dbc")
+result = replay_log("logs/drive.asc", dbc, signal_map, cell_id="VEH_01")
+print(result.render())
+```
+
+**State of health is not a CAN signal.** A bus carries instantaneous current, not
+per-cycle discharge capacity. `telemetry/cycles.py` segments charge/discharge
+phases and integrates current to recover capacity in amp-hours, which is what
+makes SOH obtainable at all.
+
+Partial discharges are excluded from SOH rather than scaled by the observed SOC
+swing — the BMS's SOC is itself derived from a capacity estimate, so normalising
+by it would make the measurement depend on the quantity being measured. Ordinary
+driving is mostly partial cycles, so a log with 400 discharges may support only a
+handful of capacity points, and the run reports that count.
+
+The pipeline refuses in three places: a DBC missing a required channel (the
+shipped `twizy_bms_1.dbc` has no temperature signal, and treating absent as safe
+is the NaN-as-healthy defect already fixed here); no complete discharge cycle;
+and fade prediction, which stays refused while nothing has passed the promotion
+gate.
+
+
 ## The BEACON dashboard
 
 `python main.py` writes a self-contained `dashboard.html` — no server, no
@@ -328,15 +457,38 @@ Behavior-Aware-BMS-main/
 │   ├── io/
 │   │   ├── loader_common.py         # Shared column normalization helpers
 │   │   ├── load_nasa.py             # NASA dataset loader
-│   │   └── load_calce.py            # CALCE dataset loader
+│   │   ├── load_calce.py            # CALCE dataset loader
+│   │   ├── load_calce_capacity.py   # CALCE capacity-characterisation workbooks (single-cycle; see docs/calce_dataset_note.md)
+│   │   ├── load_calce_cycling.py    # CALCE Arbin cycling loader (CS2/CX2; see docs/calce_integration.md)
+│   │   ├── calce_analysis.py        # CALCE feasibility + commensurability assessment
+│   │   ├── load_can_dbc.py          # Real-vehicle CAN/DBC decoding (optional: needs cantools)
+│   │   ├── can_vehicle_registry.py  # Multi-vehicle DBC registry + auto-identification
+│   │   └── dbc_examples/            # Verified Twizy DBC + a labelled synthetic fixture
 │   ├── preprocessing/
 │   │   └── schema.py                # Unified BMS schema, aliases, validation
+│   ├── telemetry/                   # Telemetry ingest/replay (see docs/telemetry_pipeline.md)
+│   │   ├── sources.py               # Telemetry source adapters
+│   │   ├── pipeline.py              # Ingest -> schema -> features -> scores
+│   │   ├── cycles.py                # Cycle segmentation and reconciliation
+│   │   └── twin_integration.py      # Bridges telemetry rows into digital_twin
+│   ├── adaptive/                    # Calibration gate — default answer is REJECT (see ADR 0005)
+│   │   ├── datasets.py              # Can this data answer the question?
+│   │   ├── cohort.py                # Have we seen these operating conditions?
+│   │   ├── validation.py            # Does this candidate generalise? (LOBO/LOCO/confound)
+│   │   ├── store.py                 # Versioned model store + stability check
+│   │   ├── calibrator.py            # Orchestration only; adds no criteria of its own
+│   │   ├── dataset_specs.py         # Declared dataset capability specs
+│   │   ├── commensurability.py      # Are two datasets comparable at all? (ADR 0006)
+│   │   ├── transfer.py              # Cross-dataset transfer feasibility
+│   │   └── __main__.py              # CLI: python -m src.bms.adaptive
 │   ├── features/
-│   │   └── behavior_features.py     # Flags, rolling stats, per-battery summary
+│   │   ├── behavior_features.py     # Flags, rolling stats, per-battery summary
+│   │   └── cycle_features.py        # Per-cycle aggregation for cycle-level calibration
 │   ├── risk/
 │   │   └── stress_score.py          # Row-level stress score + battery-level risk assessment (rule-based; optional ML hook)
 │   ├── health/
-│   │   └── health_index.py          # Battery Health Index via aging-budget model
+│   │   ├── health_index.py          # Battery Health Index via aging-budget model (pipeline default)
+│   │   └── health_index_v2.py       # Fitted OLS variant — built, validated, NOT promoted (see ADR 0002)
 │   ├── rul/
 │   │   └── rul_estimation.py        # RUL via Equivalent Aging Factor
 │   ├── explain/
@@ -348,7 +500,9 @@ Behavior-Aware-BMS-main/
 │   ├── api/
 │   │   ├── app.py                   # FastAPI transport layer (see docs/api.md)
 │   │   ├── store.py                 # In-memory fleet store, non-persistent
-│   │   └── schemas.py               # Pydantic request/response models
+│   │   ├── schemas.py               # Pydantic request/response models
+│   │   ├── telemetry_routes.py      # /telemetry/* and /transfer/* routers
+│   │   └── telemetry_schemas.py     # Pydantic models for the telemetry surface
 │   └── dashboard/
 │       ├── beacon.py                # BEACON dashboard renderer (used by main.py)
 │       ├── beacon_data.py           # Pipeline-output -> display-value mapping, unit-tested (see ADR 0004)
@@ -358,30 +512,40 @@ Behavior-Aware-BMS-main/
 ├── configs/
 │   └── dataset_sources.yaml         # Dataset source configuration
 ├── data/
-│   ├── raw/                         # Place NASA/CALCE data here
+│   ├── raw/                         # Place NASA/CALCE data here (gitignored — not redistributable)
 │   ├── interim/                     # Archive manifests
-│   ├── processed/                   # Per-dataset normalized CSVs
-│   └── features/                    # Pipeline output CSVs
+│   ├── processed/                   # Per-dataset normalized CSVs (small samples tracked; bulk gitignored)
+│   └── features/                    # Pipeline output CSVs — GENERATED, gitignored; run `python main.py`
 ├── models/
 │   └── stress_score_rf_sample_v1.joblib  # sklearn HistGradientBoostingRegressor of unknown provenance (see note below) — not wired into the pipeline by default
 ├── notebooks/                       # Original Colab notebooks (reference/history; superseded by src/bms/)
 ├── reports/
-│   └── metrics/                     # Distribution CSV reports, generated by main.py
+│   ├── metrics/                     # NASA-derived research artifacts (TRACKED — see note below)
+│   └── figures/                     # Report figures, regenerated by scripts/generate_report_figures.py
 ├── scripts/                         # CLI utility scripts
 │   ├── audit_threshold_reachability.py     # Are the rule cut points reachable in real data? (Section 4.7)
 │   ├── validate_health_index_versions.py   # v1 vs v2, LOBO + LOCO, version decision (Section 4.8)
 │   ├── fit_shap_attribution_model.py       # SHAP vs measured fade, gated on skill (Section 4.9)
 │   └── ...                                 # calibration, loaders, figure generation
-├── tests/                           # 57 tests
+├── tests/                           # 295 tests (230 + 4 skipped without the optional cantools extra)
 │   ├── smoke_day3.py                # Day 3 data ingestion smoke test
 │   ├── test_schema.py               # Unit tests for the unified schema
 │   ├── test_pipeline.py             # Full pipeline end-to-end tests
 │   ├── test_explain.py              # Shapley exactness, drift detection, Guardian consistency
 │   ├── test_beacon_dashboard.py     # Nothing-is-invented + provenance guarantees
 │   ├── test_digital_twin.py         # Digital twin state/transition/timeline tests
-│   └── test_api.py                  # FastAPI endpoint integration tests
+│   ├── test_api.py                  # FastAPI endpoint integration tests
+│   ├── test_telemetry_api.py        # /telemetry/* and /transfer/* route tests
+│   ├── test_telemetry_pipeline.py   # Telemetry ingest/replay/cycle-segmentation tests
+│   ├── test_calce_cycling.py        # CALCE Arbin cycling loader tests (fixture-based)
+│   ├── test_guardian.py             # Guardian diagnosis + evidence-confidence labelling
+│   ├── test_can_dbc.py              # CAN/DBC decode vs published OVMS example (skips without cantools)
+│   ├── test_can_vehicle_registry.py # Multi-vehicle registry (skips without cantools)
+│   ├── test_adaptive_*.py           # Calibration gate: cohort, validation, store, calibrator,
+│   │                                #   datasets, dataset_specs, commensurability, transfer
+│   └── fixtures/                    # Generated Arbin-format CALCE fixtures
 └── docs/                            # Documentation
-    └── adr/                         # Architecture decision records (0001-0004)
+    └── adr/                         # Architecture decision records (0001-0006)
 
 mern/                                 # Optional MERN layer -- see docs/mern.md
 ├── server/                          # Express gateway (proxies to the Python API, no pipeline logic)
@@ -389,8 +553,34 @@ mern/                                 # Optional MERN layer -- see docs/mern.md
 │   └── package.json
 └── client/                          # React + Vite frontend, same UI as live_dashboard.html
     ├── src/App.jsx, api.js, components/
+    │   └── FleetTable, BatteryDetail, StateBar, Sparkline,
+    │       GuardianPanel, TelemetryReplay, ThermalMap, TransferPanel, TwinPanel
     └── package.json
 ```
+
+### What is and isn't tracked in git
+
+Two categories of CSV live under `data/` and `reports/`, and they are treated
+differently on purpose.
+
+**Generated, gitignored — regenerate with `python main.py`:**
+`data/features/*.csv` and the two distribution files
+`reports/metrics/{battery_state_distribution,risk_distribution}.csv`. These are
+written fresh on every pipeline run against simulated telemetry, and nothing
+reads them back in — `main.py` hands the tables to the dashboard in memory, and
+`tests/test_pipeline.py` asserts against a temporary output directory. Tracking
+them meant every run dirtied the working tree by thousands of lines, which is
+how three batches of real source changes went unnoticed in `git status`.
+
+**Tracked, and deliberately so — do not "tidy" these away:**
+every other file under `reports/metrics/` plus `reports/figures/*.png`. These
+are derived from the NASA `cleaned_dataset` (7.2M rows), which is gitignored and
+not redistributable, so they **cannot be regenerated from a clean checkout**.
+They are also live inputs: `continuous_model_training_data.csv` is read by five
+adaptive test modules, the `python -m src.bms.adaptive` CLI, and three fitting
+scripts; `calibration_merged.csv` is read by `tests/test_explain.py`. Ignoring
+them would break the suite on a fresh clone and make `docs/final_report.md`
+unreproducible.
 
 **Note on `models/stress_score_rf_sample_v1.joblib`:** despite the filename,
 this loads as a `sklearn.ensemble.HistGradientBoostingRegressor`, not a
