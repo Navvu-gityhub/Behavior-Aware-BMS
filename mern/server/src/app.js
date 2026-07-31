@@ -3,6 +3,7 @@ import cors from 'cors';
 import morgan from 'morgan';
 
 import { batteriesRouter } from './routes/batteries.js';
+import { telemetryRouter } from './routes/telemetry.js';
 import { UpstreamError, ServiceUnavailableError } from './pythonClient.js';
 
 export function createApp() {
@@ -13,6 +14,9 @@ export function createApp() {
   app.use(express.json());
 
   app.use('/api', batteriesRouter);
+  // Telemetry, twin and transfer routes are additive: batteriesRouter's
+  // existing routes are matched first and are unaffected.
+  app.use('/api', telemetryRouter);
 
   // 404 for anything under /api that didn't match a route above.
   app.use('/api', (req, res) => {

@@ -4,6 +4,11 @@ import { api, ApiError } from './api.js';
 import { StateBar } from './components/StateBar.jsx';
 import { FleetTable } from './components/FleetTable.jsx';
 import { BatteryDetail } from './components/BatteryDetail.jsx';
+import { TelemetryReplay } from './components/TelemetryReplay.jsx';
+import { ThermalMap } from './components/ThermalMap.jsx';
+import { TwinPanel } from './components/TwinPanel.jsx';
+import { TransferPanel } from './components/TransferPanel.jsx';
+import { GuardianPanel } from './components/GuardianPanel.jsx';
 
 export default function App() {
   const [batteries, setBatteries] = useState([]);
@@ -15,6 +20,26 @@ export default function App() {
   const [simulating, setSimulating] = useState(false);
   const [toast, setToast] = useState(null);
   const toastTimer = useRef(null);
+
+  // Views are switched with local state rather than a router. The app had no
+  // router and adding one to reach four panels would be a dependency and a URL
+  // scheme introduced for no functional gain; if deep links become a
+  // requirement this is the single place that changes.
+  const [view, setView] = useState('fleet');
+
+  // The battery whose telemetry the twin and thermal views describe, set by a
+  // replay. Kept separate from `selectedId`, which tracks the simulated fleet:
+  // conflating them would make a fleet click silently repoint the telemetry
+  // views at a battery that has no CAN run.
+  const [telemetryId, setTelemetryId] = useState(null);
+  const [lastRun, setLastRun] = useState(null);
+  const [runCount, setRunCount] = useState(0);
+
+  const handleRun = useCallback((batteryId, run) => {
+    setTelemetryId(batteryId);
+    setLastRun(run);
+    setRunCount((n) => n + 1);
+  }, []);
 
   const showToast = useCallback((msg) => {
     setToast(msg);
@@ -110,17 +135,83 @@ export default function App() {
 
       <StateBar batteries={batteries} />
 
-      <main>
-        <div className="panel">
-          <div className="panel-title">Fleet — click a battery for detail</div>
-          <FleetTable batteries={batteries} selectedId={selectedId} onSelect={selectBattery} />
-        </div>
+      <nav className="viewtabs">
+        {[
+          ['fleet', 'Fleet'],
+          ['telemetry', 'CAN Replay'],
+          ['twin', 'Digital Twin'],
+          ['thermal', 'Thermal'],
+          ['transfer', 'Transfer Validation'],
+        ].map(([key, label]) => (
+          <button
+            key={key}
+            className={`viewtab ${view === key ? 'active' : ''}`}
+            onClick={() => setView(key)}
+          >
+            {label}
+          </button>
+        ))}
+      </nav>
 
-        <div className="panel">
-          <div className="panel-title">Battery Detail</div>
-          <BatteryDetail detail={detail} timeline={timeline} />
-        </div>
-      </main>
+      {view === 'fleet' && (
+        <main>
+          <div className="panel">
+            <div className="panel-title">Fleet — click a battery for detail</div>
+            <FleetTable batteries={batteries} selectedId={selectedId} onSelect={selectBattery} />
+          </div>
+
+          <div className="panel">
+            <div className="panel-title">Battery Detail</div>
+            <BatteryDetail detail={detail} timeline={timeline} />
+          </div>
+        </main>
+      )}
+
+      {view === 'telemetry' && (
+        <main className="single">
+          <div className="panel">
+            <div className="panel-title">CAN log replay</div>
+            <TelemetryReplay onRun={handleRun} />
+          </div>
+          {lastRun && lastRun.guardian && lastRun.guardian.length > 0 && (
+            <div className="panel">
+              <div className="panel-title">Battery Guardian — why this score</div>
+              <GuardianPanel guardian={lastRun.guardian} />
+            </div>
+          )}
+        </main>
+      )}
+
+      {view === 'twin' && (
+        <main className="single">
+          <div className="panel">
+            <div className="panel-title">
+              Digital Twin {telemetryId ? `— ${telemetryId}` : ''}
+            </div>
+            <TwinPanel batteryId={telemetryId} refreshKey={runCount} />
+          </div>
+        </main>
+      )}
+
+      {view === 'thermal' && (
+        <main className="single">
+          <div className="panel">
+            <div className="panel-title">
+              Thermal profile {telemetryId ? `— ${telemetryId}` : ''}
+            </div>
+            <ThermalMap batteryId={telemetryId} key={runCount} />
+          </div>
+        </main>
+      )}
+
+      {view === 'transfer' && (
+        <main className="single">
+          <div className="panel">
+            <div className="panel-title">Cross-dataset transfer feasibility</div>
+            <TransferPanel />
+          </div>
+        </main>
+      )}
 
       <footer>
         Every score here (health_index, risk_score, rul_cycles, failure_likelihood) is a hand-tuned heuristic,
