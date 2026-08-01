@@ -117,3 +117,92 @@ Functionally identical, since both are clients of the same pipeline output;
 this one just goes through Express instead of talking to FastAPI directly.
 See `docs/api.md` for what `src/bms/dashboard/live_dashboard.html` (the
 Python-served version) does differently.
+
+---
+
+## Telemetry, twin and transfer views (batch 11)
+
+The React client gained five views. The fleet view is unchanged; the other four
+are new and every one of them renders values the Python pipeline computed.
+
+| View | Reads | Component |
+|---|---|---|
+| Fleet | `/batteries`, `/pipeline/simulate` | unchanged |
+| CAN Replay | `/telemetry/replay`, `/telemetry/coverage` | `TelemetryReplay.jsx` |
+| Digital Twin | `/telemetry/twin/{id}` | `TwinPanel.jsx` |
+| Thermal | `/telemetry/thermal/{id}` | `ThermalMap.jsx` |
+| Transfer Validation | `/transfer/feasibility`, `/datasets` | `TransferPanel.jsx` |
+
+`GuardianPanel.jsx` renders inside the CAN Replay view rather than as its own
+tab, because a Guardian explanation is only meaningful next to the run it
+explains.
+
+### The gateway had to be extended
+
+The client reaches the backend only through `/api/*`, and `app.js` returns 404
+for anything that does not match a route. Each Python endpoint is therefore
+invisible to the UI until it is forwarded.
+
+`mern/server/src/routes/telemetry.js` adds that forwarding. It is a second
+router mounted alongside `batteriesRouter` on the same prefix, so no existing
+route is modified; `test_mounting_a_second_router_does_not_shadow_the_fleet_routes`
+asserts the fleet routes still resolve.
+
+A blanket proxy would have been less code, and was rejected: it would expose
+every future Python route to the browser by default, which is a wider surface
+than this gateway should have. Query parameters are named per route for the
+same reason.
+
+### Why there is no router
+
+Views switch on local state. The app had no router, and adding one to reach
+four panels would introduce a dependency and a URL scheme for no functional
+gain. If deep links become a requirement, `App.jsx`'s `view` state is the
+single place that changes.
+
+### `telemetryId` is deliberately separate from `selectedId`
+
+`selectedId` tracks the simulated fleet; `telemetryId` tracks the battery a CAN
+replay produced. Conflating them would make a fleet-table click silently
+repoint the twin and thermal views at a battery that has no CAN run behind it.
+
+### The pack visualisation shows what is measured
+
+The pack figure draws 24 cells greyed out, with a legend splitting channels into
+instrumented and not instrumented. This is ADR 0004 applied to the UI: the
+unified schema carries **one** aggregate `temperature_c`, so colouring cells
+individually would mean interpolating dozens of values from one measurement.
+
+The same constraint shapes the thermal view. Its axes are cycle and progress
+through the discharge, both measured. There is no per-cell axis, and the
+backend's `resolution_note` is rendered verbatim rather than paraphrased so the
+limitation travels with the view.
+
+Channels listed as never instrumented — individual cell voltages, cell
+temperatures, balancing currents — appear in the legend precisely because a
+reader would otherwise assume a pack diagram implies them.
+
+### Refusals are results, not errors
+
+A replay that decodes 40,000 frames and then declines to compute SOH has
+produced useful information. `TelemetryReplay` renders `refusals` as a
+first-class block, and `fade_prediction` is shown as explicitly unavailable with
+the backend's reason attached, so a viewer cannot mistake the rule-based
+severity index for a calibrated forecast.
+
+### Running the stack
+
+```bash
+# 1. Python API
+python -m uvicorn src.bms.api.app:app --port 8000
+
+# 2. Express gateway (proxies /api to the Python service)
+cd mern/server && npm install && npm start
+
+# 3. React client
+cd mern/client && npm install && npm run dev
+```
+
+Verified end to end: 11/11 calls succeed through React → Express → FastAPI,
+including a replay producing four cycles, a thermal timeline with 160 points,
+twin history, and the 404 path.

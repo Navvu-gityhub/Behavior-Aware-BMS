@@ -34,7 +34,7 @@ def test_pipeline_end_to_end_runs_and_produces_valid_ranges():
     with tempfile.TemporaryDirectory() as tmp:
         out_dir = Path(tmp) / "features"
         reports_dir = Path(tmp) / "reports"
-        guardian = run_pipeline(raw, output_dir=out_dir, reports_dir=reports_dir)
+        guardian = run_pipeline(raw, output_dir=out_dir, reports_dir=reports_dir).guardian
 
         assert len(guardian) == raw["cell_id"].nunique()
         assert guardian["health_index"].between(0, 100).all()

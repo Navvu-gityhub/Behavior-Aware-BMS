@@ -26,6 +26,8 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
+from src.bms.explain.attribution import ScoreTerm
+
 REQUIRED_COLUMNS = (
     "avg_stress",
     "avg_temp",
@@ -34,6 +36,76 @@ REQUIRED_COLUMNS = (
     "aggressive_discharge_count",
     "avg_soc",
 )
+
+
+# ---------------------------------------------------------------------------
+# Term specification
+#
+# `aging_budget` is 100 minus a sum of six independent per-feature penalties,
+# and `health_index` is `100 - aging_budget`. So absent clipping,
+# `health_index` is exactly the sum of the penalties below — an additive
+# score, which is what lets `explain.attribution` decompose it into exact
+# Shapley values. See that module's docstring for the derivation.
+#
+# These are defined once and consumed by both `compute_health_index` (which
+# sums them) and the explainer (which decomposes them), for the same
+# anti-drift reason documented in `risk.stress_score.RISK_TERMS`.
+#
+# The cut points are hand-chosen, NOT fit to data — that is the whole reason
+# `health_index_v2` exists as a fitted alternative. See
+# docs/adr/0002-health-index-version.md for why v1 nonetheless remains the
+# pipeline default.
+#
+# These bands use `>` where the structurally identical bands in
+# `risk.stress_score.RISK_TERMS` use `>=`; see the note there.
+# ---------------------------------------------------------------------------
+
+HEALTH_TERMS: tuple[ScoreTerm, ...] = (
+    ScoreTerm(
+        name="stress",
+        feature="avg_stress",
+        label="sustained high stress",
+        fn=lambda s: np.where(s > 70, 30, np.where(s > 50, 20, 10)),
+    ),
+    ScoreTerm(
+        name="temperature",
+        feature="avg_temp",
+        label="high temperature exposure",
+        fn=lambda s: np.where(s > 40, 25, np.where(s > 30, 15, 5)),
+    ),
+    ScoreTerm(
+        name="deep_discharge",
+        feature="deep_discharge_duration",
+        label="deep discharge events",
+        fn=lambda s: np.where(s > 100, 20, np.where(s > 20, 10, 5)),
+    ),
+    ScoreTerm(
+        name="fast_charge",
+        feature="fast_charge_duration",
+        label="frequent fast charging",
+        fn=lambda s: np.where(s > 100, 15, np.where(s > 20, 8, 2)),
+    ),
+    ScoreTerm(
+        name="aggressive_discharge",
+        feature="aggressive_discharge_count",
+        label="aggressive discharge",
+        fn=lambda s: np.where(s > 500, 15, np.where(s > 100, 8, 2)),
+    ),
+    ScoreTerm(
+        name="soc_extremes",
+        feature="avg_soc",
+        label="SOC held at extremes",
+        fn=lambda s: np.where((s > 80) | (s < 20), 10, 0),
+    ),
+)
+
+
+def health_penalty_from_terms(battery_summary: pd.DataFrame) -> np.ndarray:
+    """Sum `HEALTH_TERMS` into the total aging penalty deducted from the budget."""
+    total = np.zeros(len(battery_summary), dtype=float)
+    for term in HEALTH_TERMS:
+        total += term.contribution(battery_summary[term.feature]).to_numpy(dtype=float)
+    return total
 
 
 def _battery_state(health_index: float) -> str:
@@ -67,13 +139,7 @@ def compute_health_index(battery_summary: pd.DataFrame) -> pd.DataFrame:
 
     out = battery_summary.copy()
 
-    budget = np.full(len(out), 100.0)
-    budget -= np.where(out["avg_stress"] > 70, 30, np.where(out["avg_stress"] > 50, 20, 10))
-    budget -= np.where(out["avg_temp"] > 40, 25, np.where(out["avg_temp"] > 30, 15, 5))
-    budget -= np.where(out["deep_discharge_duration"] > 100, 20, np.where(out["deep_discharge_duration"] > 20, 10, 5))
-    budget -= np.where(out["fast_charge_duration"] > 100, 15, np.where(out["fast_charge_duration"] > 20, 8, 2))
-    budget -= np.where(out["aggressive_discharge_count"] > 500, 15, np.where(out["aggressive_discharge_count"] > 100, 8, 2))
-    budget -= np.where((out["avg_soc"] > 80) | (out["avg_soc"] < 20), 10, 0)
+    budget = 100.0 - health_penalty_from_terms(out)
 
     out["aging_budget"] = np.clip(budget, 0, 100)
     out["health_index"] = 100 - out["aging_budget"]

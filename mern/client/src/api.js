@@ -28,6 +28,46 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     }),
+
+  // --- telemetry -----------------------------------------------------------
+  //
+  // These reach the same Express gateway as the fleet calls above; the gateway
+  // forwards each to the Python service (mern/server/src/routes/telemetry.js).
+  // Nothing here is mocked: every view built on these renders values the
+  // pipeline computed, or renders nothing and says why.
+
+  coverage: (dbcPath) =>
+    request(`/telemetry/coverage${dbcPath ? `?dbc_path=${encodeURIComponent(dbcPath)}` : ''}`),
+
+  replay: (payload) =>
+    request('/telemetry/replay', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    }),
+
+  liveCapture: (payload) =>
+    request('/telemetry/live', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    }),
+
+  latestRun: (id) => request(`/telemetry/latest/${encodeURIComponent(id)}`),
+
+  liveState: (id, window) =>
+    request(`/telemetry/live/${encodeURIComponent(id)}${window ? `?window=${window}` : ''}`),
+
+  thermal: (id) => request(`/telemetry/thermal/${encodeURIComponent(id)}`),
+
+  twinHistory: (id) => request(`/telemetry/twin/${encodeURIComponent(id)}`),
+
+  // --- transfer validation --------------------------------------------------
+
+  feasibility: (source) =>
+    request(`/transfer/feasibility${source ? `?source=${encodeURIComponent(source)}` : ''}`),
+
+  datasets: () => request('/datasets'),
 };
 
 export { ApiError };

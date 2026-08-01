@@ -1,0 +1,5 @@
+candidate,n_batteries,spearman_rho_vs_fade_rate,permutation_p,significant_at_0.05,distinct_output_values
+v1_rule_based,33,-0.2688160581528023,0.124375124975005,False,6
+v2_fitted_ols,33,0.8703208556149733,0.0001999600079984003,True,33
+v2_fitted_ols__lobo_refit,33,0.8412433155080213,0.0001999600079984003,True,33
+v2_fitted_ols__loco_refit,33,-0.29512032085561496,0.09678064387122576,False,33

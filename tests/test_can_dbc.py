@@ -18,6 +18,14 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 import pytest
 
+# cantools is an optional extra (see requirements-dev.txt): it is only needed
+# for real-vehicle CAN/DBC work. Importing src.bms.io.load_can_dbc without it
+# raises ModuleNotFoundError at import time, which pytest treats as a
+# COLLECTION error -- that aborts the entire run, so a contributor who has not
+# installed the extra sees zero tests execute rather than this module skipping.
+# importorskip converts that into a clean skip of this module only.
+pytest.importorskip("cantools", reason="optional extra; see requirements-dev.txt")
+
 from src.bms.io.load_can_dbc import (
     DEFAULT_DBC_PATH,
     can_frames_to_unified_schema,

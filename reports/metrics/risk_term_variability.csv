@@ -1,0 +1,7 @@
+term,mean_points,std_points,distinct_values,is_constant_across_fleet
+stress,10.0,0.0,1,True
+temperature,8.636363636363637,7.423855895936852,3,False
+deep_discharge,20.0,0.0,1,True
+fast_charge,2.0,0.0,1,True
+aggressive_discharge,11.393939393939394,5.448276068740654,3,False
+soc_extremes,0.30303030303030304,1.7407765595569784,2,False

@@ -1,7 +1,0 @@
-battery_id,avg_stress,avg_temp,fast_charge_duration,deep_discharge_duration,high_temp_duration_x,aggressive_discharge_count,avg_soc,risk_score,risk_level,risk_reason,recommended_action,high_temp_duration_y,aging_budget,health_index,remaining_health,consumed_life,battery_state
-SIM000,13.416666666666666,27.344973009696755,0,98,2,3,16.76143926227304,39.0,LOW,"deep discharge, low SOC exposure",Battery behavior is healthy.,2,61.0,39.0,61.0,39.0,WARNING
-SIM001,20.625,29.308594693032838,5,111,14,12,8.697706688020396,49.0,MEDIUM,"deep discharge, low SOC exposure",Avoid deep discharge and prolonged high SOC exposure.,14,51.0,49.0,51.0,49.0,WARNING
-SIM002,31.5,33.11373554588055,13,119,37,27,3.0371287219154603,59.0,MEDIUM,"high temperature, deep discharge, low SOC exposure",Avoid deep discharge and prolonged high SOC exposure.,37,41.0,59.0,41.0,59.0,WARNING
-SIM003,13.125,27.738705607057987,1,87,4,5,22.276098443805555,29.0,LOW,deep discharge,Battery behavior is healthy.,4,71.0,29.0,71.0,29.0,HEALTHY
-SIM004,19.25,28.37062552737738,3,119,9,8,4.161912048154028,49.0,MEDIUM,"deep discharge, low SOC exposure",Avoid deep discharge and prolonged high SOC exposure.,9,51.0,49.0,51.0,49.0,WARNING
-SIM005,28.125,31.88489195478723,20,116,29,17,7.9954641019847354,65.0,HIGH,"high temperature, deep discharge, low SOC exposure",Reduce fast charging frequency and follow 20-80 charging rule.,29,41.0,59.0,41.0,59.0,WARNING

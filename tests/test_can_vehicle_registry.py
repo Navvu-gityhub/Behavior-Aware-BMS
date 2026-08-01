@@ -17,6 +17,11 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 import pytest
 
+# See the note in tests/test_can_dbc.py: can_vehicle_registry imports
+# load_can_dbc, which imports cantools at module level. Without this guard an
+# absent optional extra aborts collection for the whole suite.
+pytest.importorskip("cantools", reason="optional extra; see requirements-dev.txt")
+
 from src.bms.io.can_vehicle_registry import default_registry
 
 TWIZY_BMS_1_CAN_ID = 341

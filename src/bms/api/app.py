@@ -35,6 +35,7 @@ from main import run_pipeline
 from src.bms.simulation.simulate_telemetry import SimulationConfig, simulate_fleet
 from src.bms.digital_twin import build_health_timeline
 from src.bms.api.store import fleet_store
+from src.bms.api.telemetry_routes import router as telemetry_router
 from src.bms.api.schemas import (
     BatteryDetailOut,
     BatterySummaryOut,
@@ -55,6 +56,10 @@ app = FastAPI(
     ),
     version="0.1.0",
 )
+
+# Telemetry, twin and transfer endpoints live in their own router so this
+# module's existing routes are untouched. See api/telemetry_routes.py.
+app.include_router(telemetry_router)
 
 _DASHBOARD_PATH = Path(__file__).parent.parent / "dashboard" / "live_dashboard.html"
 
@@ -113,7 +118,7 @@ def run_simulated_pipeline(request: SimulateRequest) -> PipelineRunResponseOut:
             seed=request.seed,
         )
     )
-    guardian = run_pipeline(raw)
+    guardian = run_pipeline(raw).guardian
 
     from src.bms.preprocessing.schema import standardize_validate_bms_data
     from src.bms.features.behavior_features import compute_behavior_flags

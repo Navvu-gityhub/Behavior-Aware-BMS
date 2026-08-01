@@ -1,0 +1,40 @@
+{
+  "model": "GradientBoostingRegressor",
+  "model_params": {
+    "n_estimators": 200,
+    "max_depth": 3,
+    "learning_rate": 0.05,
+    "subsample": 0.8,
+    "min_samples_leaf": 20,
+    "random_state": 42
+  },
+  "n_observations": 2682,
+  "n_cells": 34,
+  "n_cohorts": 9,
+  "features_used": [
+    "avg_stress",
+    "avg_temp",
+    "max_temp",
+    "trailing_avg_temp",
+    "fast_charge_duration",
+    "deep_discharge_duration",
+    "high_temp_duration",
+    "aggressive_discharge_count",
+    "trailing_deep_discharge_duration",
+    "trailing_aggressive_discharge_count",
+    "avg_soc",
+    "ambient_temperature_c",
+    "cycle"
+  ],
+  "excluded_for_leakage": [
+    "capacity_ah",
+    "battery_age_factor",
+    "n_rows"
+  ],
+  "lobo_beats_global_mean_pct": 0.42424242424242425,
+  "loco_beats_global_mean_pct": 0.1111111111111111,
+  "has_out_of_sample_skill": false,
+  "verdict": "NO OUT-OF-SAMPLE SKILL: SHAP ranking describes this model's internal fitting behaviour only. It is NOT evidence about physical degradation drivers and must not be cited as such.",
+  "rule_vs_shap_rank_spearman": -0.10259783520851543,
+  "top_shap_feature": "aggressive_discharge_count"
+}

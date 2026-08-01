@@ -7,33 +7,75 @@ venv/
 # Jupyter
 .ipynb_checkpoints/
 
-# Raw dataset files
-data/raw/**/*.zip
-data/raw/**/*.mat
-data/raw/**/*.csv
-data/raw/**/*.xlsx
-data/raw/**/*.xls
-
-# Interim and processed large files
-data/interim/**/*.csv
-data/interim/**/*.parquet
-data/processed/**/*.csv
-data/processed/**/*.parquet
-
 # OS files
 .DS_Store
 Thumbs.db
-__pycache__/
-*.pyc
-__pycache__/
-*.pyc
-__pycache__/
-*.pyc
-data/features/behavior_features_v3.csv
-data/features/behavior_features_v3_sample.csv
-data/raw/nasa/cleaned_dataset/
 
 # Node (mern/)
 node_modules/
 mern/client/dist/
 
+# ---------------------------------------------------------------------------
+# Raw and intermediate dataset files.
+# NASA/CALCE raw exports are large and licence-restricted; see docs and
+# configs/dataset_sources.yaml for where to obtain them.
+# ---------------------------------------------------------------------------
+data/raw/**/*.zip
+data/raw/**/*.mat
+data/raw/**/*.csv
+data/raw/**/*.xlsx
+data/raw/**/*.xls
+data/raw/nasa/cleaned_dataset/
+data/interim/**/*.csv
+data/interim/**/*.parquet
+data/processed/**/*.parquet
+
+# ---------------------------------------------------------------------------
+# GENERATED PIPELINE OUTPUTS (Batch 13).
+#
+# Everything below is rewritten wholesale by `python main.py` on simulated
+# telemetry. Tracking it meant every pipeline run dirtied the working tree
+# (behavior_features_v1.csv alone churns ~8k lines), which buried real
+# uncommitted source changes in `git status` noise.
+#
+# Nothing reads these files back in: main.py passes the tables to the
+# dashboard in-memory, and tests/test_pipeline.py asserts against a tmp_path
+# output directory, not against these committed copies. Regenerate with
+# `python main.py`.
+#
+# NOTE the deliberate asymmetry with reports/metrics/ below: only the two
+# distribution CSVs there are main.py outputs. The rest are NASA-derived
+# research artifacts and stay tracked -- see the block after this one.
+# ---------------------------------------------------------------------------
+data/features/*.csv
+data/processed/**/*.csv
+!data/processed/calce/calce_sample_processed.csv
+!data/processed/nasa/nasa_sample_processed.csv
+reports/metrics/battery_state_distribution.csv
+reports/metrics/risk_distribution.csv
+
+# ---------------------------------------------------------------------------
+# DELIBERATELY NOT IGNORED (Batch 13) -- do not "tidy" these away:
+#
+#   reports/metrics/*.csv  (all except the two named above)
+#   reports/figures/*.png
+#
+# These are derived from the NASA cleaned_dataset (7.2M rows), which is
+# gitignored above and not redistributable. They CANNOT be regenerated from a
+# clean checkout. They are also live runtime inputs:
+#
+#   continuous_model_training_data.csv -> tests/test_adaptive_{validation,
+#       datasets,calibrator,commensurability,dataset_specs}.py,
+#       src/bms/adaptive/__main__.py, scripts/fit_{shap,horizon,mixed}*.py
+#   calibration_merged.csv             -> tests/test_explain.py,
+#       scripts/{validate_health_index_versions,audit_threshold_reachability}.py
+#   nasa_ground_truth_fade.csv,
+#   nasa_pipeline_scores.csv,
+#   horizon_regression_summary.csv     -> scripts/generate_report_figures.py
+#
+# Ignoring them would break the test suite on a fresh clone and make
+# docs/final_report.md and docs/calibration_report.md unreproducible.
+# ---------------------------------------------------------------------------
+
+# Adaptive calibration runtime store (versions + decision log are run artifacts)
+models/adaptive/
