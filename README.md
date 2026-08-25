@@ -188,6 +188,22 @@ This table is the honest summary. `docs/final_report.md` has the derivations;
 
 | Claim | Evidence | Verdict |
 |---|---|---|
+| **`capacity_loss`, the target all earlier results used, is 96% noise** | Isotonic signal fraction 0.044 — the ceiling on attainable R² (ADR 0007) | **Established** |
+| **Measured capacity carries a reversible thermal offset** | Mean SOH at cycle ≤ 20: 0.918 at 4 °C vs 0.999 at 44 °C; blocks Arrhenius identifiability (ADR 0007) | **Established** |
+| **LOBO rank carries no information about LOCO rank** | Spearman ρ = +0.084, p = 0.795, n = 12; choosing by LOBO costs 0.309 R² (ADR 0008) | **Supported** |
+| **Behaviour adds ~0.05 R² over cycle count alone** | `age_linear` LOCO R² 0.406 vs XGBoost 0.459, and `age_linear` is the most protocol-robust method tested (Δ −0.076) | **Supported** |
+| **Every method loses skill under protocol shift, on every frame tested** | 36 method-frame combinations plus 220 sweep measurements; Δ R² negative in all of them (ADR 0009, ADR 0010) | **Replicated ×3** |
+| **Unsupervised outliers are not harmful behaviour** | Both IsolationForest and LOF: flagged cycles show *less* fade than unflagged within-cell (p = 1.00 / 0.90); the two detectors agree on only 34 of 135 flags (ADR 0011) | **Established** |
+| **Usage segments are real and rediscover the existing rules** | k=6, silhouette 0.541 vs null 0.153; one segment is 100% deep-discharge, another 100% fast-charge (ADR 0011) | **Established** |
+| **The LOCO estimate is noisier than the effect it is used to measure** | Interquartile range across cohort draws **0.724 R²** vs median between-method difference **0.351 R²**; a nonlinear model beats a straight line on cycle count in only 25% of draws (ADR 0010) | **Established** |
+| ~~The loss depends on cohort coverage~~ | **Refuted by designed experiment.** CALCE raw ρ = +0.257 (p = 0.027) collapses to +0.024 (p = 0.84) once training-set size is regressed out; NASA shows nothing either way | **Withdrawn (ADR 0010)** |
+| ~~A sequence model is the worst transferring method~~ | LSTM was −4.669 on CS2 alone; adding CX2 gives it the **best LOBO (0.971)** and positive LOCO (0.526) | **Withdrawn (ADR 0009)** |
+| ~~Behaviour adds only ~0.05 R² over cycle count~~ | NASA-specific. On CALCE `age_linear` LOCO 0.016 vs `random_forest` 0.693 | **Withdrawn (ADR 0009)** |
+| ~~High-capacity models transfer worse than simple ones~~ | XGBoost is a direct counterexample | **Withdrawn (ADR 0008)** |
+| ~~Regularisation, not capacity, predicts transfer~~ | Contradicted on CALCE — unregularised `random_forest` transfers best there | **Withdrawn (ADR 0009)** |
+| Which model family transfers best | Ordering **inverts** between NASA and CALCE; not identifiable from 12 methods on one dataset | **Not identifiable** |
+| **Conformal 90% intervals undercover on most unseen protocols** | ElasticNet LOCO: 56% of held-out cohorts below nominal, worst 0.262 | **Established** |
+| An activation energy can be estimated from NASA data | Ea = −35 kJ/mol (physically impossible); `assess_identifiability` refuses | **Not identifiable** |
 | Guardian's attribution matches the score it explains | Shapley efficiency axiom, asserted on every call | **Exact** |
 | Trailing temperature relates to measured capacity fade | rho 0.21–0.22, p < 0.0001, correct sign in 7/7 cells across independent cohorts | **Supported** |
 | Fitted v2 ranks an unseen cell within a **known** protocol | Spearman rho = 0.841, p < 0.001 (LOBO-refit, n=33) | **Supported** |
@@ -204,6 +220,106 @@ themselves are not validated predictors of capacity fade, and the project says
 so in the report, in the module docstrings, and on the dashboard's own front
 page. The main contribution is a rigorously diagnosed account of *why* they
 fail, with a specific, costed path to fixing it — not a working predictor.
+
+---
+
+## The benchmark suite
+
+`src/bms/benchmarks/` runs published methods through **this project's own
+gate** — the same `Validator`, the same mandatory leave-one-cohort-out, the
+same age-confound baseline. A method does not get an easier evaluation for
+being well known.
+
+```bash
+python scripts/run_benchmark_study.py            # full sweep (~14 min/target)
+python scripts/run_benchmark_study.py --quick    # reference methods only
+python scripts/run_coverage_study.py             # conformal coverage under shift
+```
+
+| Family | Methods |
+|---|---|
+| Reference | `train_mean`, `age_linear`, `age_quadratic`, `age_isotonic` |
+| Classical | `elasticnet`, `svr_rbf`, `gpr_matern`, `random_forest`, `hist_gradient_boosting`, `xgboost`, `mlp` |
+| Sequence | `lstm` — genuine LSTM over 10 consecutive cycles per cell |
+| Physics | `arrhenius_avg_temp`, `arrhenius_trailing_temp` |
+| Curve-based | `severson_delta_q_variance`, `ica_peak_features`, `sequence_model` |
+
+`xgboost` is the real `xgboost` package, registered separately from
+`hist_gradient_boosting` because they are different algorithms; `lstm` is a
+real sequence model, distinct from `mlp` which is a network over one flat row.
+Both need the optional extra and both are **experimental benchmarks, not
+promoted** — see `docs/benchmark_models.md` for architecture, window
+justification and leakage controls.
+
+```bash
+pip install "behavior-aware-bms[benchmarks]"   # xgboost + torch
+```
+
+The curve-based family reports **UNAVAILABLE with a reason** rather than being
+omitted — the retained NASA frame carries cycle-level aggregates, not per-cycle
+voltage traces. The feature maths is implemented and tested; only the data is
+missing. A results table listing only what happened to be computable reads as a
+complete survey and is not one.
+
+`train_mean` scores exactly R² = 0.0000 on both splits, which is a live
+self-test: any other value means the metric is wired wrong.
+
+### Why this changed the project's headline finding
+
+Running published methods forced a question nobody had asked — *how much signal
+does the target contain?* `benchmarks/targets.signal_to_noise` answers it, and
+the answer reframes four years of null results:
+
+| Target | Max attainable R² | |
+|---|---|---|
+| `capacity_loss` | **0.044** | the target every earlier result used |
+| `soh` / `cumulative_fade` | 0.569 | 31 of 34 cells pass the SOH screen |
+| `horizon_fade_20` | 0.639 | |
+| `horizon_fade_50` | 0.967 | 17 cells survive a 50-cycle horizon |
+
+Every previously published "R² ≈ 0" was measured against a target where 0.044
+was the best possible score. The finding was real but its scope was wrong: *these
+scores do not predict per-cycle capacity delta, which is mostly measurement
+noise* — not *these scores do not predict degradation*. Full account in
+**ADR 0007**.
+
+### The result that came out of it
+
+On `cumulative_fade`, twelve methods through the same gate (**ADR 0008**):
+
+Target `soh`, 31 cells, 9 cohorts, ceiling 0.569 (ADR 0008):
+
+| Method | LOBO MAE | LOCO MAE | LOBO R² | LOCO R² | Δ |
+|---|---:|---:|---:|---:|---:|
+| `xgboost` | **4.21%** | **7.62%** | 0.732 | **0.459** | −0.273 |
+| `age_linear` | 8.54% | 10.71% | 0.483 | 0.406 | **−0.076** |
+| `elasticnet` | 7.61% | 10.31% | 0.609 | 0.355 | −0.254 |
+| `random_forest` | 4.90% | 10.67% | **0.773** | 0.150 | −0.623 |
+| `lstm` | 5.62% | 17.36% | 0.594 | −0.185 | −0.778 |
+| `mlp` | 4.15% | 14.19% | 0.731 | −0.623 | −1.354 |
+| `train_mean` | 11.17% | 11.92% | 0.000 | 0.000 | 0.000 |
+
+**Leave-one-cell-out rank carries essentially no information about
+leave-one-cohort-out rank** — Spearman ρ = +0.084 (p = 0.795, n = 12). A
+leaderboard sorted the way the field sorts them tells you close to nothing
+about which model to deploy across protocols. Choosing by LOBO here still
+costs **0.309 R²**.
+
+**The number that matters most:** `age_linear` — a straight line on cycle
+count — reaches LOCO R² 0.406 against XGBoost's 0.459. **All the behavioural
+modelling buys about 0.05 R² over counting cycles**, and `age_linear` is also
+by far the most robust to protocol shift (Δ = −0.076 against the next-best
+−0.254).
+
+Nothing is wired into the dashboard regardless (ADR 0005).
+
+> ⚠ An earlier version of this table used 32 cells and reported a much more
+> dramatic selection failure (`random_forest` at LOCO −0.515, last of twelve).
+> That rested on a single pathological cell, **B0041**, which the SOH screen's
+> fourth criterion now excludes. The correction is documented in ADR 0008
+> rather than quietly applied.
+
+---
 
 ### The three findings worth knowing
 
@@ -269,6 +385,13 @@ That is the correct outcome on current evidence, and `score()` refuses rather
 than falling back to a rejected candidate or to the v1 rule-based index
 (rho = -0.269 against measured fade). The binding constraint is data: every
 verdict here is worth re-running on a second multi-cycle dataset.
+
+> **Scope note (ADR 0007/0008).** These verdicts are against `capacity_loss`,
+> whose R² ceiling is 0.044 — so "nothing is promoted" is partly a statement
+> about the target. Against `cumulative_fade`, four candidates do clear the
+> same gate. The adaptive CLI still defaults to `capacity_loss` for continuity
+> with previously published numbers; re-running it on the better-conditioned
+> target is the next step, tracked in `docs/roadmap.md`.
 
 ### The gate caught a false positive its author did not anticipate
 
@@ -481,6 +604,22 @@ Behavior-Aware-BMS-main/
 │   │   ├── commensurability.py      # Are two datasets comparable at all? (ADR 0006)
 │   │   ├── transfer.py              # Cross-dataset transfer feasibility
 │   │   └── __main__.py              # CLI: python -m src.bms.adaptive
+│   ├── benchmarks/                  # Published methods, run through the same gate
+│   │   ├── registry.py              # Method registry; availability is reported, never skipped
+│   │   ├── baselines.py             # train_mean, age_linear/quadratic/isotonic
+│   │   ├── classical.py             # ElasticNet, SVR, GPR, RF, HistGB, MLP
+│   │   ├── curves.py                # Severson dQ(V) variance, ICA/DVA (need curve data)
+│   │   ├── physics.py               # Registers the Arrhenius variants
+│   │   ├── targets.py               # Target construction + noise-ceiling estimation (ADR 0007)
+│   │   └── study.py                 # Runs every method x every target through LOBO/LOCO
+│   ├── detect/                      # Unsupervised segmentation + outlier detection (ADR 0011)
+│   │   ├── clustering.py            # K-Means/DBSCAN + null-model separability gate
+│   │   └── anomaly.py               # IsolationForest/LOF + within-cell fade-association test
+│   ├── physics/                     # Physics-grounded models, with external checks
+│   │   ├── arrhenius.py             # fade = A*exp(-Ea/RT)*N^z + identifiability gate
+│   │   └── thermal_confound.py      # Reversible thermal capacity offset (ADR 0007)
+│   ├── uncertainty/
+│   │   └── conformal.py             # Split + Mondrian conformal, coverage under protocol shift
 │   ├── features/
 │   │   ├── behavior_features.py     # Flags, rolling stats, per-battery summary
 │   │   └── cycle_features.py        # Per-cycle aggregation for cycle-level calibration

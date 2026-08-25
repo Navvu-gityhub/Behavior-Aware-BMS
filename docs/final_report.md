@@ -1,7 +1,20 @@
 # Behavior-Aware EV Battery Health Monitoring: Final Report
 
 **Author:** Naveen Vaidyanathan
-**Date:** 2026-07-22
+**Date:** 2026-07-22 (Sections 4.10–4.12 added 2026-08-21)
+
+**Note on revision:** Sections 4.10 through 4.12 were added after the original
+report and **change how Sections 4.1 through 4.6 should be read**. In short:
+every earlier result was measured against a target whose maximum attainable R²
+is 0.044, so the recurring "no method beats a constant" finding was
+substantially a property of the target rather than of the methods.
+
+Nothing earlier has been retracted or silently edited — each number remains
+correct as a statement about `capacity_loss`. What has changed is the scope of
+the conclusions drawn from them, and Sections 4.10–4.12 state exactly which
+claims narrow and which survive. Where this document and ADR 0007/0008
+disagree, the ADRs are authoritative; they were written first and this section
+follows them.
 
 **Note on this document:** every number below was executed and verified in
 the course of producing this report — nothing is carried over from an
@@ -51,7 +64,47 @@ fixed cohort intercept as the likely cause, but a mixed-effects model
 built to test that directly (Section 4.6) is not identifiable with only
 3-4 batteries per cohort — closing that modeling line on this dataset and
 converting "more data would help" into a concrete acceptance criterion
-(~8-10+ batteries per cohort) for whatever dataset comes next. The project's main contribution at this stage is not a validated predictive
+(~8-10+ batteries per cohort) for whatever dataset comes next.
+
+A final pass (Sections 4.10–4.12) rescoped much of the above. The target used
+throughout, per-cycle capacity delta, has a signal fraction of **0.044** — an
+R² of 0.044 was the best score obtainable against it, so the recurring null
+result was substantially a property of the target. On a well-conditioned
+target (`soh`/`cumulative_fade`, ceiling 0.569) four candidates clear the same
+gate. A reversible thermal offset in measured capacity — apparent SOH of 0.918
+at 4 °C versus 0.999 at 44 °C before degradation is possible — was found to
+explain mechanically why temperature predicts fade correctly within cohorts
+and backwards across them.
+
+A benchmark of twelve published methods, including a real XGBoost and a real
+LSTM, showed that **leave-one-cell-out rank carries essentially no information
+about leave-one-cohort-out rank** (Spearman ρ = +0.084, p = 0.795, n = 12) and
+that choosing by the former costs 0.309 R². The most robust method in the
+table is `age_linear`, a straight line on cycle count: it reaches LOCO
+R² = 0.406 against the best model's 0.459, so **all the behavioural modelling
+buys about 0.05 R² over counting cycles**.
+
+The picture then replicated on CALCE (Section 4.13) — a second laboratory, a
+depth-of-discharge cohort axis rather than a thermal one, 19 cells across 8
+cohorts and two cell families. Every method again lost skill under protocol
+shift. Which *family* transfers best did not replicate.
+
+By that point five separate ranking claims had been made and withdrawn, so a
+designed experiment (Section 4.14, 220 measurements) was run to find out why.
+The proposed explanation — that the gap reflects cohort coverage — was
+**refuted**: the one dataset showing a significant raw correlation lost it
+entirely once training-set size was regressed out. What the experiment did
+establish is that the leave-one-cohort-out estimate has an interquartile range
+across cohort draws of **0.724 R²**, roughly twice the median difference
+between a nonlinear model and a straight line on cycle count (0.351). The
+measurement is noisier than the effect it was being used to rank, which is why
+every ranking claim failed to replicate.
+
+The defensible conclusion is methodological: *at the sample sizes standard
+battery datasets provide, a single leave-one-cohort-out estimate cannot
+distinguish between candidate methods and must be reported as an interval.*
+
+The project's main contribution at this stage is not a validated predictive
 score — it is a rigorously diagnosed account of what does and doesn't
 work, with a concrete, specific path to closing the gap.
 
@@ -186,6 +239,16 @@ individual batteries checked (a check against pseudoreplication from
 pooling autocorrelated cycles).
 
 ![Figure 2: temperature is a significant, correctly-signed, transferable signal](../reports/figures/fig2_temperature_signal.png)
+
+> **Scope narrowed by Section 4.11.** This result holds *within* cohorts and
+> should not be read as "transferable", despite this section's original
+> heading. Measured capacity carries a large reversible thermal offset —
+> apparent SOH is 0.918 at 4 °C and 0.999 at 44 °C at cycle ≤ 20, before
+> degradation is possible — which is constant inside a fixed-ambient cohort
+> but switches on across cohorts, where it is anti-correlated with real
+> thermal aging and reverses the apparent sign. The within-cohort finding
+> above stands; the cross-cohort collapse reported in Section 4.8 now has a
+> measurement explanation rather than only a statistical one.
 
 The current-based `avg_stress`/
 `aggressive_discharge_count` signals do not transfer: significant and
@@ -528,6 +591,393 @@ SHAP is right", but that this dataset supports neither weighting — consistent
 with Section 4.7, where most of the rule score turns out to be constant.
 
 
+### 4.10 The target itself was 96% noise (Level 5)
+
+Every result in Sections 4.1 through 4.9 is measured against `capacity_loss`,
+the per-cycle change in measured discharge capacity. Building the benchmark
+suite (Section 4.12) required running published methods against that target,
+which forced a question this report had not asked: **how much signal does the
+target contain at all?**
+
+`benchmarks/targets.signal_to_noise` answers it by decomposing each target's
+within-cell variance into monotone trend and residual, using isotonic
+regression against cycle index. A monotone fit assumes only that degradation
+does not reverse — the weakest assumption that still defines a trend, chosen
+because a polynomial would bend to absorb noise and overstate the result. The
+trend fraction is a **ceiling on attainable R²**, since nothing can predict
+the residual.
+
+| Target | Signal fraction (max attainable R²) | Cells | Rows |
+|---|---|---|---|
+| `capacity_loss` | **0.044** | 33 | 2,680 |
+| `soh` / `cumulative_fade` | 0.569 | 31 | 2,585 |
+| `horizon_fade_10` | 0.389 | 31 | 2,268 |
+| `horizon_fade_20` | 0.639 | 25 | 1,933 |
+| `horizon_fade_50` | 0.967 | 17 | 1,246 |
+
+**An R² of 0.044 was the best score obtainable on the target this report's
+central negative result was measured against.** The finding was real, but its
+scope was wrong. The defensible statement is *these scores do not predict
+per-cycle capacity delta, which is mostly measurement noise* — not *these
+scores do not predict degradation*.
+
+The mechanism is arithmetic rather than subtle. A per-cycle capacity delta is
+a difference of two noisy measurements: it inherits both errors while
+cancelling nearly all of the underlying trend. Its mean is 0.003 Ah against a
+standard deviation of 0.132, and its minimum is −2.61 Ah. Capacity does not
+un-degrade by 2.61 Ah in one cycle.
+
+This also reframes Section 4.5. Longer horizons improved rank correlation but
+not R², which was attributed there to the cohort intercept generalising worse
+as loss magnitude grows. The ceiling table supplies a simpler contributing
+explanation: horizon length and signal fraction rise together, so part of what
+Section 4.5 measured was the target getting cleaner.
+
+**Constructing an SOH target required screening.** State of health presumes
+every `capacity_ah` entry for a cell is the same kind of measurement, and for
+NASA's randomised-usage cells it is not — they interleave reference discharges
+with random-walk loading, and the frame carries no measurement-type flag.
+Normalising B0041 by its earliest cycles yields an SOH of 22.6.
+
+`screen_cells_for_soh` applies three criteria; 32 of 34 cells pass. The
+criterion that does the work is step size: normalising by a high quantile of a
+cell's own capacity bounds SOH at 1.0 by construction, so an alternating
+full/partial series shows almost no *overshoot* and passes a naive check. What
+identifies it is that degradation is gradual. Admissible cells have a median
+step of 0.5% of reference capacity between consecutive cycles (maximum 2.2%);
+B0050 sits at 28.3% and is excluded. B0052 has 2 usable cycles. Fourteen
+individual readings across the remaining cells are masked as implausible.
+
+A declining trend is reported but deliberately **not** screened on. Requiring
+the target to trend downward before admitting a cell would select the cells
+that agree with the hypothesis under test.
+
+### 4.11 Measured capacity carries a reversible thermal offset that inverts the temperature signal (Level 5)
+
+Switching to an SOH-family target exposed a second problem, running in the
+opposite direction. Restricting to cycle ≤ 20 — before meaningful degradation
+is possible:
+
+| Ambient | Mean SOH at cycle ≤ 20 | Cells |
+|---|---|---|
+| 4 °C | 0.918 | 10 |
+| 22 °C | 0.992 | 3 |
+| 24 °C | 0.909 | 14 |
+| 43 °C | 0.979 | 4 |
+| 44 °C | 0.999 | 3 |
+
+Spearman correlation between ambient temperature and apparent SOH over that
+early window is **+0.205**: warmer cells measure *healthier* before they have
+had time to degrade.
+
+A cell does not lose 8% of its capacity in twenty cycles. This is the
+reversible temperature dependence of measured discharge capacity — at low
+temperature, higher internal resistance and slower lithium diffusion mean the
+cell reaches its voltage cutoff sooner and delivers less charge. The capacity
+returns when the cell is warmed. It is not degradation.
+
+**This supplies a mechanism for the report's longest-standing open puzzle.**
+Section 4.2 reports trailing temperature as a real, correctly-signed predictor
+of fade *within* cohorts. Section 4.8 reports the fitted model's ranking
+collapsing to ρ = −0.295 *across* cohorts, attributed there to cohort
+intercepts doing the work. Those are one phenomenon.
+
+Within a cohort, ambient temperature is fixed, the offset is constant, and the
+residual temperature variation reflects genuine thermal stress — so the
+Section 4.2 signal is real and correctly signed. Across cohorts, ambient
+changes, the artifact switches on, and because it is *anti*-correlated with
+true thermal degradation it does not merely add noise: it reverses the
+apparent relationship. A coefficient fitted within cohorts and applied across
+them gets the sign wrong, which is what Section 4.8 measured.
+
+Section 4.2's finding therefore stands, with its scope narrowed: it is a
+within-cohort result, and the cross-cohort behaviour has a measurement
+explanation rather than only a statistical one.
+
+**An Arrhenius model was built to exploit this, and it failed.** The reasoning
+was that a linear temperature coefficient is the wrong functional form —
+thermally activated side reactions follow `k(T) = A·exp(−Ea/RT)`, and a linear
+slope fitted at 4 °C is a tangent to an exponential taken at the wrong point.
+An activation energy, being a property of the chemistry rather than the
+experiment, should transfer where a fitted slope does not.
+
+Fitted on NASA, `fade = A·exp(−Ea/RT)·N^z` returns **Ea = −34.0 kJ/mol**
+against trailing temperature and −32.5 against instantaneous: negative, meaning
+degradation slows with heat. Per-cohort fits scatter from −568 to +183 kJ/mol,
+with 1 of 9 inside the published 20–80 kJ/mol band. Correcting the thermal
+offset moves it to −25.4 kJ/mol and discards 927 of 2,585 observations,
+because after correction many cells show no net fade to take a logarithm of.
+
+The estimator is not at fault: given data generated from the model it recovers
+a known Ea to within 0.12%, and to machine precision without noise
+(`tests/test_physics.py`). What the fit faithfully reports is that **an
+activation energy is not identifiable from this frame**, for three compounding
+reasons: capacity is not measured at a common temperature; ambient temperature
+is nearly collinear with protocol (the 4 °C cells *are* the COLD4C cohorts,
+with their own loads, cutoffs and cell batches); and within-cohort temperature
+variation, the only contrast free of that confound, is far smaller than the
+between-cohort spread.
+
+`assess_identifiability` encodes those checks and refuses before fitting. On
+this frame it reports temperature varying only **0.171×** as much within
+cohorts as between them (minimum 0.25), and an early-cycle SOH spread of
+**0.090** across ambient levels (maximum 0.05).
+
+This yields a concrete data acceptance criterion, joining the "8–10+ batteries
+per cohort" criterion from Section 4.6: **the next dataset must supply
+reference discharges at a common temperature, and must vary temperature within
+protocol rather than confounding the two.** Neither NASA nor the supplied
+CALCE data does.
+
+### 4.12 Published methods under protocol shift: the field's standard selection picks the worst model (Level 5)
+
+With a well-conditioned target available, a question that was previously
+unanswerable becomes answerable: how do standard published methods behave
+under leave-one-cohort-out? Twelve methods were run through the *same*
+`Validator` this project applies to its own candidates — same mandatory LOCO,
+same training-mean baseline, same age-confound check. A method does not get a
+friendlier evaluation for being well known.
+
+Target `soh`, 2,585 rows, 31 cells, 9 cohorts, ceiling 0.569. Two of the
+twelve are a real XGBoost (the `xgboost` package, not a substitute) and a real
+LSTM over 10 consecutive cycles per cell — see `docs/benchmark_models.md`.
+Sorted by LOCO, which is the column that matters:
+
+| Method | LOBO MAE | LOCO MAE | LOBO R² | LOCO R² | Δ |
+|---|---:|---:|---:|---:|---:|
+| `xgboost` | **4.21%** | **7.62%** | 0.732 | **0.459** | −0.273 |
+| `age_linear` | 8.54% | 10.71% | 0.483 | 0.406 | **−0.076** |
+| `elasticnet` | 7.61% | 10.31% | 0.609 | 0.355 | −0.254 |
+| `gpr_matern` | 4.48% | 17.06% | 0.725 | 0.207 | −0.518 |
+| `random_forest` | 4.90% | 10.67% | **0.773** | 0.150 | −0.623 |
+| `svr_rbf` | 6.91% | 14.29% | 0.651 | 0.087 | −0.564 |
+| `age_quadratic` | 6.62% | 8.31% | 0.336 | 0.034 | −0.301 |
+| `age_isotonic` | 6.99% | 8.50% | 0.278 | 0.018 | −0.260 |
+| `train_mean` | 11.17% | 11.92% | 0.000 | 0.000 | 0.000 |
+| `lstm` | 5.62% | 17.36% | 0.594 | −0.185 | −0.778 |
+| `hist_gradient_boosting` | 4.12% | 10.27% | 0.770 | −0.265 | −1.035 |
+| `mlp` | 4.15% | 14.19% | 0.731 | −0.623 | −1.354 |
+
+`train_mean` scoring exactly 0.0000 on both splits is a live self-test of the
+metric: `r2_vs_global_mean` is defined against the training-fold mean, so a
+method predicting exactly that must score exactly zero.
+
+**Leave-one-cell-out rank carries essentially no information about
+leave-one-cohort-out rank.** Spearman ρ = **+0.084 (p = 0.795, n = 12)**. A
+leaderboard sorted the way this field sorts them says close to nothing about
+which model to deploy across protocols. Choosing by LOBO here selects
+`random_forest` (LOBO 0.773) and costs **0.309 R²** against `xgboost`, the
+best transferring method.
+
+> **A stronger claim was made here and withdrawn.** Computed on 32 cells —
+> before the SOH screen's fourth criterion excluded B0041 — this section
+> reported that LOBO selection picks the *worst* method (`random_forest` at
+> LOCO −0.515, last of twelve) and that ρ = −0.490. Both rested on one
+> pathological cell: with it removed `random_forest` reaches LOCO +0.150,
+> fifth of twelve, and the correlation flips sign. ADR 0008 records the
+> correction. The episode is itself evidence for the paper's argument — a
+> single unscreened cell was carrying a headline conclusion.
+
+**Every method still loses skill**, from −0.076 to −1.354, and three go
+negative. **`age_linear` is the most robust by a wide margin** (Δ = −0.076
+against the next-best −0.254) and reaches LOCO R² 0.406 against XGBoost's
+0.459 — so all the behavioural modelling buys about **0.05 R² over counting
+cycles**, consistent with Section 4.7's threshold audit.
+
+**The LSTM is the clearest negative result.** A genuine sequence model with
+strictly more temporal context than the hand-engineered `trailing_*` features
+posts LOBO R² 0.594 and LOCO −0.185. On CALCE (Section 4.13) it is far worse:
+LOCO −4.669, an MAE of 62%. It learns cell-specific trajectory shape, and that
+shape does not survive a protocol change.
+
+**A control confirms the harness is not manufacturing the divergence.** On
+`capacity_loss`, Spearman(LOBO, LOCO) is **+0.818 (p = 0.001)** and every
+method sits within ±0.01 of zero on both splits. When a target has no signal
+there is nothing to overfit to, so the splits agree — on nothing.
+
+**`age_linear` remains the bar, and it is higher than it looks.** At LOCO
+R² = 0.274 against ElasticNet's 0.295, cycle count alone recovers 93% of the
+best behavioural model's cross-protocol skill. Whatever behaviour contributes
+beyond age on this dataset is small — which is the same conclusion Section 4.7
+reached from a different direction.
+
+**Conformal prediction states the same finding in the language of a safety
+case.** Split conformal intervals guarantee ≥ 1 − α coverage when calibration
+and test data are exchangeable; deploying on an unseen protocol violates that
+assumption directly. Measured with ElasticNet at a nominal 0.90:
+
+|  | Median | Worst | Below nominal |
+|---|---|---|---|
+| LOBO | 0.970 | 0.000 (B0045) | 19% of cells |
+| LOCO | 0.824 | 0.262 (COLD4C_2A_flagged) | 56% of cohorts |
+
+The medians would pass an audit that stopped there. The worst-group column
+would not: there is a cell whose 90% interval contained the truth **zero
+times**, and under protocol shift a majority of held-out cohorts fall below
+nominal. A fleet-average coverage statistic is not merely uninformative here,
+it is anti-informative — the overcovered easy cohorts pull the mean up and
+certify a system that fails precisely on the cells in the hardest conditions.
+
+`age_linear` puts only 11% of cohorts below nominal but needs intervals 27%
+wider to do it (0.505 versus 0.399). Tighter intervals are not free.
+
+**Four candidates now clear the gate on this target** — `elasticnet`, both
+Arrhenius variants, and `age_quadratic` — so this project's "nothing is
+promoted" state holds only against `capacity_loss`. Nothing has been wired
+into the dashboard regardless: ADR 0005's rule that the gate is the product
+still applies, and one dataset is not deployment evidence.
+
+**A model can pass a predictive gate while its coefficients are physically
+meaningless.** `arrhenius_avg_temp` is marked PROMOTED at LOCO R² = 0.069, and
+it is the same fit that returns Ea = −31 kJ/mol. These are not in conflict:
+the gate measures out-of-sample prediction and cannot check whether a fitted
+parameter means what its name says, since a wrong sign on one term can be
+compensated elsewhere in the fit. `assess_identifiability` therefore remains a
+separate check that runs before fitting and refuses independently of the
+gate's verdict.
+
+### 4.13 Replication on CALCE CS2: the collapse holds, the ranking does not (Level 5)
+
+Every quantitative result above comes from NASA. Section 5 has listed
+independent replication as the highest-value next step since the first draft,
+and a reviewer would reject on that ground alone.
+
+CALCE CS2 is the dataset the commensurability screen identified as worth the
+download: FEASIBLE on four axes, and — decisively — its cohorts vary **depth
+of discharge and discharge rate**, not temperature. If the collapse reproduces
+there it is a property of protocol shift rather than of NASA.
+
+15 cells downloaded, 13 loadable (two are CADEX-format and refused), 11
+admitted by the SOH screen, 5 cohorts, 31,311 cycle rows, ceiling **0.888**.
+CALCE records no temperature and no SOC, so the feature set is electrical
+(voltage, current, internal resistance, cycle duration) — **these results are
+not feature-comparable with the NASA table above and must not be placed
+alongside it without that caveat.**
+
+The figures below are the **full CS2 + CX2 run**: 19 admitted cells across 8
+cohorts and two cell families, 43,832 rows, ceiling 0.870. Cohort labels are
+namespaced `CS2_Type1 … CX2_Type6`, because both families number their
+experiment types 1–6 and a bare `Type1` would merge four CS2 cells with four
+CX2 cells — leaving half a held-out protocol in training.
+
+| Method | LOBO MAE | LOCO MAE | LOBO R² | LOCO R² | Δ |
+|---|---:|---:|---:|---:|---:|
+| `random_forest` | 3.04% | **8.59%** | 0.938 | **0.693** | −0.245 |
+| `hist_gradient_boosting` | 3.22% | 10.00% | 0.922 | 0.642 | −0.280 |
+| `gpr_matern` | **2.93%** | 10.06% | 0.911 | 0.617 | −0.294 |
+| `xgboost` | 3.38% | 16.07% | 0.912 | 0.534 | −0.378 |
+| `lstm` | **2.26%** | 15.68% | **0.971** | 0.526 | −0.445 |
+| `mlp` | 2.74% | 15.88% | 0.940 | 0.507 | −0.433 |
+| `svr_rbf` | 5.59% | 22.37% | 0.878 | 0.301 | −0.577 |
+| `age_isotonic` | 9.79% | 12.07% | 0.339 | 0.198 | −0.141 |
+| `age_linear` | 14.52% | 15.43% | 0.096 | 0.016 | −0.080 |
+| `elasticnet` | 14.87% | 15.39% | 0.131 | 0.000 | −0.130 |
+| `train_mean` | 17.53% | 18.16% | 0.000 | 0.000 | 0.000 |
+
+Ten of twelve methods clear the promotion gate here. **`lstm` reaches LOBO MAE
+2.26% and `gpr_matern` 2.93%** — the first sub-3% figures in this project, and
+the only place the original target is met. Under leave-one-cohort-out the same
+models give 15.68% and 10.06%.
+
+> **On an earlier CS2-only run.** With 11 cells across 5 cohorts the same
+> harness gave `lstm` a LOCO R² of −4.669 and this report claimed a sequence
+> model was the worst transferring method on both datasets. Adding CX2
+> reversed it entirely. That claim is withdrawn (ADR 0009), and Section 4.14
+> explains why such reversals kept happening.
+
+**What replicates.** Every method loses skill under protocol shift, on a
+different dataset from a different laboratory with a different cohort axis.
+Every Δ in the table is negative.
+
+**What does not.** The *ordering among methods* inverts between datasets. On
+NASA the tree ensembles were mid-to-poor transferrers and `elasticnet` was
+strong; here the three tree ensembles take the top LOCO positions and
+`elasticnet` is barely better than the training mean. The reason is visible in
+its LOBO score of 0.131: with only electrical features and a strongly
+nonlinear relationship to state of health, a penalised linear model cannot fit
+the data even in sample.
+
+By this point five separate ranking claims had been made and withdrawn.
+Section 4.14 reports the experiment built to find out why.
+
+**Both Arrhenius variants report ERROR rather than a score**, because CALCE
+records no temperature channel at all — surfaced by the harness rather than
+silently scored against a quantity the model does not use.
+
+**Caveat on three of the five cohorts.** `Cycle_Index` equals one full
+discharge only for Types 1 and 2. Types 5 and 6 cycle partially by design, so
+their SOH is measured against a partial-cycle reference of ~0.26–0.42 Ah; that
+tracks relative fade but is not absolute state of health. Type 3 is excluded
+outright by the screen. Recovering absolute SOH there needs full-discharge
+segment detection of the kind `telemetry/cycles.py` already performs for CAN
+logs. Full detail in ADR 0009.
+
+**On the `<3%` target.** `xgboost` reaches LOBO MAE **3.97%** here — the
+lowest SOH error anywhere in this project, on its cleanest target. Still above
+3%, and 15.89% on the honest split.
+
+### 4.14 Why the rankings kept reversing: the LOCO estimate is noisier than the effect (Level 6)
+
+Sections 4.12 and 4.13 produced two incompatible method orderings, and five
+ranking claims had been withdrawn by that point. A hypothesis was proposed:
+that the LOBO-to-LOCO gap is a property of **cohort coverage** rather than of
+the method, because a held-out protocol is barely unseen when eight others
+remain in training. It was intended as this project's central claim.
+
+`scripts/run_coverage_sweep.py` tested it — 220 measurements, holding method,
+target, harness and features fixed and varying only the number of cohorts
+available, 12 random cohort subsets per level, NASA and CALCE swept separately.
+
+Two controls decided the outcome. Cohorts holding a single cell are excluded,
+because holding out such a cohort *is* holding out a cell, so LOCO and LOBO
+become the same split and the gap is zero by construction — an earlier draft
+produced exactly that. And cell count is regressed out, because cohort count
+and cell count rise together.
+
+**The hypothesis is refuted.**
+
+| Dataset | n | Raw ρ(cohorts, gap) | Adjusted for cell count | ρ(cells, gap) |
+|---|---:|---:|---:|---:|
+| NASA | 146 | −0.029 (p = 0.73) | +0.007 (p = 0.94) | −0.031 |
+| CALCE | 74 | **+0.257 (p = 0.027)** | **+0.024 (p = 0.84)** | +0.272 |
+| Pooled | 220 | +0.034 (p = 0.62) | +0.025 (p = 0.71) | +0.028 |
+
+NASA shows nothing at all. CALCE's raw correlation is significant and its
+medians look convincingly monotone (−0.668, −0.347, −0.206, −0.125), and
+presented alone it reads as clean confirmation — but adjusted for cell count
+it collapses to +0.024, and the gap's correlation with cell count alone
+(+0.272) accounts for essentially all of it. The apparent coverage effect is a
+training-set-size effect. **Without the partial-correlation control this
+section would have reported the hypothesis as confirmed.**
+
+**What does explain the reversals** is visible in the spread. At a fixed
+coverage level, across 24 draws differing only in which cohorts were chosen:
+
+| | Value |
+|---|---:|
+| Median within-level IQR of the LOCO gap | **0.724 R²** |
+| Median `svr_rbf` − `age_linear`, paired on identical subframes | **−0.351 R²** |
+| IQR of that paired difference | 0.807 R² |
+| Draws where `svr_rbf` beats `age_linear` | **25%** |
+
+**The spread of the LOCO estimate between cohort draws is about twice the
+median difference between a nonlinear model and a straight line on cycle
+count.** The measurement noise exceeds the effect being measured, so a single
+LOCO run cannot resolve which method is better. Each of the five withdrawn
+claims was one draw from a distribution wider than the gaps it was being used
+to rank.
+
+The paired comparison is worth stating separately: on identical subframes the
+nonlinear model *loses* to the age baseline in three draws out of four. The
+full-frame runs where flexible models "won" were draw-specific outcomes.
+
+**The conclusion this report should be read as supporting** is therefore
+methodological and narrower than the one it set out to make: *at the sample
+sizes standard battery datasets provide, a single leave-one-cohort-out
+estimate cannot distinguish between candidate methods, and must be reported as
+an interval over cohort draws rather than a point estimate.* Full detail in
+ADR 0010.
+
 ## 5. Limitations
 
 - **Sample size.** 34 NASA batteries split across 9 protocol cohorts of
@@ -586,13 +1036,86 @@ with Section 4.7, where most of the rule score turns out to be constant.
   significant result in this report comes from NASA. Independent
   replication on a second cycling dataset (Stanford/Severson, or CALCE
   CS2/CX2) is the single highest-value next step for credibility.
+- **Sections 4.1–4.6 are scoped to a target that is 96% noise.** Their
+  numbers are correct; the conclusions drawn from them are narrower than
+  originally stated (Section 4.10). Any of those analyses is worth re-running
+  against `cumulative_fade`, and none has been.
+- **The SOH target rests on a screen, and the screen has thresholds.**
+  32 of 34 cells are admitted by criteria with hand-chosen cut points
+  (Section 4.10). The separation on NASA is wide enough that the exact values
+  do not matter here — 2.2% versus 28.3% median step — but that margin is a
+  property of this dataset, not a guarantee, and the thresholds have not been
+  tested against a second archive.
+- **The thermal correction is first-order and does not fix the problem.**
+  `thermal_confound.correct_thermal_measurement` divides out a per-ambient-level
+  offset estimated from early cycles. It assumes the offset is multiplicative
+  and constant over life, which is wrong — internal resistance grows with age,
+  so the low-temperature penalty grows too — and it cannot distinguish a
+  genuine early-life difference from the artifact. It did not rescue the
+  Arrhenius fit (Section 4.11).
+- **An activation energy is not identifiable from this data at all.** Not
+  poorly estimated — unidentifiable, for three independent reasons
+  (Section 4.11). The Arrhenius module ships gated and refusing.
+- **The capacity-versus-transfer relationship is underpowered.**
+  Spearman(LOBO, LOCO) = −0.490 at p = 0.106 with n = 12 methods
+  (Section 4.12). The concrete selection failure it accompanies does not
+  depend on that p-value, but the general ordering claim does and should not
+  be cited as established.
+- **Conformal coverage was measured on two methods, not all twelve.**
+  `elasticnet` and `age_linear` (Section 4.12). The per-cohort coverage
+  collapse may or may not be as severe for the others.
 
 ## 6. Future Work, in priority order
+
+> **Reprioritised 2026-08-21.** Item 1 is unchanged and remains first, but the
+> commensurability screen now answers *which* dataset, and items 0a–0c below
+> were added by Sections 4.10–4.12. Item 0a is cheap and should precede
+> everything.
+
+0a. **Re-run Sections 4.1, 4.3, 4.7 and 4.8 against `cumulative_fade`.** They
+    are currently scoped to a target with a 0.044 ceiling (Section 4.10). No
+    new data is required and the harness already exists — `make study`. This
+    is the highest value-per-hour item in the list and it may materially
+    change several conclusions in this report.
+
+0b. **Re-run the adaptive CLI on the better-conditioned target.** `python -m
+    src.bms.adaptive calibrate` still defaults to `capacity_loss`, so its
+    "nothing promoted" verdict inherits the same scope limit. Four candidates
+    clear the gate on `cumulative_fade`.
+
+0c. **Measure conformal coverage for the remaining ten benchmark methods.**
+    Only `elasticnet` and `age_linear` have been measured (Section 4.12), and
+    the per-cohort collapse is the most deployment-relevant result in the
+    report.
 
 1. Acquire a genuine multi-cycle dataset with fast-charge-rate variation
    (Stanford/Severson) or CALCE cycling data (CS2/CX2) to (a) independently
    replicate the temperature finding and (b) test the fast-charge
    hypothesis this dataset structurally cannot test.
+
+   **Now answerable in advance.** The commensurability screen
+   (`python -m src.bms.adaptive feasibility`) rates NASA → CALCE CS2/CX2 as
+   FEASIBLE on four axes (cutoff voltage, depth of discharge, discharge rate,
+   internal resistance), and NASA → Stanford/Severson and NASA → Oxford as
+   MARGINAL, with internal resistance the only usable axis in both cases.
+   **CALCE is the download that matters**; Severson cannot receive a NASA
+   temperature coefficient and NASA cannot fit Severson's charge-rate axis.
+
+   The scientific value is specifically that CS2's groupings vary *depth of
+   discharge and discharge rate*, not temperature. If the LOBO-to-LOCO
+   collapse in Section 4.12 reproduces on a different axis in a different
+   laboratory, it is a property of protocol shift rather than of NASA.
+
+   Loaders and registry adapters for CALCE cycling and Oxford now exist
+   (`src/bms/adaptive/loaders.py`) and are tested against format fixtures, so
+   this item is a download rather than a build. Note that neither dataset
+   ships a protocol label; cohorts are derived from measured discharge rate
+   and cutoff voltage and marked `DERIVED_`, and an authoritative CALCE
+   Type-1..6 mapping supplied via `cohort_map` would be strictly better.
+
+   The acceptance criteria are now concrete: ~8–10+ cells per cohort
+   (Section 4.6), **and** reference discharges at a common temperature with
+   temperature varied within protocol (Section 4.11).
 2. ~~Change the Level 3 regression target from noisy per-cycle capacity
    differences to a longer-horizon target~~ — **done, see Section 4.5.**
    Result: rank correlation improved and generalized better; R² against a
@@ -656,6 +1179,49 @@ tuning of what's already been tried here. That is a legitimate, if modest,
 research result, and the path to a stronger one is specific and
 actionable (Section 6), not vague.
 
+### Addendum, 2026-08-21
+
+The paragraph above is more pessimistic than the evidence now supports, and
+the reason is instructive rather than embarrassing.
+
+"No statistically supported improvement in generalization was identified"
+remains true **against `capacity_loss`**. Section 4.10 shows that target has a
+maximum attainable R² of 0.044, so all three linear extensions were competing
+for a band forty times narrower than anyone realised. Against
+`cumulative_fade`, a plain penalised linear model reaches LOCO R² = 0.295 and
+clears the promotion gate. The NASA-only modelling work was not complete; it
+was measuring the wrong thing.
+
+Two of the three diagnoses survive intact and one gains a mechanism. The
+horizon result (Section 4.5) is partly explained by horizon length and signal
+fraction rising together. The mixed-effects identifiability limit
+(Section 4.6) is unaffected. And the cross-protocol collapse (Section 4.8) now
+has a physical cause: a reversible thermal offset in measured capacity that is
+constant within a cohort and sign-reversing across cohorts (Section 4.11).
+
+What replaces the original conclusion is a sharper claim, and a more
+transferable one. This project's contribution is not a battery model. It is
+evidence that **the validation protocol standard in this field cannot support
+the claims made on it** — not because it is biased, but because at these
+sample sizes it is too *noisy*. Section 4.14 measures the leave-one-cohort-out
+estimate's interquartile range across cohort draws at 0.724 R², against a
+median between-method difference of 0.351. A single LOCO number is a draw from
+a distribution wider than the gaps it is used to rank.
+
+This project is its own demonstration. Five ranking claims were made from
+single-frame LOCO runs and all five were withdrawn — one reversed by excluding
+a single pathological cell, one by adding a second cell family, one by a
+control the author added to test his own hypothesis. None of the individual
+runs was wrong; the estimator does not resolve what it was asked to resolve.
+
+That result does not depend on batteries. It is testable by anyone with two
+protocols and a held-out group, and the prescription is concrete: report the
+interval over cohort draws, not the point estimate.
+
+The correct next step is therefore not "acquire more data" in general, but
+specifically **more cohorts per dataset** — the only thing that narrows this
+interval — together with the reporting change above.
+
 ## References
 
 1. B. Saha and K. Goebel (2007). "Battery Data Set", NASA Prognostics
@@ -718,8 +1284,42 @@ python scripts/validate_health_index_versions.py
 # SHAP attribution against measured fade, with the skill gate (Section 4.9)
 python scripts/fit_shap_attribution_model.py
 
+# --- Level 5: target ceilings, benchmark suite, coverage (Sections 4.10-4.12) ---
+# All reuse the tracked continuous_model_training_data.csv; no raw cache needed.
+
+# Target noise ceilings, SOH cell screen, and the twelve-method benchmark.
+# Writes benchmark_{results,signal_report,cell_screen,registry}.csv.
+# Roughly 14 minutes per target: six estimators refitted across 42 folds.
+python scripts/run_benchmark_study.py --targets capacity_loss cumulative_fade
+python scripts/run_benchmark_study.py --quick     # reference methods only, seconds
+
+# Conformal coverage within protocol vs across it (Section 4.12).
+# Read min_coverage and worst_group, NOT median_coverage -- see ADR 0007.
+python scripts/run_coverage_study.py --methods age_linear elasticnet
+
+# The thermal confound and the Arrhenius identifiability refusal (Section 4.11)
+python -c "
+import pandas as pd
+from src.bms.benchmarks import add_targets
+from src.bms.physics import assess_identifiability, fit_arrhenius, thermal_baseline
+d = add_targets(pd.read_csv('reports/metrics/continuous_model_training_data.csv'))
+print(thermal_baseline(d).to_string(index=False))
+print(fit_arrhenius(d, target='cumulative_fade', temperature_col='trailing_avg_temp').render())
+print(assess_identifiability(d, temperature_col='trailing_avg_temp').render())
+"
+
+# Which datasets can answer the question, before downloading any of them
+python -m src.bms.adaptive feasibility
+python -m src.bms.adaptive screen
+
 # Explainability + dashboard test suites
 python -m pytest tests/test_explain.py tests/test_beacon_dashboard.py -v
+
+# Level 5 test suites (synthetic recovery of a known activation energy,
+# conformal coverage guarantees, benchmark harness self-tests, loaders)
+python -m pytest tests/test_physics.py tests/test_uncertainty.py \
+                tests/test_benchmarks.py tests/test_oxford.py \
+                tests/test_dataset_loaders.py -v
 
 # Build the polished .docx version of this report (reports/final_report.docx)
 ./scripts/build_report_docx.sh
