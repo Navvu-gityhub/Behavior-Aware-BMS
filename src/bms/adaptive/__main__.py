@@ -27,23 +27,44 @@ from src.bms.adaptive.calibrator import AdaptiveCalibrator, linear_candidate
 from src.bms.adaptive.commensurability import assess_commensurability
 from src.bms.adaptive.dataset_specs import (
     REGISTRY as SPEC_REGISTRY,
+)
+from src.bms.adaptive.dataset_specs import (
     get_spec,
     predict_transfer_feasibility,
 )
 from src.bms.adaptive.datasets import CallableDatasetLoader, DatasetRegistry
+from src.bms.adaptive.loaders import CalceCyclingLoader, OxfordLoader
 from src.bms.adaptive.store import ModelStore
 
 DEFAULT_STORE = Path("models/adaptive")
 NASA_TRAINING = Path("reports/metrics/continuous_model_training_data.csv")
 CALCE_SAMPLE = Path("data/processed/calce/calce_sample_processed.csv")
+CALCE_CYCLING = Path("data/raw/calce")
+OXFORD_ARCHIVE = Path(
+    "data/raw/oxford/Oxford_Battery_Degradation_Dataset_1.mat"
+)
 
 
 def build_registry() -> DatasetRegistry:
-    """Register the datasets this repository actually contains.
+    """Register the datasets this repository can reach.
 
-    CALCE is registered even though it is known to be unusable. Leaving it out
-    would hide the finding; registering it means `screen` reports *why* it
-    cannot be used, which is more informative than its absence.
+    Two registration policies here, and the difference is deliberate.
+
+    The **sample** datasets are registered only when present, because they are
+    small files that ship with the repository — absence means something is
+    wrong with the checkout, not that a download is pending.
+
+    The **archive** datasets (CALCE cycling, Oxford) are registered
+    unconditionally. Their loaders raise `FileNotFoundError` when the data is
+    absent, and `DatasetRegistry.assess` turns that into a blocker carrying the
+    reason. So `screen` reports "not downloaded, here is where to get it" as a
+    distinct state, rather than the dataset simply not appearing in the table.
+    A dataset that vanishes from a report is indistinguishable from one that
+    was never considered.
+
+    `calce_sample` stays registered even though ADR 0001 records it as
+    unusable, for the same reason: `screen` reporting *why* it cannot be used
+    is more informative than its absence.
     """
     registry = DatasetRegistry()
 
@@ -62,6 +83,12 @@ def build_registry() -> DatasetRegistry:
             return data
 
         registry.register(CallableDatasetLoader("calce_sample", load_calce))
+
+    # The real multi-cycle archives. See src/bms/adaptive/loaders.py for how
+    # each derives its cohort column, which is the part that governs whether
+    # leave-one-cohort-out is available at all.
+    registry.register(CalceCyclingLoader(name="calce_cycling", base_dir=CALCE_CYCLING))
+    registry.register(OxfordLoader(name="oxford", path=OXFORD_ARCHIVE))
 
     return registry
 

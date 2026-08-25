@@ -43,7 +43,6 @@ from src.bms.adaptive.dataset_specs import (
     predict_transfer_feasibility,
 )
 
-
 # ---------------------------------------------------------------------------
 # Variation semantics
 # ---------------------------------------------------------------------------

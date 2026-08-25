@@ -47,7 +47,7 @@ NASA-to-CALCE transfer is most likely to be well posed.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
 from typing import Mapping, Sequence
 
@@ -267,9 +267,9 @@ def predict_transfer_feasibility(
         reason = (
             f"Varied in {source.name} and {target.name}."
             if not marginal else
-            f"One side records this axis only incidentally, so the usable "
-            f"range is likely far narrower than the fitted range. Treat any "
-            f"result as marginal and check the measured spread ratio."
+            "One side records this axis only incidentally, so the usable "
+            "range is likely far narrower than the fitted range. Treat any "
+            "result as marginal and check the measured spread ratio."
         )
         verdicts.append(AxisVerdict(
             axis, source_variation, target_variation, True, marginal, reason,
@@ -482,6 +482,62 @@ STANFORD_SEVERSON_SPEC = DatasetSpec(
 )
 
 
+OXFORD_SPEC = DatasetSpec(
+    name="oxford_degradation",
+    description=(
+        "Oxford Battery Degradation Dataset 1: 8 Kokam SLPB533459H4 pouch "
+        "cells aged with an ARTEMIS urban drive-cycle discharge, with "
+        "characterisation every 100 cycles."
+    ),
+    column_map={
+        # Extracted from the nested MATLAB structs; see io/load_oxford.py.
+        "t": "test_time_s",
+        "v": "voltage_v",
+        "q": "capacity_ah",
+        "T": "temperature_c",
+    },
+    n_cells=8,
+    nominal_capacity_ah=0.74,
+    chemistry="NMC/LCO blend cathode, graphite anode (pouch)",
+    variation=VariationProfile(
+        axes={
+            # Every cell sat in a 40 C thermal chamber on one protocol.
+            Axis.AMBIENT_TEMPERATURE: Variation.FIXED,
+            Axis.CHARGE_RATE: Variation.FIXED,
+            # The drive cycle varies current continuously *within* a cycle,
+            # but identically for every cell, so it is not an axis on which
+            # cells differ and cannot support a between-cell coefficient.
+            Axis.DISCHARGE_RATE: Variation.FIXED,
+            Axis.DEPTH_OF_DISCHARGE: Variation.FIXED,
+            Axis.INTERNAL_RESISTANCE: Variation.INCIDENTAL,
+        },
+        note=(
+            "All 8 cells share one protocol at 40 C: constant-current-"
+            "constant-voltage charge, ARTEMIS urban drive-cycle discharge. "
+            "The dataset's value here is a third chemistry and a genuinely "
+            "behavioural (drive-cycle) load, not experimental variation."
+        ),
+    ),
+    caveats=(
+        "Single protocol: there are no cohorts, so this dataset cannot "
+        "support a leave-one-cohort-out test on its own. It is an external "
+        "held-out target for cell-level generalisation only.",
+        "Temperature is chamber-controlled at 40 C, so it cannot receive a "
+        "fitted ambient-temperature coefficient — the same wall CALCE CS2 and "
+        "Severson hit.",
+        "Capacity appears only in the periodic characterisation cycles (every "
+        "100), not in the drive-cycle ageing cycles, so the usable fade series "
+        "is roughly one point per 100 cycles per cell.",
+        "Ships as nested MATLAB structs (Cell -> cycNNNN -> C1ch/C1dc/OCVch/"
+        "OCVdc), not a flat table.",
+    ),
+    citation=(
+        "Birkl, C. Oxford Battery Degradation Dataset 1, University of Oxford "
+        "Research Archive (2017)."
+    ),
+)
+
+
 REGISTRY: Mapping[str, DatasetSpec] = {
     spec.name: spec
     for spec in (
@@ -490,6 +546,7 @@ REGISTRY: Mapping[str, DatasetSpec] = {
         CALCE_CX2_SPEC,
         CALCE_CX2_4_THERMAL_SPEC,
         STANFORD_SEVERSON_SPEC,
+        OXFORD_SPEC,
     )
 }
 

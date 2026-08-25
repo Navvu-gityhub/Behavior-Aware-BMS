@@ -37,9 +37,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parent / "fixtures"))
 from make_calce_fixture import ARBIN_COLUMNS, make_cell, make_cell_file
 
 from src.bms.io.load_calce_cycling import (
+    _DATE_IN_NAME,
     CALCE_ARBIN_ALIASES,
     CALCE_UNAVAILABLE_CHANNELS,
-    _DATE_IN_NAME,
     _sort_key,
     calce_capacity_loss,
     load_calce_cell,
@@ -183,18 +183,133 @@ def test_cx2_4_can_receive_thermocouple_data(tmp_path):
 # Per-cycle reduction
 # ---------------------------------------------------------------------------
 
-def test_capacity_is_the_per_cycle_maximum_not_the_mean(cs2_cell):
-    """Arbin's Discharge_Capacity accumulates through a discharge and resets.
+def _write_cadex_file(path: Path) -> None:
+    """A minimal CADEX-format export, as CS2_8 and CS2_21 actually ship."""
+    header = ("Time\tStatus code\tStatus category\tStatus color\tPgm code\t"
+              "Pgm step\tPgm para\tPgm cycle\tmV\tmA\tTemperature\tDuration\t"
+              "Charge count\tDischarge count\tCapacity")
+    rows = [f"{i}.0\t8\t3\t3\t0\t1\t2\t{1 + i // 3}\t4210\t349\t19\t3\t1\t0\t0"
+            for i in range(9)]
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text("\n".join([header, *rows]), encoding="utf-8")
 
-    Its per-cycle maximum is the charge that cycle delivered; the mean would
-    report roughly half of it.
+
+def test_cadex_export_is_refused_rather_than_misread(tmp_path):
+    """A CADEX file loaded through the Arbin path yields capacity off by ~1000x.
+
+    CS2_21 read as "capacity 97.0 -> 86.0 Ah" on a 1.1 Ah cell before this
+    guard: plausible-looking, monotonically declining, and nonsense. Refusing
+    costs no cohort — CS2_8 and CS2_21 are both Type 1, which retains CS2_33
+    and CS2_34.
+    """
+    cell_dir = tmp_path / "CS2_21"
+    _write_cadex_file(cell_dir / "CS2_21_1_19_10.txt")
+
+    with pytest.raises(ValueError, match="CADEX tester export"):
+        load_calce_cell(cell_dir)
+
+
+def test_arbin_files_are_not_mistaken_for_cadex(cs2_cell):
+    """The signature check must not reject the format it is meant to accept."""
+    telemetry, _ = load_calce_cell(cs2_cell)
+    assert len(telemetry) > 0
+
+
+def test_container_directory_is_not_reported_as_a_cell(tmp_path):
+    """`CS2/` holds the Type folders and is not itself a cell."""
+    from src.bms.io.load_calce_cycling import discover_calce_cells
+
+    make_cell(tmp_path / "CS2" / "Type1" / "CS2_33",
+              cell_id="CS2_33", n_files=1, cycles_per_file=3)
+
+    found = discover_calce_cells(tmp_path)
+    assert [s.cell_id for s in found] == ["CS2_33"]
+    assert found[0].cohort == "CS2_Type1"
+
+
+def test_cohort_comes_from_the_type_directory(tmp_path):
+    """CALCE's own experiment grouping, which is what LOCO needs."""
+    from src.bms.io.load_calce_cycling import discover_calce_cells
+
+    for cell_id, type_dir in (("CS2_33", "Type1"), ("CS2_35", "Type2")):
+        make_cell(tmp_path / "CS2" / type_dir / cell_id,
+                  cell_id=cell_id, n_files=1, cycles_per_file=3)
+
+    cohorts = {s.cell_id: s.cohort for s in discover_calce_cells(tmp_path)}
+    assert cohorts == {"CS2_33": "CS2_Type1", "CS2_35": "CS2_Type2"}
+
+
+def test_cohort_is_namespaced_by_archive_family(tmp_path):
+    """CS2 and CX2 both number their types 1-6; a bare `Type1` would merge them.
+
+    They are different cell designs (1.1 Ah prismatic vs 1.35 Ah), so merging
+    would leave half of a protocol's cells in training when that protocol is
+    held out — flattering leave-one-cohort-out without it noticing.
+    """
+    from src.bms.io.load_calce_cycling import discover_calce_cells
+
+    make_cell(tmp_path / "CS2" / "Type1" / "CS2_33",
+              cell_id="CS2_33", n_files=1, cycles_per_file=3)
+    make_cell(tmp_path / "CX2" / "Type1" / "CX2_16",
+              cell_id="CX2_16", n_files=1, cycles_per_file=3)
+
+    cohorts = {s.cell_id: s.cohort for s in discover_calce_cells(tmp_path)}
+    assert cohorts == {"CS2_33": "CS2_Type1", "CX2_16": "CX2_Type1"}
+    assert len(set(cohorts.values())) == 2, "families must not share a cohort"
+
+
+def test_sort_key_tolerates_a_path_that_does_not_exist(tmp_path):
+    """Archive members are addressed as paths with no filesystem entry.
+
+    Real CS2 archives contain `CS2_21_7_9b_10.txt` (a letter inside the date)
+    and `CS_2_5_15_12_calibration.xls` (not a cycling file), neither of which
+    parses as a date. An unguarded stat() on those lost the entire cell.
+    """
+    key = _sort_key(Path("CS2_21/CS2_21_7_9b_10.txt"))
+    assert isinstance(key, tuple)
+    assert key[0] == 1  # fell through to the mtime branch without raising
+
+
+def test_capacity_is_the_within_cycle_span_not_the_maximum(cs2_cell):
+    """Arbin's Discharge_Capacity accumulates ACROSS cycles; it does not reset.
+
+    So the charge a cycle delivered is the span of the counter within that
+    cycle, not its maximum. Taking the maximum returns cumulative throughput,
+    which on real data made CS2_33 report a state of health of 383% on a
+    1.1 Ah cell.
     """
     telemetry, _ = load_calce_cell(cs2_cell)
     summary = summarize_calce_cycles(telemetry)
 
     first = telemetry[telemetry["cycle"] == 1]
-    assert summary.iloc[0]["capacity_ah"] == pytest.approx(first["capacity_ah"].max())
-    assert summary.iloc[0]["capacity_ah"] > first["capacity_ah"].mean()
+    span = first["capacity_ah"].max() - first["capacity_ah"].min()
+    assert summary.iloc[0]["capacity_ah"] == pytest.approx(span)
+
+
+def test_capacity_stays_near_nominal_rather_than_accumulating(cs2_cell):
+    """The regression guard for the 383%-SOH bug.
+
+    A 1.1 Ah cell must report ~1.1 Ah on every cycle. If the counter is being
+    read as a level rather than a span, later cycles climb without bound.
+    """
+    telemetry, _ = load_calce_cell(cs2_cell)
+    summary = summarize_calce_cycles(telemetry)
+
+    assert summary["capacity_ah"].max() < 1.5, (
+        "per-cycle capacity exceeds any plausible value for a 1.1 Ah cell — "
+        "the accumulating counter is being read as a level"
+    )
+    assert summary["capacity_ah"].min() > 0.5
+
+
+def test_cumulative_throughput_is_kept_separately(cs2_cell):
+    """Retained so an accumulating export is distinguishable from a resetting one."""
+    telemetry, _ = load_calce_cell(cs2_cell)
+    summary = summarize_calce_cycles(telemetry)
+
+    assert "cumulative_capacity_ah" in summary.columns
+    assert summary["cumulative_capacity_ah"].is_monotonic_increasing
+    assert summary["cumulative_capacity_ah"].iloc[-1] > summary["capacity_ah"].iloc[-1]
 
 
 def test_initial_capacity_uses_a_median_not_cycle_one(cs2_cell):
@@ -271,7 +386,7 @@ def test_one_broken_cell_does_not_abort_the_dataset(tmp_path):
 
 def test_dataset_without_cell_subdirectories_raises(tmp_path):
     (tmp_path / "loose_file.csv").write_text("Cycle_Index\n1\n")
-    with pytest.raises(FileNotFoundError, match="no cell subdirectories"):
+    with pytest.raises(FileNotFoundError, match="no cells found"):
         load_calce_dataset(tmp_path)
 
 

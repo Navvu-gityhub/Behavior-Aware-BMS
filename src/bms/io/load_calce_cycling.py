@@ -41,10 +41,12 @@ that case, and only that case.
 
 from __future__ import annotations
 
+import io
 import re
-from dataclasses import dataclass, field
+import zipfile
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Iterable, Mapping, Sequence
+from typing import Mapping, Sequence
 
 import numpy as np
 import pandas as pd
@@ -88,12 +90,70 @@ CALCE_UNAVAILABLE_CHANNELS: tuple[str, ...] = (
 _DATE_IN_NAME = re.compile(r"(\d{1,2})[_-](\d{1,2})[_-](\d{2,4})$")
 _CELL_IN_NAME = re.compile(r"((?:CS2|CX2|CS_2|CX_2)[_-]?\d+)", re.IGNORECASE)
 
+# CALCE files its cells under `Type1` .. `Type6`, one directory per documented
+# experiment type. That directory name IS the cohort, which is what
+# leave-one-cohort-out needs; see `discover_calce_cells`.
+_COHORT_IN_DIR = re.compile(r"^type[_\s-]?\d+$", re.IGNORECASE)
+
+# Looser than `_CELL_IN_NAME`, which requires a cell number. Used to recognise
+# a directory that is *meant* to hold a cell even when it holds nothing, so an
+# empty or unreadable one is reported rather than quietly omitted.
+#
+# The trailing separator matters: without it this also matches the container
+# directory `CS2/`, which holds the Type folders and is not a cell. That
+# produced a phantom sixteenth cell reported as unloadable.
+_CELL_PREFIX = re.compile(r"^(?:cs2|cx2|cs_2|cx_2)[_\s-]", re.IGNORECASE)
+
+# CADEX tester exports (CS2_8, CS2_21, CX2_4, CX2_31) share none of the Arbin
+# schema: tab-separated, millivolts and milliamps rather than volts and amps,
+# `Pgm cycle` instead of `Cycle_Index`, and a `Capacity` column whose units are
+# not stated in the export.
+#
+# Loading one through the Arbin path does not fail — it produces a frame whose
+# `capacity_ah` is off by three orders of magnitude. CS2_21 read as capacity
+# "97.0 -> 86.0 Ah" on a 1.1 Ah cell before this guard existed, which is the
+# most dangerous kind of wrong: plausible-looking, monotonically declining, and
+# nonsense.
+#
+# Refusing is the correct behaviour until someone maps the schema against the
+# cycler's documentation and confirms the units. It costs no cohort: CS2_8 and
+# CS2_21 are both Type 1, which retains CS2_33 and CS2_34.
+_CADEX_SIGNATURE: frozenset[str] = frozenset({"mV", "mA", "Pgm cycle"})
+
 _READERS = {
     ".xlsx": pd.read_excel,
     ".xls": pd.read_excel,
     ".csv": pd.read_csv,
     ".txt": lambda p: pd.read_csv(p, sep="\t"),
 }
+
+# Extensions that are data. Anything else inside an archive is ignored rather
+# than attempted: the CS2_7 archive ships a `Thumbs.db`, and trying to parse it
+# would fill the skip list with noise that hides a real failure.
+_DATA_SUFFIXES: frozenset[str] = frozenset(_READERS)
+
+# An Arbin workbook has TWO sheets: a human-readable `Info` header block and
+# the actual channel log, named `Channel_<n>-<nnn>`. `pd.read_excel` defaults
+# to the first sheet, which is `Info` — a 23-column metadata block that parses
+# without error and contains no telemetry whatsoever.
+#
+# This is the failure mode this project keeps meeting: structurally valid,
+# silently wrong. The fixtures are single-sheet CSVs, so no test caught it;
+# only running against a real workbook did.
+_ARBIN_SHEET_PREFIX = "channel"
+
+
+def _pick_data_sheet(sheets: Sequence[str]) -> str | int:
+    """Choose the telemetry sheet from an Arbin workbook.
+
+    Prefers a sheet named `Channel_*`. Falls back to the last sheet when no
+    name matches, because Arbin appends the channel log after the header
+    block — never the first, which is where `Info` lives.
+    """
+    for name in sheets:
+        if str(name).strip().lower().startswith(_ARBIN_SHEET_PREFIX):
+            return name
+    return sheets[-1] if sheets else 0
 
 
 @dataclass(frozen=True)
@@ -136,7 +196,19 @@ def _sort_key(path: Path) -> tuple:
         if year < 100:
             year += 2000
         return (0, year, month, day, path.name)
-    return (1, path.stat().st_mtime, 0, 0, path.name)
+
+    # Modification time is the fallback for a file whose name carries no date.
+    # It has to tolerate a path that does not exist on disk: archive members
+    # are addressed as `Path("CS2_21/CS2_21_7_9b_10.txt")` and stat() raises
+    # for them. Real CS2 archives contain both cases — `..._7_9b_10.txt` has a
+    # letter inside the date, and `CS_2_5_15_12_calibration.xls` is not a
+    # cycling file at all — and an unguarded stat() lost the entire cell over
+    # one such member.
+    try:
+        mtime = path.stat().st_mtime
+    except OSError:
+        mtime = 0.0
+    return (1, mtime, 0, 0, path.name)
 
 
 def _infer_cell_id(path: Path) -> str:
@@ -144,13 +216,38 @@ def _infer_cell_id(path: Path) -> str:
     return match.group(1).upper().replace("-", "_") if match else path.stem
 
 
-def _read_one(path: Path) -> pd.DataFrame:
-    reader = _READERS.get(path.suffix.lower())
+def _read_frame(source, suffix: str) -> pd.DataFrame:
+    """Parse one telemetry file from a path or an in-memory buffer.
+
+    Split out from `_read_one` so archive members can be read without being
+    extracted to disk: a CS2 cell is up to 235 MB compressed and unpacking
+    fifteen of them to read them once is a lot of I/O for no benefit.
+    """
+    suffix = suffix.lower()
+    if suffix in (".xlsx", ".xls"):
+        workbook = pd.ExcelFile(source)
+        return workbook.parse(_pick_data_sheet(workbook.sheet_names))
+
+    reader = _READERS.get(suffix)
     if reader is None:
-        raise ValueError(f"unsupported extension '{path.suffix}'")
-    frame = reader(path)
+        raise ValueError(f"unsupported extension '{suffix}'")
+    return reader(source)
+
+
+def _normalise_columns(frame: pd.DataFrame) -> pd.DataFrame:
+    """Map source column names onto the unified schema."""
     if frame.empty:
         raise ValueError("file contains no rows")
+
+    present = {str(c).strip() for c in frame.columns}
+    if len(_CADEX_SIGNATURE & present) >= 2:
+        raise ValueError(
+            "CADEX tester export, not Arbin — columns include "
+            f"{sorted(_CADEX_SIGNATURE & present)}. Units are mV/mA and the "
+            "capacity column's units are unstated, so mapping it through the "
+            "Arbin aliases yields a capacity wrong by ~1000x. Refused until "
+            "the schema is confirmed against the cycler documentation."
+        )
 
     # Two renames, deliberately separate.
     #
@@ -170,6 +267,18 @@ def _read_one(path: Path) -> pd.DataFrame:
         if column in CALCE_ARBIN_ALIASES and column not in canonical
     }
     return frame.rename(columns={**canonical, **extra})
+
+
+def _read_one(path: Path) -> pd.DataFrame:
+    """Read and normalise one telemetry file from disk."""
+    return _normalise_columns(_read_frame(path, path.suffix))
+
+
+def _read_member(archive: zipfile.ZipFile, name: str) -> pd.DataFrame:
+    """Read and normalise one telemetry file from inside a zip archive."""
+    with archive.open(name) as handle:
+        buffer = io.BytesIO(handle.read())
+    return _normalise_columns(_read_frame(buffer, Path(name).suffix))
 
 
 def _reconcile_cycle_index(frames: Sequence[pd.DataFrame]) -> pd.DataFrame:
@@ -335,45 +444,214 @@ def load_calce_cell(
     return telemetry, report
 
 
+def load_calce_archive(
+    archive_path: str | Path,
+    cell_id: str | None = None,
+) -> tuple[pd.DataFrame, CalceLoadReport]:
+    """Load one cell directly from its distributed `.zip`, without extracting.
+
+    CALCE ships one archive per cell, each containing a `CS2_nn/` folder of
+    date-named files. A CS2 cell runs to 235 MB compressed, so unpacking
+    fifteen of them to read each once is a lot of I/O for nothing.
+
+    Members are ordered by the date in their filename, exactly as the
+    directory loader does, because a zip's member order is arbitrary and
+    lexical order puts `10_04_10` before `9_20_10`.
+    """
+    archive_path = Path(archive_path)
+    if not archive_path.exists():
+        raise FileNotFoundError(f"load_calce_archive: no such file: {archive_path}")
+
+    resolved_id = cell_id or _infer_cell_id(archive_path)
+    frames: list[pd.DataFrame] = []
+    used: list[str] = []
+    skipped: list[tuple[str, str]] = []
+
+    with zipfile.ZipFile(archive_path) as archive:
+        members = [
+            name for name in archive.namelist()
+            if not name.endswith("/") and Path(name).suffix.lower() in _DATA_SUFFIXES
+        ]
+        if not members:
+            raise ValueError(
+                f"load_calce_archive: {archive_path.name} contains no readable "
+                f"telemetry files (looked for {sorted(_DATA_SUFFIXES)})."
+            )
+
+        for name in sorted(members, key=lambda n: _sort_key(Path(n))):
+            try:
+                frames.append(_read_member(archive, name))
+                used.append(Path(name).name)
+            except Exception as exc:
+                skipped.append((Path(name).name, f"{type(exc).__name__}: {exc}"))
+
+    if not frames:
+        raise ValueError(
+            f"load_calce_archive: every member of {archive_path.name} failed to "
+            f"parse: " + "; ".join(f"{n} ({r})" for n, r in skipped[:5])
+        )
+
+    telemetry = _reconcile_cycle_index(frames)
+    telemetry["cell_id"] = resolved_id
+    telemetry["dataset"] = "calce"
+
+    return telemetry, CalceLoadReport(
+        cell_id=resolved_id,
+        n_files=len(used),
+        n_rows=int(len(telemetry)),
+        n_cycles=int(pd.to_numeric(telemetry["cycle"], errors="coerce").nunique()),
+        files_used=tuple(used),
+        files_skipped=tuple(skipped),
+        unavailable_channels=tuple(
+            c for c in CALCE_UNAVAILABLE_CHANNELS if c not in telemetry.columns
+        ),
+        has_temperature="temperature_c" in telemetry.columns,
+    )
+
+
+@dataclass(frozen=True)
+class CalceSource:
+    """One cell's data, and the cohort implied by where it was filed."""
+
+    cell_id: str
+    path: Path
+    is_archive: bool
+    cohort: str = ""
+
+
+def _cohort_for(type_dir: Path) -> str:
+    """Build a cohort label from the `<archive>/Type<n>/` directory pair.
+
+    The archive name is part of the label, not decoration. CS2 and CX2 both
+    number their experiment types 1 to 6, so a bare `Type1` would silently
+    merge CS2's four 0.5C cells with CX2's four — different cell designs
+    (1.1 Ah prismatic versus 1.35 Ah), different chemistry batches, and
+    different absolute capacities.
+
+    Merging them would corrupt leave-one-cohort-out in the direction that
+    flatters it: holding out "Type1" would still leave half of that protocol's
+    cells in training, so a model could memorise the protocol and the split
+    would not notice. Namespacing gives twelve genuinely disjoint cohorts
+    instead of six overlapping ones.
+    """
+    if not _COHORT_IN_DIR.match(type_dir.name):
+        return ""
+    family = type_dir.parent.name
+    return f"{family}_{type_dir.name}" if family else type_dir.name
+
+
+def discover_calce_cells(base_dir: str | Path) -> list[CalceSource]:
+    """Find every cell under `base_dir`, however the archive was laid out.
+
+    Two layouts are supported because both occur in practice:
+
+        calce/CS2_33/CS2_33_10_04_10.xlsx      extracted, flat
+        calce/CS2/Type1/CS2_33.zip             as distributed, nested by type
+
+    **The second carries the cohort for free, and that matters.** CALCE groups
+    CS2 and CX2 into six experiment types each, and leave-one-cohort-out needs
+    that grouping. Reading it from the directory the file was filed in is
+    strictly better than inferring it from telemetry
+    (`adaptive.loaders.derive_cohorts_from_protocol`) and better than a
+    transcribed lookup table, because it is the organisation the data actually
+    shipped in.
+
+    A cell not filed under a recognisable type folder gets an empty cohort,
+    and the caller decides what to do about it rather than being handed a
+    fabricated group.
+    """
+    base_dir = Path(base_dir)
+    if not base_dir.exists():
+        raise FileNotFoundError(f"discover_calce_cells: no such directory: {base_dir}")
+
+    found: dict[str, CalceSource] = {}
+
+    for archive in sorted(base_dir.rglob("*.zip")):
+        cell_id = _infer_cell_id(archive)
+        found[cell_id] = CalceSource(
+            cell_id, archive, True, _cohort_for(archive.parent),
+        )
+
+    for directory in sorted(p for p in base_dir.rglob("*") if p.is_dir()):
+        if _COHORT_IN_DIR.match(directory.name):
+            continue
+        data_files = [
+            p for p in directory.iterdir()
+            if p.is_file() and p.suffix.lower() in _DATA_SUFFIXES
+        ]
+        if not data_files:
+            # A directory NAMED like a cell but holding nothing is still
+            # registered, so the loader reports it as unloadable rather than
+            # omitting it. A cell that disappears from a report is
+            # indistinguishable from one that was never there.
+            if _CELL_PREFIX.match(directory.name) and directory.name not in found:
+                parent_name = directory.parent.name
+                found[directory.name] = CalceSource(
+                    directory.name, directory, False,
+                    parent_name if _COHORT_IN_DIR.match(parent_name) else "",
+                )
+            continue
+        cell_id = _infer_cell_id(data_files[0])
+        if cell_id in found:
+            continue
+        found[cell_id] = CalceSource(
+            cell_id, directory, False, _cohort_for(directory.parent),
+        )
+
+    return [found[k] for k in sorted(found)]
+
+
 def load_calce_dataset(
     base_dir: str | Path,
     temperature_dir: str | Path | None = None,
 ) -> tuple[pd.DataFrame, list[CalceLoadReport]]:
-    """Load every cell under `base_dir`, one subdirectory per cell.
+    """Load every cell under `base_dir`, in either supported layout.
 
-    Expected layout, matching how CALCE distributes the archives::
+    Both of these work, and the second is how CALCE actually distributes the
+    data::
 
-        data/raw/calce/
-          CS2_33/  CS2_33_10_04_10.xlsx  CS2_33_10_20_10.xlsx  ...
-          CS2_34/  ...
+        data/raw/calce/CS2_33/CS2_33_10_04_10.xlsx     extracted, flat
+        data/raw/calce/CS2/Type1/CS2_33.zip            as downloaded
+
+    When cells are filed under `Type<n>` directories, that name is carried
+    through as a `cohort` column — CALCE's own experiment grouping, which is
+    exactly what leave-one-cohort-out needs and is better evidence than any
+    grouping inferred from telemetry.
 
     Cells that fail to load are skipped with their reason preserved in the
     returned reports rather than aborting the whole dataset, because one corrupt
-    archive should not cost the other thirteen cells.
+    archive should not cost the other twelve cells.
     """
     base_dir = Path(base_dir)
     if not base_dir.exists():
         raise FileNotFoundError(f"load_calce_dataset: no such directory: {base_dir}")
 
-    cell_dirs = sorted(p for p in base_dir.iterdir() if p.is_dir())
-    if not cell_dirs:
+    sources = discover_calce_cells(base_dir)
+    if not sources:
         raise FileNotFoundError(
-            f"load_calce_dataset: no cell subdirectories in {base_dir}. Expected "
-            f"one directory per cell, e.g. {base_dir}/CS2_33/."
+            f"load_calce_dataset: no cells found under {base_dir}. Expected "
+            f"either one directory per cell (e.g. {base_dir}/CS2_33/) or the "
+            f"distributed archives (e.g. {base_dir}/CS2/Type1/CS2_33.zip)."
         )
 
     frames: list[pd.DataFrame] = []
     reports: list[CalceLoadReport] = []
 
-    for cell_dir in cell_dirs:
+    for source in sources:
         try:
-            frame, report = load_calce_cell(
-                cell_dir, temperature_dir=temperature_dir
-            )
+            if source.is_archive:
+                frame, report = load_calce_archive(source.path, cell_id=source.cell_id)
+            else:
+                frame, report = load_calce_cell(
+                    source.path, cell_id=source.cell_id,
+                    temperature_dir=temperature_dir,
+                )
+            if source.cohort:
+                frame["cohort"] = source.cohort
         except Exception as exc:
             reports.append(CalceLoadReport(
-                cell_id=cell_dir.name, n_files=0, n_rows=0, n_cycles=0,
-                files_skipped=((cell_dir.name, f"{type(exc).__name__}: {exc}"),),
+                cell_id=source.cell_id, n_files=0, n_rows=0, n_cycles=0,
+                files_skipped=((source.path.name, f"{type(exc).__name__}: {exc}"),),
             ))
             continue
         frames.append(frame)
@@ -391,11 +669,30 @@ def load_calce_dataset(
 def summarize_calce_cycles(telemetry: pd.DataFrame) -> pd.DataFrame:
     """Reduce CALCE telemetry to one row per cell-cycle.
 
-    `capacity_ah` is taken as the **maximum** within a cycle, not the mean or
-    the last value. Arbin's `Discharge_Capacity` accumulates monotonically
-    through a discharge and resets between cycles, so its per-cycle maximum is
-    the charge that cycle actually delivered. The mean would report roughly half
-    of it, and the last value is unreliable when a file ends mid-cycle.
+    `capacity_ah` is the **span** of `Discharge_Capacity` within the cycle —
+    its maximum minus its minimum — which is the charge that cycle actually
+    delivered.
+
+    THIS WAS WRONG UNTIL REAL DATA WAS RUN THROUGH IT
+    --------------------------------------------------
+    A previous version took the per-cycle *maximum*, on the stated assumption
+    that Arbin's `Discharge_Capacity` "accumulates through a discharge and
+    resets between cycles". **It does not reset.** In the CS2 workbooks the
+    counter accumulates monotonically across every cycle in a file::
+
+        Cycle 1:  0.0000 -> 1.0849      delta 1.0849
+        Cycle 2:  1.0849 -> 2.1718      delta 1.0869
+        Cycle 3:  2.1718 -> 3.1423      delta 0.9705   (fading)
+
+    Taking the maximum therefore returned the cell's cumulative throughput, so
+    CS2_33 reported capacity climbing 1.16 -> 4.45 Ah and a state of health of
+    383% on a 1.1 Ah cell. The span gives 1.08 Ah on cycle 1, which is the
+    right answer for that cell.
+
+    The regression fixtures reproduced the same false assumption — they write
+    a counter that resets — so no test caught it. Only loading a real workbook
+    did, which is the third time in this project that a structurally valid
+    frame turned out to carry a wrong quantity.
     """
     required = {"cell_id", "cycle"}
     missing = required - set(telemetry.columns)
@@ -410,9 +707,18 @@ def summarize_calce_cycles(telemetry: pd.DataFrame) -> pd.DataFrame:
     frame = frame.dropna(subset=["cycle"])
     frame["cycle"] = frame["cycle"].astype(int)
 
-    aggregations: dict[str, tuple[str, str]] = {}
+    def _span(series: pd.Series) -> float:
+        """Charge delivered within this cycle. See the docstring."""
+        values = pd.to_numeric(series, errors="coerce").dropna()
+        return float(values.max() - values.min()) if len(values) else float("nan")
+
+    aggregations: dict[str, tuple] = {}
     if "capacity_ah" in frame.columns:
-        aggregations["capacity_ah"] = ("capacity_ah", "max")
+        aggregations["capacity_ah"] = ("capacity_ah", _span)
+        # Retained so a reader can tell an accumulating counter from a
+        # resetting one without re-deriving it: on an accumulating export this
+        # rises without bound, on a resetting one it tracks capacity_ah.
+        aggregations["cumulative_capacity_ah"] = ("capacity_ah", "max")
     if "voltage_v" in frame.columns:
         aggregations["mean_voltage_v"] = ("voltage_v", "mean")
         aggregations["min_voltage_v"] = ("voltage_v", "min")
@@ -436,6 +742,15 @@ def summarize_calce_cycles(telemetry: pd.DataFrame) -> pd.DataFrame:
         .reset_index(drop=True)
     )
     summary["dataset"] = "calce"
+
+    # Carry the cohort through the aggregation. It is a per-cell constant, so
+    # a map from cell id is exact — and losing it here would silently strip the
+    # column leave-one-cohort-out depends on, leaving a frame that looks fine
+    # and cannot be validated across protocols.
+    if "cohort" in telemetry.columns:
+        by_cell = telemetry.groupby("cell_id")["cohort"].first()
+        summary["cohort"] = summary["cell_id"].map(by_cell)
+
     return summary
 
 
