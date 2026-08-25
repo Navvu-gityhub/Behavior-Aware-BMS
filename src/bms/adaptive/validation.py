@@ -80,6 +80,13 @@ class FoldResult:
     r2_vs_own_mean_oracle: float
     spearman_rho: float
     r2_vs_confound_baseline: float = float("nan")
+    # Reported alongside MAE rather than instead of it. RMSE penalises large
+    # errors quadratically, so a method with a few badly-wrong folds and one
+    # with uniformly moderate error can share an MAE and differ sharply here —
+    # exactly the distinction that matters when the question is whether a model
+    # fails gracefully outside its training protocols. Added last, with a
+    # default, so existing positional construction is unaffected.
+    rmse: float = float("nan")
     error: str | None = None
 
     @property
@@ -108,6 +115,18 @@ class CrossValidationResult:
     @property
     def median_spearman(self) -> float:
         values = [f.spearman_rho for f in self.completed]
+        finite = [v for v in values if np.isfinite(v)]
+        return float(np.median(finite)) if finite else float("nan")
+
+    @property
+    def median_mae(self) -> float:
+        values = [f.mae for f in self.completed]
+        finite = [v for v in values if np.isfinite(v)]
+        return float(np.median(finite)) if finite else float("nan")
+
+    @property
+    def median_rmse(self) -> float:
+        values = [f.rmse for f in self.completed]
         finite = [v for v in values if np.isfinite(v)]
         return float(np.median(finite)) if finite else float("nan")
 
@@ -266,6 +285,7 @@ class Validator:
                 n_train=int(len(train)),
                 n_test=int(len(test)),
                 mae=float(np.mean(np.abs(y - pred))),
+                rmse=float(np.sqrt(np.mean((y - pred) ** 2))),
                 r2_vs_global_mean=r2_against(y, pred, global_mean),
                 r2_vs_own_mean_oracle=r2_against(y, pred, own_mean),
                 spearman_rho=float(rho) if rho is not None and np.isfinite(rho) else float("nan"),
@@ -292,7 +312,7 @@ class Validator:
         return FoldResult(
             split=split, held_out=str(group), n_train=int(len(train)),
             n_test=int(len(test)), mae=nan, r2_vs_global_mean=nan,
-            r2_vs_own_mean_oracle=nan, spearman_rho=nan, error=error,
+            r2_vs_own_mean_oracle=nan, spearman_rho=nan, rmse=nan, error=error,
         )
 
     # -- the gate -----------------------------------------------------------
