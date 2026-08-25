@@ -10,7 +10,6 @@ from typing import Iterable
 
 import pandas as pd
 
-
 COLUMN_ALIASES = {
     "timestamp": ["timestamp", "time", "date_time", "datetime", "test_time", "time_s", "time_sec", "time_seconds"],
     "cycle": ["cycle", "cycle_index", "cycle_number", "cycle_no", "cycleid"],

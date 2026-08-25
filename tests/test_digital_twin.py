@@ -11,13 +11,13 @@ import pandas as pd
 import pytest
 
 from main import run_pipeline
-from src.bms.simulation.simulate_telemetry import SimulationConfig, simulate_fleet
 from src.bms.digital_twin import (
     build_health_timeline,
     detect_transition,
     evaluate_fleet,
     evaluate_twin_state,
 )
+from src.bms.simulation.simulate_telemetry import SimulationConfig, simulate_fleet
 
 
 def _fleet_and_guardian():
@@ -98,8 +98,8 @@ def test_detect_transition_rejects_mismatched_battery_ids():
 
 def test_build_health_timeline_ordered_by_cycle():
     raw, guardian = _fleet_and_guardian()
-    from src.bms.preprocessing.schema import standardize_validate_bms_data
     from src.bms.features.behavior_features import compute_behavior_flags
+    from src.bms.preprocessing.schema import standardize_validate_bms_data
     from src.bms.risk.stress_score import compute_stress_score
 
     clean, _ = standardize_validate_bms_data(raw, dataset="simulated")
@@ -116,8 +116,8 @@ def test_build_health_timeline_ordered_by_cycle():
 
 def test_build_health_timeline_raises_keyerror_for_unknown_battery():
     raw, _ = _fleet_and_guardian()
-    from src.bms.preprocessing.schema import standardize_validate_bms_data
     from src.bms.features.behavior_features import compute_behavior_flags
+    from src.bms.preprocessing.schema import standardize_validate_bms_data
     from src.bms.risk.stress_score import compute_stress_score
 
     clean, _ = standardize_validate_bms_data(raw, dataset="simulated")

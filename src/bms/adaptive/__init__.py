@@ -25,17 +25,17 @@ from src.bms.adaptive.calibrator import (
     ScoringRefusal,
     linear_candidate,
 )
-from src.bms.adaptive.commensurability import (
-    CommensurabilityReport,
-    FeatureVariation,
-    assess_commensurability,
-    measure_variation,
-)
 from src.bms.adaptive.cohort import (
     CohortRegistry,
     CohortSpec,
     DriftReport,
     InDistribution,
+)
+from src.bms.adaptive.commensurability import (
+    CommensurabilityReport,
+    FeatureVariation,
+    assess_commensurability,
+    measure_variation,
 )
 from src.bms.adaptive.dataset_specs import (
     Axis,

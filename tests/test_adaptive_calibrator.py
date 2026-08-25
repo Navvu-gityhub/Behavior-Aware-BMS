@@ -30,8 +30,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from src.bms.adaptive.calibrator import (
     AdaptiveCalibrator,
     CandidateSpec,
-    ScoringRefusal,
     Scored,
+    ScoringRefusal,
     linear_candidate,
 )
 from src.bms.adaptive.datasets import CallableDatasetLoader, DatasetRegistry

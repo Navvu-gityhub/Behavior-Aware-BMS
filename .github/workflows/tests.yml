@@ -4,18 +4,102 @@ on:
   push:
   pull_request:
 
+# A slow CI run is a CI run people learn to ignore. Cancelling superseded runs
+# on the same ref keeps the queue honest.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # joblib probes the physical core count by shelling out, which fails in some
+  # runner sandboxes and takes the process down with it. Every estimator in
+  # this repo is configured n_jobs=1 anyway — see src/bms/benchmarks/classical.py.
+  LOKY_MAX_CPU_COUNT: "2"
+
 jobs:
-  pytest:
+  lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+          cache: pip
+      - name: Install tooling
+        run: pip install ruff mypy pandas-stubs types-PyYAML
+      - name: Ruff
+        run: ruff check src tests scripts main.py
+      # No `ruff format --check` job. This codebase predates the tooling and
+      # is not ruff-formatted; adding the check would either fail permanently
+      # or force a whole-repo reformat that buries real history in the diff.
+      # Formatting is tracked as debt in docs/roadmap.md, not half-enforced.
+      - name: Mypy
+        run: mypy
+
+  pytest:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # 3.10 is the floor declared in pyproject.toml. Testing only the
+        # newest version lets a floor claim rot silently.
+        python-version: ["3.10", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
       - name: Install dependencies
         run: pip install -r requirements-dev.txt
+      - name: Run tests with coverage
+        run: python -m pytest tests/ -v --cov --cov-report=term-missing --cov-report=xml
+      - name: Upload coverage
+        if: matrix.python-version == '3.12'
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: coverage.xml
+
+  no-optional-extras:
+    # The CAN extra is optional by design, so the suite must pass without it.
+    # Without this job the claim "cantools is optional" is untested, and the
+    # two CAN modules would start failing collection the day someone moved an
+    # import to module scope.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install core only
+        run: pip install -r requirements.txt pytest httpx
+      - name: Uninstall the optional extra
+        run: pip uninstall -y cantools python-can
       - name: Run tests
         run: python -m pytest tests/ -v
+
+  reproduce-study:
+    # The benchmark study is the project's headline result, so CI proves it
+    # still runs end to end. --quick restricts to the reference methods; the
+    # full sweep refits six estimators across 42 folds and takes ~14 minutes
+    # per target, which does not belong on every push.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install dependencies
+        run: pip install -r requirements-dev.txt
+      - name: Pipeline smoke run
+        run: python main.py --dashboard-out /tmp/dashboard.html
+      - name: Benchmark study (quick)
+        run: python scripts/run_benchmark_study.py --quick --out /tmp/metrics
+      - name: Threshold reachability audit
+        run: python scripts/audit_threshold_reachability.py
 
   gateway-tests:
     runs-on: ubuntu-latest
@@ -27,8 +111,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
+          cache: npm
+          cache-dependency-path: mern/server/package-lock.json
       - name: Install dependencies
-        run: npm install
+        run: npm ci
       - name: Run tests
         run: npm test
 
@@ -42,9 +128,22 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
+          cache: npm
+          cache-dependency-path: mern/client/package-lock.json
       - name: Install dependencies
-        run: npm install
+        run: npm ci
       - name: Lint
         run: npm run lint
       - name: Build
         run: npm run build
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build image
+        run: docker build -t behavior-aware-bms:ci .
+      - name: Smoke-test the image
+        run: |
+          docker run --rm behavior-aware-bms:ci python -c "import src.bms; print('import ok')"
+          docker run --rm behavior-aware-bms:ci python main.py --dashboard-out /tmp/d.html

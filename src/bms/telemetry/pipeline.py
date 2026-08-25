@@ -42,9 +42,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Iterator, Mapping, Sequence
+from typing import Iterator, Mapping
 
-import numpy as np
 import pandas as pd
 
 from src.bms.telemetry.cycles import (

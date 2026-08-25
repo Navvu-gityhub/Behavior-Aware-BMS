@@ -16,6 +16,15 @@ nothing and omit terms that dominated.
 
 **This merge:** Keeps the Shapley foundation (exact, consistent with the score)
 and restores the evidence labels to track what was actually validated.
+
+**Merge residue removed later:** the merge left two definitions of
+`_evidence_confidence` in this file — one taking a single dominant cause, one
+taking the comma-joined cause string. Python bound the name to whichever was
+defined last, so the single-cause version was dead code that looked live, and
+editing it would have changed nothing while appearing to change behaviour. It
+was removed along with `_causes_from_shap`, which was never called. Both were
+found by `ruff` (F811) and `mypy` (no-redef) once those were added to CI,
+which is a fair argument for having added them.
 """
 
 from __future__ import annotations
@@ -110,36 +119,6 @@ _CAUSE_EVIDENCE = {
     ),
     "normal usage": ("N/A", "No causes were flagged for this battery."),
 }
-
-
-def _evidence_confidence(dominant_cause: str) -> str:
-    """Label the confidence level of a diagnosis.
-    
-    VALIDATED: temperature signal, the one real calibrated driver.
-    HEURISTIC: hand-picked thresholds that were never confirmed.
-    N/A: no causes flagged.
-    """
-    if dominant_cause == "normal usage":
-        return "N/A"
-    confidence, _ = _CAUSE_EVIDENCE.get(dominant_cause, ("HEURISTIC", ""))
-    return confidence
-
-
-
-def _causes_from_shap(shap_row: pd.Series, terms) -> str:
-    """Extract top causes from a Shapley attribution row."""
-    # Map HEALTH_TERMS to their labels
-    term_labels = {t.name: t.label for t in terms}
-    # Get the top contributions
-    top = shap_row.nlargest(3)
-    causes = []
-    for name, contrib in top.items():
-        # shap_row index is like "health_shap_stress" -> extract "stress"
-        term_name = name.replace("health_shap_", "").replace("risk_shap_", "")
-        label = term_labels.get(term_name)
-        if label and contrib > 0.5:  # Only include meaningful contributions
-            causes.append(label)
-    return ", ".join(causes) if causes else "normal battery usage"
 
 
 def _primary_causes(row: pd.Series) -> str:

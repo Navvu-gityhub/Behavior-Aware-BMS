@@ -36,13 +36,13 @@ score up as a calibrated fade prediction.
 from __future__ import annotations
 
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Callable, Mapping, Sequence
 
 import numpy as np
 import pandas as pd
 
-from src.bms.adaptive.cohort import CohortRegistry, DriftReport, InDistribution
+from src.bms.adaptive.cohort import CohortRegistry, DriftReport
 from src.bms.adaptive.datasets import DatasetRegistry, SuitabilityReport
 from src.bms.adaptive.store import ModelStore, ModelVersion
 from src.bms.adaptive.validation import (

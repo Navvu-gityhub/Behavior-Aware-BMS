@@ -18,11 +18,11 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 import pandas as pd
 
 from main import run_pipeline
-from src.bms.simulation.simulate_telemetry import SimulationConfig, simulate_fleet
-from src.bms.features.behavior_features import compute_behavior_flags, add_age_features
-from src.bms.risk.stress_score import compute_stress_score, compute_risk_assessment, RiskThresholds
-from src.bms.health.health_index import compute_health_index
 from src.bms.dashboard.dashboard import build_dashboard
+from src.bms.features.behavior_features import add_age_features, compute_behavior_flags
+from src.bms.health.health_index import compute_health_index
+from src.bms.risk.stress_score import RiskThresholds, compute_risk_assessment, compute_stress_score
+from src.bms.simulation.simulate_telemetry import SimulationConfig, simulate_fleet
 
 
 def _small_fleet() -> pd.DataFrame:
@@ -103,6 +103,7 @@ def test_scoring_fails_loudly_on_nan_inputs_instead_of_silently_defaulting():
     # low-risk instead of raising. See src/bms/risk/stress_score.py and
     # src/bms/health/health_index.py.
     import pytest
+
     from src.bms.health.health_index import compute_health_index
     from src.bms.risk.stress_score import compute_risk_assessment
 

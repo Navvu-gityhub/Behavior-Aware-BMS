@@ -15,9 +15,9 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 import pytest
 from fastapi.testclient import TestClient
 
+import src.bms.api.app as app_module
 from src.bms.api.app import app
 from src.bms.api.store import FleetStore
-import src.bms.api.app as app_module
 
 
 @pytest.fixture(autouse=True)

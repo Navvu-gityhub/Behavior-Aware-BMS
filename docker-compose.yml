@@ -1,0 +1,71 @@
+# Full local stack: Python API, Express gateway, React client.
+#
+#   docker compose up api          # just the Python service on :8000
+#   docker compose up              # api + gateway + client
+#   docker compose run --rm study  # reproduce the benchmark study
+#
+# There is deliberately no database service. The API's fleet store is
+# in-memory by design (src/bms/api/store.py), and adding Postgres here would
+# imply a persistence layer that does not exist yet. See docs/roadmap.md for
+# where that sits in the plan.
+
+services:
+  api:
+    build: .
+    image: behavior-aware-bms:local
+    ports:
+      - "8000:8000"
+    environment:
+      LOKY_MAX_CPU_COUNT: "1"
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/healthz', timeout=4).status == 200 else 1)"
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+  gateway:
+    image: node:22-slim
+    working_dir: /app
+    command: sh -c "npm ci && npm start"
+    volumes:
+      - ./mern/server:/app
+    environment:
+      # Service name, not localhost: inside the compose network the Python
+      # service is reachable by its service name.
+      PYTHON_API_URL: http://api:8000
+      PORT: "5000"
+    ports:
+      - "5000:5000"
+    depends_on:
+      api:
+        condition: service_healthy
+
+  client:
+    image: node:22-slim
+    working_dir: /app
+    command: sh -c "npm ci && npm run dev -- --host 0.0.0.0"
+    volumes:
+      - ./mern/client:/app
+    ports:
+      - "5173:5173"
+    depends_on:
+      - gateway
+
+  # One-shot: reproduce the headline result. Writes into the mounted repo so
+  # the CSVs land in reports/metrics/ on the host.
+  study:
+    build: .
+    image: behavior-aware-bms:local
+    profiles: ["tools"]
+    volumes:
+      - ./reports:/app/reports
+    environment:
+      LOKY_MAX_CPU_COUNT: "1"
+    command: >
+      python scripts/run_benchmark_study.py
+      --targets capacity_loss cumulative_fade

@@ -22,19 +22,19 @@ import pandas as pd
 # from the repository root.
 sys.path.insert(0, str(Path(__file__).parent))
 
-from src.bms.simulation.simulate_telemetry import SimulationConfig, simulate_fleet
-from src.bms.preprocessing.schema import standardize_validate_bms_data
+from src.bms.dashboard.beacon import build_beacon_dashboard
 from src.bms.features.behavior_features import (
-    compute_behavior_flags,
-    add_rolling_features,
     add_age_features,
+    add_rolling_features,
+    compute_behavior_flags,
     summarize_batteries,
 )
-from src.bms.risk.stress_score import compute_stress_score, compute_risk_assessment
-from src.bms.health.health_index import compute_health_index
-from src.bms.rul.rul_estimation import compute_rul
 from src.bms.guardian.guardian import generate_guardian_reports
-from src.bms.dashboard.beacon import build_beacon_dashboard
+from src.bms.health.health_index import compute_health_index
+from src.bms.preprocessing.schema import standardize_validate_bms_data
+from src.bms.risk.stress_score import compute_risk_assessment, compute_stress_score
+from src.bms.rul.rul_estimation import compute_rul
+from src.bms.simulation.simulate_telemetry import SimulationConfig, simulate_fleet
 
 
 @dataclass(frozen=True)

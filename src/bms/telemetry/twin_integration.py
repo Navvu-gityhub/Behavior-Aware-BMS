@@ -33,7 +33,7 @@ from __future__ import annotations
 
 from collections import deque
 from dataclasses import dataclass, field
-from typing import Deque, Iterator, Mapping, Sequence
+from typing import Deque, Sequence
 
 import pandas as pd
 

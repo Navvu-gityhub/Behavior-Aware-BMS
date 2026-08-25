@@ -27,7 +27,7 @@ It is not broad multi-OEM coverage.
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Iterable, Mapping, Optional, Sequence
+from typing import Iterable, Mapping, Optional
 
 import cantools
 import pandas as pd

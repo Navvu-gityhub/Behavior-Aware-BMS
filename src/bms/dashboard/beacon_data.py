@@ -202,7 +202,6 @@ def _usage_breakdown(telemetry: pd.DataFrame | None, battery_id: str) -> list[di
         ("high_soc_flag", "High SOC", "#a78bfa"),
         ("aggressive_discharge_event", "Aggressive discharge", "#facc15"),
     ]
-    total = len(sub)
     out = []
     for col, label, color in flags:
         if col in sub.columns:

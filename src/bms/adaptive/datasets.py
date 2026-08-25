@@ -37,9 +37,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Callable, Iterable, Mapping, Protocol, runtime_checkable
+from typing import Callable, Mapping, Protocol, runtime_checkable
 
-import numpy as np
 import pandas as pd
 
 # Columns the adaptive pipeline needs from any dataset, whatever its origin.

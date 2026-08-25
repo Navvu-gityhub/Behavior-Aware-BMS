@@ -54,6 +54,23 @@ data/processed/**/*.csv
 reports/metrics/battery_state_distribution.csv
 reports/metrics/risk_distribution.csv
 
+# The CALCE cycle-level cache. Ignored for the SAME reason the block below
+# keeps the NASA artifacts tracked, applied in the other direction: that block
+# tracks files because they cannot be regenerated from a clean checkout, and
+# this one CAN be — `python scripts/build_calce_frame.py` rebuilds it from the
+# CS2/CX2 archives in about 50 minutes.
+#
+# It is also 30 MB. Committing it would put that in git history permanently
+# for a file any contributor with the archives can rebuild.
+reports/metrics/calce_cycle_level.csv
+
+# Partial browser downloads. A dataset download interrupted mid-flight leaves
+# one of these next to the archives, where it is neither a .zip (so the rule
+# above misses it) nor anything worth keeping.
+*.crdownload
+*.part
+*.download
+
 # ---------------------------------------------------------------------------
 # DELIBERATELY NOT IGNORED (Batch 13) -- do not "tidy" these away:
 #

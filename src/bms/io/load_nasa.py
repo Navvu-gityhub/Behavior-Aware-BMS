@@ -13,7 +13,6 @@ import pandas as pd
 
 from .loader_common import add_basic_features, normalize_columns, numeric_cleanup, read_table
 
-
 REQUIRED_AT_LEAST_ONE = ["voltage_v", "current_a", "temperature_c", "capacity_ah"]
 
 

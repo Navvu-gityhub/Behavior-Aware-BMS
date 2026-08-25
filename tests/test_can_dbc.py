@@ -34,7 +34,6 @@ from src.bms.io.load_can_dbc import (
 )
 from src.bms.preprocessing.schema import standardize_validate_bms_data
 
-
 # The exact message OVMS's DBC primer uses as its worked example:
 # https://docs.openvehicles.com/en/latest/components/vehicle_dbc/docs/dbc-primer.html
 TWIZY_BMS_1_CAN_ID = 341  # 0x155

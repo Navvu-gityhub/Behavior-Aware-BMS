@@ -33,6 +33,8 @@ from fastapi import APIRouter, HTTPException, Query
 
 from src.bms.adaptive.dataset_specs import (
     REGISTRY as SPEC_REGISTRY,
+)
+from src.bms.adaptive.dataset_specs import (
     get_spec,
     predict_transfer_feasibility,
 )
@@ -55,9 +57,9 @@ from src.bms.api.telemetry_schemas import (
     TwinUpdateOut,
 )
 from src.bms.telemetry import (
+    REQUIRED_CHANNELS,
     LiveBusSource,
     LogFileSource,
-    REQUIRED_CHANNELS,
     TelemetryResult,
     TwinHistory,
     check_signal_coverage,

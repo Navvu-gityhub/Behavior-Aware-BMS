@@ -42,7 +42,7 @@ That is worth doing and worth reporting, but it must be labelled, which is what
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Callable, Mapping, Sequence
+from typing import Mapping, Sequence
 
 import numpy as np
 import pandas as pd

@@ -46,7 +46,6 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Mapping, Sequence
 
-import numpy as np
 import pandas as pd
 
 from src.bms.io.load_calce_cycling import (

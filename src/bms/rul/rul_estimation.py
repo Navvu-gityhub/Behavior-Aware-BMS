@@ -26,7 +26,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-import numpy as np
 import pandas as pd
 
 REQUIRED_COLUMNS = ("health_index", "avg_temp", "deep_discharge_duration", "fast_charge_duration", "remaining_health")

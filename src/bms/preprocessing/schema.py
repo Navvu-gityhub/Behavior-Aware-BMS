@@ -12,11 +12,10 @@ inside Google Colab without heavy dependencies.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, asdict
+from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Dict, Iterable, List, Mapping, Optional, Sequence, Tuple
+from typing import Dict, Iterable, List, Mapping, Optional, Tuple
 
-import numpy as np
 import pandas as pd
 
 

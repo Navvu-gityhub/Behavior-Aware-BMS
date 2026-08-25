@@ -6,12 +6,13 @@ so a reader can sanity-check a figure against the report's own claims.
 """
 
 import matplotlib
+
 matplotlib.use("Agg")
+from pathlib import Path
+
 import matplotlib.pyplot as plt
-import matplotlib.ticker as mticker
 import numpy as np
 import pandas as pd
-from pathlib import Path
 
 OUT = Path("reports/figures")
 OUT.mkdir(parents=True, exist_ok=True)

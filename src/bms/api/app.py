@@ -32,10 +32,6 @@ from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
 
 from main import run_pipeline
-from src.bms.simulation.simulate_telemetry import SimulationConfig, simulate_fleet
-from src.bms.digital_twin import build_health_timeline
-from src.bms.api.store import fleet_store
-from src.bms.api.telemetry_routes import router as telemetry_router
 from src.bms.api.schemas import (
     BatteryDetailOut,
     BatterySummaryOut,
@@ -46,6 +42,10 @@ from src.bms.api.schemas import (
     TransitionOut,
     TwinSnapshotOut,
 )
+from src.bms.api.store import fleet_store
+from src.bms.api.telemetry_routes import router as telemetry_router
+from src.bms.digital_twin import build_health_timeline
+from src.bms.simulation.simulate_telemetry import SimulationConfig, simulate_fleet
 
 app = FastAPI(
     title="Behavior-Aware BMS API",
@@ -120,8 +120,8 @@ def run_simulated_pipeline(request: SimulateRequest) -> PipelineRunResponseOut:
     )
     guardian = run_pipeline(raw).guardian
 
-    from src.bms.preprocessing.schema import standardize_validate_bms_data
     from src.bms.features.behavior_features import compute_behavior_flags
+    from src.bms.preprocessing.schema import standardize_validate_bms_data
     from src.bms.risk.stress_score import compute_stress_score
 
     clean, _ = standardize_validate_bms_data(raw, dataset="simulated")

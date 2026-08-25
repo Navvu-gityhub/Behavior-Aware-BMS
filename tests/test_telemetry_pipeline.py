@@ -34,8 +34,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 cantools = pytest.importorskip("cantools")
 
 from src.bms.telemetry import (
-    MemorySource,
     TWIZY_SIGNAL_MAP,
+    MemorySource,
     capacity_yield,
     check_signal_coverage,
     cycles_to_frame,

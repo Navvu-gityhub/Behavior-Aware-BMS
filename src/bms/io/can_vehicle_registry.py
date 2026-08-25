@@ -35,13 +35,18 @@ independently-stated worked example to verify against.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Iterable, Mapping, Optional
+from typing import Iterable, Mapping
 
 import pandas as pd
 
-from src.bms.io.load_can_dbc import can_frames_to_unified_schema, load_dbc, TWIZY_BMS_1_SIGNAL_MAP, DEFAULT_DBC_PATH
+from src.bms.io.load_can_dbc import (
+    DEFAULT_DBC_PATH,
+    TWIZY_BMS_1_SIGNAL_MAP,
+    can_frames_to_unified_schema,
+    load_dbc,
+)
 
 
 @dataclass
