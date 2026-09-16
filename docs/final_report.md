@@ -1,7 +1,24 @@
 # Behavior-Aware EV Battery Health Monitoring: Final Report
 
 **Author:** Naveen Vaidyanathan
-**Date:** 2026-07-22 (Sections 4.10–4.12 added 2026-08-21)
+**Date:** 2026-07-22
+**Revisions:** Sections 4.10–4.12 added 2026-08-21 · Sections 1.1–1.3, 3.4,
+4.15 and the second Conclusion addendum added 2026-09-09
+
+**Note on the 2026-09-09 revision.** Three decision records were accepted after
+Section 4.14 was written — ADR 0012 (corrected CALCE target derivation),
+ADR 0013 (estimator variance re-measured on it), and ADR 0014 (rated capacity
+declared on the wire). **Section 4.15 states what each changes**, and the
+second Conclusion addendum restates the headline claim at its corrected
+magnitude. As in the previous revision, nothing earlier is retracted or
+silently edited: every figure in Sections 4.1–4.14 remains correct as a
+statement about the frame it was measured on, and Section 4.15 says which frame
+that was. A reader who quotes a magnitude from Section 4.14 without reading
+4.15 will overstate it roughly threefold.
+
+Sections 1.1 (literature context), 1.2 (objectives), 1.3 (objectives against
+outcomes) and 3.4 (verification strategy) were added in the same revision to
+complete the report's structure; they introduce no new experimental results.
 
 **Note on revision:** Sections 4.10 through 4.12 were added after the original
 report and **change how Sections 4.1 through 4.6 should be read**. In short:
@@ -129,6 +146,79 @@ that:
 Item 4 is the part V1 did not have, and this report is primarily about
 closing that gap and reporting honestly on how far it got.
 
+### 1.1 Literature context
+
+Data-driven SOH estimation is a mature applied machine-learning problem with a
+large literature and a small number of shared benchmark datasets. Severson et
+al. (2019) established the dominant framing: features derived from the discharge
+voltage curve — specifically the variance of ΔQ(V) between early cycles —
+predict cycle life before capacity degradation is measurable, at 9.1% test error
+across 124 LFP/graphite cells. Their dataset and feature construction anchor a
+large body of subsequent work on curve-based features, incremental capacity
+analysis and differential voltage analysis.
+
+The behavioural or usage-aggregate feature family this project began with —
+mean temperature, C-rate exposure, depth-of-discharge statistics — is less
+represented in that literature, and Section 4 is largely an account of why.
+
+**Validation practice is where this project ended up contributing**, and the
+relevant prior work forms a ladder in which each rung holds out a larger unit
+than the last, and each exposes inflation the rung below concealed:
+
+| Rung | Holds out | Representative finding |
+|---|---|---|
+| Random / k-fold over cycles | Nothing — cycles from one cell fall on both sides | Maher & Yerken (2025): R² = 0.9999 under random splitting |
+| Cell-wise (LOBO) | One cell | Maher & Yerken (2025): the same data gives R² ≈ 0.91 — "optimistic bias" |
+| | | Le & Nguyen (2026): a 119% gap between 5-fold CV and LOBO on NASA |
+| Protocol-wise (LOCO) | An entire operating protocol | Rare. Sections 4.8, 4.12–4.14 of this report |
+
+Maher and Yerken (2025) is the closest prior work, and the distinction matters:
+they show that pooling *cycles within a cell* inflates skill and recommend
+group-wise cross-validation as the remedy. This project takes their conclusion
+as its **starting point** and shows that pooling *protocols within a cohort*
+inflates it again — and, in Section 4.14, that the obvious correction is itself
+too noisy to rank methods with. The two results are consecutive rather than
+competing.
+
+> A full systematic survey — protocol, extraction schema, and a screening gate
+> that refuses to report a proportion over an incomplete sample — is maintained
+> at `docs/manuscript/survey/extraction.csv` and rendered by
+> `scripts/render_survey_table.py`. It is currently 3 papers into a declared
+> sample of 40. The three cited here are the verified ones; no reference in this
+> report has been filled in from memory.
+
+### 1.2 Objectives
+
+Restating the Problem Statement as testable objectives:
+
+| # | Objective | Success criterion |
+|---|---|---|
+| O1 | Convert raw BMS telemetry into interpretable behaviour features | A running pipeline ingesting real telemetry and emitting the documented feature set |
+| O2 | Score degradation risk; estimate a health index and RUL | Scores produced end to end for every admitted cell |
+| O3 | Explain each score in plain language and recommend action | Per-battery attribution and a recommendation, traceable to score terms |
+| O4 | Validate those scores against measured degradation | A statistically supported relationship between score and measured capacity fade, holding out of sample |
+
+### 1.3 Objectives against outcomes
+
+| # | Outcome | Evidence |
+|---|---|---|
+| O1 | **Met.** Three ingestion transports (dataset files, CAN/DBC, serial rig) converge on one unified schema; features computed for 34 NASA and 22 CALCE cells | §2, §4.1 |
+| O2 | **Met as engineering.** Risk, health index and RUL are produced end to end for every admitted cell, with refusals where inputs are insufficient | §4.1, §4.7 |
+| O3 | **Met, and strengthened.** Threshold-based attribution was replaced with exact closed-form Shapley values over the score terms; the SHAP analysis against measured fade was gated on out-of-sample skill, which it failed, so its ranking is reported as describing model fitting rather than physics | §4.9 |
+| O4 | **Not met, and the reason is the project's main result.** The heuristic scores show no significant relationship with measured fade (§4.1). One signal — temperature exposure — is real and cohort-controlled (§4.2) but does not transfer across ambient conditions, for a mechanical reason later identified (§4.11). A fitted model is valid in-sample and does not generalise (§4.3, §4.8). Much of the earlier null result is attributable to a target that is 96% noise (§4.10) | §4.1–4.3, §4.8, §4.10–4.11 |
+
+**On O4.** The honest position is that the objective was not achieved and that
+pursuing it produced a more transferable result than achieving it would have.
+Sections 4.12–4.15 establish that the validation protocol standard in this field
+cannot support the claims routinely made on it — not because it is biased, but
+because at these sample sizes it is too noisy. Six ranking claims were made from
+single-frame runs during this work and all six were withdrawn (§4.15). That
+finding does not depend on batteries and is testable by anyone with two
+protocols and a held-out group.
+
+A project that reported O4 as met would have had to ignore the evidence in
+§4.10 and §4.14. This report treats not meeting it as the finding.
+
 ## 2. System Architecture
 
 ```
@@ -203,6 +293,56 @@ All correlations use Spearman's rho with reported p-values and sample
 sizes; the regression uses OLS with reported coefficients, standard
 errors, and both in-sample and cross-validated fit statistics. No result
 in this report is presented without its sample size and significance.
+
+### 3.4 Verification and testing strategy
+
+The software is verified by 735 automated tests across 33 modules, executed on
+every push by a seven-job continuous-integration pipeline. Three categories are
+worth describing, because they are not the usual kind and two of them exist
+specifically to protect this report.
+
+**Unit and integration tests** cover the conventional ground: feature
+computation, cycle segmentation, coulomb counting, the scoring stages, the API
+surface, and the serial and CAN ingestion paths end to end.
+
+**Prose-to-evidence pinning** (`tests/test_reported_numbers.py`) binds every
+figure quoted in this report to the artifact that produced it. Each pinned claim
+records the value, the recipe that recomputes it from a tracked CSV under
+`reports/metrics/`, and a regular expression that must match this document.
+Re-running an experiment and forgetting to update a paragraph fails the build.
+This mechanism was not a precaution taken in advance — it was built after a
+stale figure was found to have survived a full re-run, and §6.4 of the companion
+manuscript documents that failure.
+
+**Refusal tests.** Because the system's defining behaviour is declining to
+produce a number it cannot justify, the refusals are tested as functionality
+rather than as error handling. Nine gates each have tests asserting that the
+refusal fires, that it names the consumer that would have broken, and — equally
+important — that the stages *upstream* of it still report what they measured.
+
+**Cross-artifact structural tests** assert that independently maintained
+artifacts agree: the firmware sketch's declared field set is compared as a *set*
+against the wire schema's authoritative definition, and the schema table
+embedded in the hardware documentation must equal the rendered output of the
+code that defines it. Substring assertions had already proved insufficient — a
+renamed wire field left the schema identifier untouched, so the firmware would
+have continued announcing a protocol version it no longer spoke.
+
+The CI pipeline additionally runs three jobs that are unusual and were each
+added in response to a specific failure mode:
+
+| Job | Guards against |
+|---|---|
+| `no-optional-extras` | Uninstalls the optional CAN dependency and re-runs the suite, so "this dependency is optional" is tested rather than claimed |
+| `reproduce-study` | Executes the headline benchmark end to end, so the central result cannot rot |
+| Python floor matrix (3.10 and 3.12) | Testing only the newest interpreter lets a declared minimum version rot silently |
+
+**What is not verified.** The pyserial port read (`SerialPortSource.lines()`)
+has never run against a physical board — approximately 25 lines that the
+emulator cannot exercise, since everything downstream of it is driven through
+the identical parser. The firmware sketch has never been compiled in CI, so
+"compiles on ESP32, ESP8266 and AVR" is a claim rather than a tested fact. Both
+are recorded in §5.
 
 ## 4. Results
 
@@ -978,6 +1118,119 @@ estimate cannot distinguish between candidate methods, and must be reported as
 an interval over cohort draws rather than a point estimate.* Full detail in
 ADR 0010.
 
+### 4.15 Corrections since 2026-08-25 (ADR 0012, 0013, 0014)
+
+Three decision records were accepted after Section 4.14 was written. Each
+changes how an earlier section should be read; none of them retracts a number.
+
+#### 4.15.1 The CALCE target derivation was wrong (ADR 0012)
+
+Section 4.13 evaluates CALCE using the dataset's own `Cycle_Index` column to
+delimit cycles. That derivation **alternates between full and partial discharge
+capacities**, so the resulting target is not a physical state-of-health
+trajectory but a measurement artifact of how the cycler indexed its records.
+
+Replacing it with full-discharge segmentation — detecting contiguous discharge
+runs from sample-level telemetry and grading each against the cell's own voltage
+cutoff *and* its charge capability — changes the frame substantially:
+
+| | §4.13 as written | Corrected (ADR 0012) |
+|---|---:|---:|
+| Admitted cells | 19 of 23 | **22 of 22** |
+| Cohorts | 8 | **10** |
+| Target noise ceiling | 0.870 | **0.907** |
+| Reference capacity, CS2_5 | 0.177 Ah | **1.055 Ah** |
+| Reference capacity, CS2_24 | 0.367 Ah | **1.101 Ah** |
+
+The reference-capacity figures show the size of the error directly: a cell whose
+"full" capacity was recorded as 0.177 Ah against a 1.1 Ah nominal was being
+scored on a fifth of its actual discharge.
+
+**Consequence for §4.12–4.13.** On the corrected absolute-SOH target, counting
+cycles reaches LOCO R² of 0.478–0.524 and beats every learned method except
+`random_forest` (0.670). The large advantage the learned methods appeared to
+hold in §4.13 was substantially them fitting the partial-cycle artifact. *"Learned
+models add enormously over cycle count"* is therefore withdrawn — the fifth of
+the six ranking claims tabulated in the Conclusion.
+
+#### 4.15.2 The estimator-variance magnitudes were inflated ~3× (ADR 0013)
+
+Section 4.14's headline figures — an interquartile range of **0.724 R²** against
+a median between-method difference of **0.351** — were computed by pooling two
+frames, one of which is the `Cycle_Index` derivation §4.15.1 refutes.
+
+This is a problem for §4.14 specifically, not merely an untidiness. The sweep's
+two arms are a flexible model (`svr_rbf`) and a smooth function of cycle count
+(`age_linear`), and §4.15.1's artifact is precisely one that a smooth function
+cannot track but a flexible one can partially fit. The experiment was measuring
+the contrast the target distorts.
+
+Re-running the identical sweep on the corrected derivation — same cells, same
+features, same two methods, same machinery, differing only in target derivation
+— on the three coverage levels both runs draw fully (k = 3, 4, 5):
+
+| | `Cycle_Index` target | Full-discharge target |
+|---|---:|---:|
+| LOCO IQR of the gap | 0.892 | **0.296** |
+| Median paired `svr_rbf` − `age_linear` | −0.336 | **−0.110** |
+| Draws where `svr_rbf` wins | 13.9% | 38.9% |
+| **Noise-to-effect ratio** | **2.66** | **2.70** |
+
+The IQR reduction is 0.596 R², bootstrap 95% CI [0.335, 0.936] over 4,000
+resamples; the corrected estimate is smaller in every resample.
+
+**Three conclusions, and they are not the same conclusion:**
+
+1. **The claim survives as a ratio.** 2.70 against 2.66 — the estimator is
+   several times noisier than the effect it is used to detect on *both*
+   derivations. This is not an artifact of the target.
+2. **The magnitudes were inflated roughly threefold.** Any sentence quoting
+   0.724 or 0.351 as a property of leave-one-cohort-out *in general* overstates
+   it by that factor. Those figures describe that estimator on that frame.
+3. **The mechanism does not survive.** On the `Cycle_Index` target `svr_rbf`
+   collapsed hardest (gap −1.037 against `age_linear`'s −0.096); on the
+   corrected target the ordering **inverts** (−0.203 against −0.460).
+   *"The flexible method transfers worst"* is the sixth withdrawn ranking claim.
+
+Section 4.14's refutation of the coverage hypothesis (ADR 0010) replicates:
+raw ρ(cohorts, gap) = +0.126 (p = 0.217, n = 98), adjusted for cell count
+−0.002 (p = 0.982). The hypothesis is now refuted on two independent
+derivations of the same cells.
+
+#### 4.15.3 A silently defaulted physical constant (ADR 0014)
+
+Found by code audit of the serial ingestion path before any hardware was
+connected. C-rate — the definition of both `aggressive_discharge_event` and
+`fast_charge_flag` — was computed against a rated capacity defaulted to 2.0 Ah
+that no caller supplied and nothing on the wire carried.
+
+It was correct only by coincidence: the NASA cells and the bench emulator are
+both 2 Ah. A 3.4 Ah cell drawing 1 C would have been scored at **1.7 C**,
+setting both flags on every row of a capture and propagating a fabricated stress
+score into the health index and RUL estimate.
+
+The capacity is now declared by the rig in its schema handshake or supplied by
+the caller, and a capture with neither is **measured but not scored** —
+segmentation and coulomb counting do not divide by capacity, so withholding them
+too would hide the one result a bring-up most needs.
+
+This affects no figure in this report: every dataset analysed here uses 2 Ah
+cells. It is recorded because it is the same defect class as the NaN-as-healthy
+fault of §4.4 — a missing quantity substituted rather than refused — and because
+it would have corrupted the first physical measurement taken.
+
+#### 4.15.4 What this means for reading Sections 4.12–4.14
+
+| Section | Status |
+|---|---|
+| §4.12 (NASA methods under shift) | **Unaffected.** NASA's target derivation was never in question |
+| §4.13 (CALCE replication) | **Cell and cohort counts superseded** by §4.15.1; the qualitative finding — every method loses skill under protocol shift — holds on both derivations |
+| §4.14 (estimator variance) | **Ratio holds; magnitudes inflated ~3×.** Quote 2.7×, not 0.724 |
+
+The central methodological claim is unchanged and is now better supported than
+when Section 4.14 was written, because it has been reproduced on a second,
+defensible derivation of the same cells.
+
 ## 5. Limitations
 
 - **Sample size.** 34 NASA batteries split across 9 protocol cohorts of
@@ -1222,7 +1475,61 @@ The correct next step is therefore not "acquire more data" in general, but
 specifically **more cohorts per dataset** — the only thing that narrows this
 interval — together with the reporting change above.
 
+### Addendum, 2026-09-09
+
+The addendum above quotes an interquartile range of 0.724 R² against a median
+between-method difference of 0.351. **Both figures are inflated by roughly
+threefold**, and Section 4.15.2 replaces them.
+
+The sweep behind them pooled two frames, one being the CALCE `Cycle_Index`
+derivation that ADR 0012 subsequently showed to be a measurement artifact — and
+the artifact is specifically one that a flexible model can partially fit and a
+smooth function of cycle count cannot, which is exactly the contrast the sweep
+was measuring. Re-running it on the corrected derivation gives an IQR of 0.296
+against an effect of 0.110.
+
+**What survives is the claim, in its ratio form.** The estimator's spread is
+2.70× the between-method difference on the corrected target against 2.66× on the
+artifact target. The measurement being several times noisier than the effect it
+is used to detect is *not* a property of the flawed derivation, and the
+conclusion above stands with its magnitude restated:
+
+> *At the sample sizes standard battery datasets provide, a single
+> leave-one-cohort-out estimate cannot distinguish between candidate methods and
+> must be reported as an interval over cohort draws.*
+
+Two further consequences. The count of withdrawn ranking claims rises from five
+to **six** — the correction killed *"learned models add enormously over cycle
+count"* (§4.15.1) and *"the flexible method transfers worst"* (§4.15.2), in
+opposite directions, from the same cause. And the withdrawal pattern itself
+sharpens into the clearest statement of this project's finding:
+
+| # | Claim | What varied | How it died |
+|---|---|---|---|
+| 1 | High-capacity models transfer worse | Method set | XGBoost was a counterexample |
+| 2 | Regularisation, not capacity, predicts transfer | Dataset | Contradicted on CALCE |
+| 3 | Selecting by LOBO picks the worst method | Cell set | Rested on one cell (B0041) |
+| 4 | The LSTM transfers worst on both datasets | Cohort coverage | Reversed when CX2 was added |
+| 5 | Learned models add enormously over cycle count | Target derivation | Reversed by the corrected target |
+| 6 | The flexible method transfers worst | Target derivation | Ordering inverted on the corrected target |
+
+**In no case did the model change.** Every claim was overturned by varying
+something the field routinely treats as a fixed preliminary — which methods were
+compared, which dataset, which cells were admitted, how many cohorts, and how
+the target was derived from raw records. That third column is this project's
+argument in one place.
+
+That the sixth claim was found by re-running the project's own central
+experiment against its own later finding — rather than by a reviewer — is the
+strongest available evidence that the reporting discipline described in §3.4
+works.
+
 ## References
+
+> Every entry below has been verified against the publisher's or repository's
+> own record. No reference in this report was filled in from memory. Entries
+> 4–6 were added in the 2026-09-09 revision and correspond to verified rows in
+> `docs/manuscript/survey/extraction.csv`.
 
 1. B. Saha and K. Goebel (2007). "Battery Data Set", NASA Prognostics
    Data Repository, NASA Ames Research Center, Moffett Field, CA.
@@ -1235,10 +1542,37 @@ interval — together with the reporting change above.
    calibration question attempted, for reasons specific to the files
    supplied, not the dataset's value in general — CALCE's separate CS2/CX2
    cycling series remains a reasonable candidate for Section 6, item 1.
-3. K. A. Severson et al. (2019). "Data-driven prediction of battery cycle
-   life before capacity degradation", *Nature Energy*. Identified as the
-   right dataset for fast-charge-specific validation (Section 3.2); not
-   yet acquired at time of writing.
+3. K. A. Severson, P. M. Attia, N. Jin, N. Perkins, B. Jiang, Z. Yang,
+   M. H. Chen, M. Aykol, P. K. Herring, D. Fraggedakis, M. Z. Bazant,
+   S. J. Harris, W. C. Chueh and R. D. Braatz (2019). "Data-driven prediction
+   of battery cycle life before capacity degradation", *Nature Energy*, 4(5),
+   383–391. https://doi.org/10.1038/s41560-019-0356-8
+   Anchor for curve-based SOH features (Section 1.1); identified as the right
+   dataset for fast-charge-specific validation (Section 3.2), not acquired at
+   time of writing.
+4. K. Maher and N. Yerken (2025). "Comprehensive machine learning for
+   lithium-ion battery state-of-health estimation using group-wise
+   cross-validation", *14th International Conference on Renewable Energy
+   Research and Applications (ICRERA 2025)*, pp. 1465–1468, IEEE.
+   https://doi.org/10.1109/ICRERA66237.2025.11283788
+   The closest prior work to this project's methodological contribution
+   (Section 1.1): compares random splitting against cell-wise `GroupKFold`
+   across seven models and reports R² falling from 0.9999 to ≈0.91. Establishes
+   the rung of the validation ladder immediately below the one this report
+   addresses.
+5. H. H. Le and K.-A. Nguyen (2026). "Charging phase health indicators for
+   battery state-of-health estimation: a systematic comparison of CC, CV, and
+   combined approaches under cross-battery validation", *arXiv:2607.23482*.
+   Independent corroboration of Section 4.8's first step: a 119% performance
+   gap between 5-fold cross-validation and leave-one-battery-out validation on
+   the NASA dataset. *Cited from the abstract; confirm against the full text
+   before quoting the figure elsewhere.*
+6. Y. Liu, S. Saxena, M. Pecht et al. CALCE CS2 and CX2 prismatic cell cycling
+   series, Center for Advanced Life Cycle Engineering, University of Maryland.
+   The replication dataset for Sections 4.13 and 4.15: 22 cells across 10
+   cohorts under the corrected full-discharge derivation (ADR 0012), spanning
+   two cell families and a depth-of-discharge cohort axis rather than a thermal
+   one. Distinct from the PL pouch-cell data of entry 2.
 
 ## Appendix: Reproducing all results
 

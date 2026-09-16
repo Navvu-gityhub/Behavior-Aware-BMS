@@ -135,6 +135,111 @@ class LiveCaptureRequest(BaseModel):
     require_full_coverage: bool = True
 
 
+# --- Serial rig ------------------------------------------------------------
+# The bench/demo transport. Deliberately separate request models rather than a
+# mode flag on ReplayRequest: a DBC path and a baud rate have nothing to do with
+# each other, and one model carrying both would make every field optional and
+# every combination look legal.
+
+class SerialReplayRequest(BaseModel):
+    capture_path: str = Field(
+        description="Path to a recorded serial capture (one wire line per line)."
+    )
+    battery_id: Optional[str] = Field(
+        default=None,
+        description=(
+            "Overrides the identity the rig declares in its HELLO line. Left "
+            "null, the rig's own declaration is used."
+        ),
+    )
+    require_full_coverage: bool = True
+    min_accepted_fraction: float = Field(
+        default=0.5, ge=0.0, le=1.0,
+        description=(
+            "Fraction of data records that must parse before the capture is "
+            "scored. Below it the run refuses rather than computing a health "
+            "index from an arbitrary subsample of a broken capture."
+        ),
+    )
+
+
+class SerialLiveRequest(BaseModel):
+    port: str = Field(
+        description=(
+            "Serial port, e.g. COM5 or /dev/ttyUSB0. Required and never "
+            "inferred: auto-selecting would silently read the wrong device on a "
+            "host with a Bluetooth serial port or a second board attached."
+        )
+    )
+    baudrate: int = Field(default=115200, gt=0)
+    duration_s: float = Field(default=30.0, gt=0.0, le=300.0)
+    battery_id: Optional[str] = None
+    require_full_coverage: bool = True
+    min_accepted_fraction: float = Field(default=0.5, ge=0.0, le=1.0)
+
+
+class SerialEmulateRequest(BaseModel):
+    """Run the deterministic emulated rig. Needs no hardware and no pyserial."""
+
+    battery_id: str = Field(default="RIG_01")
+    n_cycles: int = Field(default=3, ge=1, le=50)
+    sample_period_s: float = Field(default=60.0, gt=0.0, le=3600.0)
+    compact: bool = Field(
+        default=False, description="Use the compact key=value codec."
+    )
+    corrupt_every: int = Field(
+        default=0, ge=0,
+        description=(
+            "Truncate every Nth line, to exercise the rejection counters and "
+            "the accepted-fraction refusal. Zero disables it."
+        ),
+    )
+    require_full_coverage: bool = True
+    min_accepted_fraction: float = Field(
+        default=0.5, ge=0.0, le=1.0,
+        description=(
+            "As on the other serial endpoints. Exposed here too so the refusal "
+            "path is demonstrable without hardware: pair it with "
+            "`corrupt_every` to drive a capture below the floor."
+        ),
+    )
+
+
+class SerialFieldOut(BaseModel):
+    wire_name: str
+    channel: str
+    unit: str
+    minimum: float
+    maximum: float
+    required: bool
+    note: str
+
+
+class SerialSchemaOut(BaseModel):
+    """The wire contract, served so a firmware author can fetch it."""
+
+    schema_id: str
+    sentinel: str
+    fields: list[SerialFieldOut]
+    example_hello: str
+    example_record: str
+    example_record_compact: str
+    markdown_table: str
+
+
+class SerialDecodeStatsOut(BaseModel):
+    n_lines: int
+    n_noise: int = Field(
+        description="Lines without the sentinel: boot banners, stray prints."
+    )
+    n_status: int
+    n_accepted: int
+    n_rejected: int
+    accepted_fraction: float
+    reasons: dict[str, int]
+    summary: str
+
+
 class TelemetryRunOut(BaseModel):
     source: str
     status: str = Field(description="SCORED, SCORED_WITH_REFUSALS or REFUSED")
@@ -157,6 +262,18 @@ class TelemetryRunOut(BaseModel):
         ),
     )
     fade_prediction_refusal: str = ""
+    serial: Optional[SerialDecodeStatsOut] = Field(
+        default=None,
+        description=(
+            "Present only for serial runs. Serial is a lossy transport, so a "
+            "capture that silently dropped most of its lines would otherwise be "
+            "indistinguishable from a clean one on its output alone."
+        ),
+    )
+    rig: Optional[str] = Field(
+        default=None,
+        description="The rig's declared schema, when it announced one.",
+    )
 
 
 class LiveSampleOut(BaseModel):

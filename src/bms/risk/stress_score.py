@@ -31,6 +31,7 @@ import numpy as np
 import pandas as pd
 
 from src.bms.explain.attribution import ScoreTerm
+from src.bms.features.behavior_features import DEFAULT_RATED_CAPACITY_AH
 
 REQUIRED_ROW_COLUMNS = ("current_a", "temperature_c", "soc")
 REQUIRED_SUMMARY_COLUMNS = (
@@ -64,7 +65,7 @@ class StressScoreWeights:
     high_soc: float = 10.0
 
 
-def compute_stress_score(df: pd.DataFrame, weights: StressScoreWeights = StressScoreWeights(), rated_capacity_ah: float = 2.0, c_rate_threshold: float = 1.0) -> pd.Series:
+def compute_stress_score(df: pd.DataFrame, weights: StressScoreWeights = StressScoreWeights(), rated_capacity_ah: float = DEFAULT_RATED_CAPACITY_AH, c_rate_threshold: float = 1.0) -> pd.Series:
     """Rule-based row-level stress score in [0, 100].
 
     Expects `current_a`, `temperature_c`, `soc` columns (unified schema).

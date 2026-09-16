@@ -69,6 +69,14 @@ MIN_PHASE_SAMPLES = 3
 # nominal capacity varies by pack and is often unknown from telemetry alone.
 COMPLETE_CYCLE_FRACTION = 0.80
 
+# NumPy renamed `trapz` to `trapezoid` in 2.0 and kept the old spelling only as a
+# deprecated alias. Binding the callable once here keeps this module working on
+# both major versions, which matters because `requirements.txt` floors NumPy at
+# 1.24 without ceiling it: a fresh install resolves to 2.x while an existing
+# environment may still be on 1.26, and coulomb counting must not depend on
+# which one a given machine happens to have.
+_trapezoid = getattr(np, "trapezoid", None) or np.trapz
+
 
 @dataclass(frozen=True)
 class Phase:
@@ -207,7 +215,7 @@ def _build_phase(
     charge_ah = 0.0
     if finite.sum() > 1:
         charge_ah = float(
-            np.trapezoid(np.abs(window_current[finite]), window_time[finite]) / 3600.0
+            _trapezoid(np.abs(window_current[finite]), window_time[finite]) / 3600.0
         )
 
     return Phase(

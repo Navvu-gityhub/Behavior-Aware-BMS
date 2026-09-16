@@ -49,6 +49,12 @@ benchmarks = [
 # the API and every calibration script — the two CAN test modules skip
 # cleanly via pytest.importorskip rather than failing collection.
 can = ["cantools>=4.4.0", "python-can>=4.0.0"]
+# Serial telemetry from a microcontroller rig. Needed ONLY by
+# `SerialPortSource`, which reads a physical port. Every other part of the
+# serial path — the wire protocol, the schema gate, the emulated rig, replay of
+# a recorded capture, and the whole test suite — runs without it, which is what
+# keeps the hardware demo path available on a machine with no board attached.
+serial = ["pyserial>=3.5"]
 # TreeSHAP, used only by scripts/fit_shap_attribution_model.py. The rule-score
 # explainer in src/bms/explain/attribution.py uses an exact closed form and
 # needs no dependency at all (ADR 0003).
@@ -205,6 +211,13 @@ files = [
     "src/bms/benchmarks",
     "src/bms/physics",
     "src/bms/uncertainty",
+    # Serial ingestion was written against the gate rather than retrofitted, so
+    # it joins on arrival. Scoped to the three serial modules rather than all of
+    # `src/bms/telemetry`, because the CAN modules predate the gate and still
+    # carry the pandas interface friction described above.
+    "src/bms/telemetry/serial_schema.py",
+    "src/bms/telemetry/serial_source.py",
+    "src/bms/telemetry/serial_pipeline.py",
 ]
 
 [[tool.mypy.overrides]]

@@ -101,6 +101,65 @@ jobs:
       - name: Threshold reachability audit
         run: python scripts/audit_threshold_reachability.py
 
+  firmware:
+    # The reference sketch claims to compile on ESP32, ESP8266 and AVR. Until
+    # this job existed that was a claim, not a tested fact -- the sketch had
+    # never been compiled anywhere, so a syntax error would have been found by
+    # a student at a bench rather than by CI.
+    #
+    # The sketch has no #include of any kind: it is pure Arduino core, so no
+    # library installation is needed and the only dependency is the board core
+    # itself. That is what makes compiling all three targets cheap.
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # The primary target. docs/hardware_design.md specifies an
+          # ESP32-WROOM-32 DevKit v1, and BEACON_DEVICE reports "esp32".
+          - name: esp32
+            fqbn: "esp32:esp32:esp32"
+            core: "esp32:esp32"
+            url: "https://espressif.github.io/arduino-esp32/package_esp32_index.json"
+          - name: esp8266
+            fqbn: "esp8266:esp8266:nodemcuv2"
+            core: "esp8266:esp8266"
+            url: "https://arduino.esp8266.com/stable/package_esp8266com_index.json"
+          - name: avr-uno
+            fqbn: "arduino:avr:uno"
+            core: "arduino:avr"
+            url: ""
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install arduino-cli
+        run: |
+          mkdir -p "$HOME/.local/bin"
+          curl -fsSL https://raw.githubusercontent.com/arduino/arduino-cli/master/install.sh \
+            | BINDIR="$HOME/.local/bin" sh
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+      - name: Install board core (${{ matrix.core }})
+        run: |
+          if [ -n "${{ matrix.url }}" ]; then
+            arduino-cli core update-index --additional-urls "${{ matrix.url }}"
+            arduino-cli core install "${{ matrix.core }}" --additional-urls "${{ matrix.url }}"
+          else
+            arduino-cli core update-index
+            arduino-cli core install "${{ matrix.core }}"
+          fi
+      - name: Record toolchain
+        run: |
+          arduino-cli version
+          arduino-cli core list
+      - name: Compile beacon_rig.ino
+        # --warnings all rather than the default "none": a sketch that compiles
+        # only because warnings are suppressed is not verified, and the point of
+        # this job is verification.
+        run: |
+          arduino-cli compile \
+            --fqbn "${{ matrix.fqbn }}" \
+            --warnings all \
+            firmware/beacon_rig
+
   gateway-tests:
     runs-on: ubuntu-latest
     defaults:

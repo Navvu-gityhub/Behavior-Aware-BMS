@@ -16,8 +16,24 @@ import pandas as pd
 
 ROLLING_WINDOW = 50
 
+#: Fallback denominator for C-rate when no caller supplies one, in amp-hours.
+#:
+#: This is an *assumption*, not a measurement, and it is named here so that
+#: every place relying on it is greppable. It happens to be right for the NASA
+#: 18650 cells this project calibrated against and for the bench emulator, and
+#: it is wrong for any other cell: a 3.4 Ah 18650 drawing 1 C would be scored at
+#: 1.7 C, setting `aggressive_discharge_event` on every discharge row.
+#:
+#: The serial ingestion path no longer uses it - it resolves capacity from the
+#: rig's HELLO declaration or its caller and refuses when it has neither (see
+#: `telemetry/serial_pipeline.py`). The CAN path and the batch dataset path
+#: still fall back to it, because a DBC carries no capacity declaration and the
+#: dataset loaders describe cells this constant is correct for. Removing the
+#: fallback for those is tracked in docs/roadmap.md.
+DEFAULT_RATED_CAPACITY_AH = 2.0
 
-def compute_behavior_flags(df: pd.DataFrame, rated_capacity_ah: float = 2.0, c_rate_threshold: float = 1.0) -> pd.DataFrame:
+
+def compute_behavior_flags(df: pd.DataFrame, rated_capacity_ah: float = DEFAULT_RATED_CAPACITY_AH, c_rate_threshold: float = 1.0) -> pd.DataFrame:
     """Add the five binary behavior flags from the README's feature catalog.
 
     Expects `current_a`, `temperature_c`, `soc` columns (unified schema).

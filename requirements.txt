@@ -4,6 +4,13 @@ scikit-learn>=1.3.0
 # TreeSHAP for the attribution model in scripts/fit_shap_attribution_model.py.
 # NOT needed by the pipeline itself: the rule-score explainer in
 # src/bms/explain/attribution.py uses an exact closed form (see ADR 0003).
+#
+# INSTALLING INTO AN EXISTING CONDA ENVIRONMENT: shap 0.52+ requires numpy>=2,
+# and pip will happily upgrade numpy underneath a conda-installed matplotlib
+# that was built against numpy 1.x. The result is an ImportError from
+# matplotlib._path at import time, which looks like a matplotlib fault and is
+# not. If that happens, pin `numpy==1.26.4` and `shap==0.46.0`, or install into
+# a clean virtualenv where pip resolves matplotlib and numpy together.
 shap>=0.44.0
 statsmodels>=0.14.0
 joblib>=1.3.0
@@ -16,3 +23,8 @@ uvicorn>=0.29.0
 pydantic>=2.0.0
 cantools>=4.4.0  # CAN/DBC decoding for real telemetry (src/bms/telemetry)
 python-can>=4.0.0  # CAN log replay and live bus capture (src/bms/telemetry)
+# Serial telemetry from a microcontroller rig. Imported lazily, inside
+# SerialPortSource.lines(), so it is genuinely optional: the wire protocol, the
+# schema gate, the emulated rig, capture replay and the full test suite all run
+# without it. Only reading a physical port needs it.
+pyserial>=3.5

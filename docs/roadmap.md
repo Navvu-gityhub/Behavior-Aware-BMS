@@ -21,24 +21,83 @@ ordering is by dependency, not by appeal.
 | CALCE CS2+CX2 loader (zip, nested, cohort-from-directory) | `src/bms/io/load_calce_cycling.py` | Working |
 | Cohort-coverage sweep with size control | `src/bms/benchmarks/coverage.py` | Working — refuted its own hypothesis (ADR 0010) |
 | Container build, CI with lint/type/coverage | `Dockerfile`, `.github/workflows/` | Working |
+| Serial telemetry ingestion + emulated rig | `src/bms/telemetry/serial_*.py` | Working — untested against a physical board |
+| Rated capacity declared on the wire; live capture recording | `serial_schema.py`, `serial_source.py` | Working (ADR 0014) — closes the four defects blocking a bring-up |
 
 ## Next, in dependency order
 
-### 0. Full-discharge segment detection — now the largest open quality item
+### 0aa. Remove the C-rate default from the CAN and batch paths — **open**
 
-Three of eight admitted CALCE cohorts (Types 5 and 6) rest on a **partial-cycle
-reference** of ~0.26–0.42 Ah, roughly a quarter of nominal, because those
-protocols cycle partially by design. Their SOH tracks relative fade of a
-repeated partial cycle — a real signal, but not absolute state of health.
-Type 3 is excluded outright, and CX2_3 needed a fifth screen criterion.
+ADR 0014 removed the silent 2.0 Ah C-rate denominator from the serial path: a
+rig declares `capacity_ah` in HELLO, or the caller supplies it, or the capture
+is measured but not scored. `DEFAULT_RATED_CAPACITY_AH` survives for the CAN
+path and the batch dataset path, which still take it silently.
 
-The fix is to detect full discharges directly — contiguous negative-current
-runs terminating at the voltage cutoff — rather than trusting `Cycle_Index`.
-`telemetry/cycles.py` already does exactly this for CAN logs; the work is
-applying it at CALCE's scale and re-deriving the target from it.
+It is defensible there and not merely unfinished — the dataset loaders describe
+cells the constant is correct for, and a DBC carries no capacity declaration to
+read — but it is the same defect waiting for the first pack that is not 2 Ah. A
+DBC has no standard capacity signal, so this needs a per-vehicle registry entry
+rather than a wire change; `src/bms/io/can_vehicle_registry.py` is the place.
 
-This would recover four cells, remove a caveat currently attached to three
-cohorts, and is the only route to an *absolute* SOH target on those protocols.
+Do this before the CAN path is pointed at any real vehicle.
+
+### 0. Full-discharge segment detection — **done** (ADR 0012)
+
+`src/bms/io/calce_full_discharge.py`, `make calce-full-discharge`.
+
+Segments sample-level telemetry into contiguous discharge runs via
+`telemetry/cycles.segment_phases` and grades each against the cell's own voltage
+cutoff *and* charge capability. References move from partial to physical
+(CS2_5: 0.177 → 1.055 Ah; CS2_24: 0.367 → 1.101 Ah), all four previously
+excluded cells are recovered, admissibility goes 19/23 → 22/22, and the target
+noise ceiling rises 0.870 → 0.907.
+
+Two things this item's original description got wrong, both corrected in
+ADR 0012 and worth keeping visible:
+
+- **"Terminating at the voltage cutoff" is not sufficient.** CS2_5's partial
+  discharges reach the 2.7 V cutoff from a partially charged state, so 99.8% of
+  them pass a cutoff test while moving a fifth of the cell's capacity.
+- **The cutoff cannot be estimated as a quantile of terminal voltages**, because
+  the partials then define it — 3.78 V for CS2_24, which certifies exactly the
+  cycles the detector exists to reject.
+
+It also refuted ADR 0009's "the learned models add enormously": on the absolute
+target the age baselines reach LOCO 0.478–0.524 and beat every learned method
+except `random_forest`.
+
+Cost: a Type 5 or 6 cell yields 36–73 full discharges out of 5,000–7,000 cycles.
+Absolute SOH on those protocols is inherently sparse.
+
+### 0a. Estimator variance on the corrected target — **done** (ADR 0013)
+
+The cohort-coverage sweep behind the project's one novel claim was run on
+`calce_cycle_level.csv` — the `Cycle_Index` derivation that ADR 0012 refutes as
+a measurement artifact. The sweep's nonlinear arm is `svr_rbf` and its baseline
+is a smooth function of cycle number, so it was measuring exactly the
+flexible-versus-smooth contrast that target distorts.
+
+Re-run on the ADR 0012 full-discharge frame — same cells, same features, same
+methods, only the target derivation different — via
+`run_coverage_sweep.py --frames calce_full_discharge --out-prefix
+coverage_sweep_full_discharge`.
+
+On the coverage levels both runs draw fully, the LOCO interquartile range falls
+from 0.892 to **0.296** and the between-method difference from -0.336 to
+-0.110, while the **ratio between them holds at 2.66 versus 2.70**. The claim
+that survives is the ratio: the LOCO estimate is several times noisier than the
+difference it is used to adjudicate, on both derivations. The magnitudes were
+inflated about threefold by the artifact.
+
+What does **not** survive is the mechanism. On the artifact target `svr_rbf`
+collapsed hardest (gap -1.037 against `age_linear`'s -0.096); on the corrected
+target the ordering inverts (-0.203 against -0.460). "The flexible method
+transfers worst" is the fifth ranking claim this project has had to withdraw.
+
+ADR 0010 replicates: raw Spearman +0.126 (p = 0.217), **-0.002 (p = 0.982)**
+once cell count is regressed out.
+
+`coverage_sweep.csv` and the three figures pinned to it are unchanged.
 
 ### 0b. CADEX loader — the only route to testing the Arrhenius model
 
@@ -174,6 +233,26 @@ CALCE's Arbin exports carry test time only.
 This needs telemetry with real timestamps — a fleet feed or the instrumented
 rig — not a modelling change. Until then the box should be marked
 *not applicable to lab-cycled data*.
+
+**Partially unblocked.** The serial ingestion path
+(`docs/hardware_integration.md`) is the instrumented-rig half of that. A
+microcontroller rig streams samples at wall-clock intervals, so a capture from
+one carries the axis every dataset here lacks.
+
+The host-side timestamp is **now built**: `run_serial_pipeline(...,
+captured_at=...)` adds a `timestamp` column as the supplied start instant plus
+each record's elapsed `test_time_s`. It is not defaulted to "now" — replaying
+last week's capture would then stamp it with today's date, inventing a calendar
+rather than recording one — and a naive datetime is refused, because the same
+local hour is two different instants across a DST change and daily aggregation
+would mis-bucket silently. `test_time_s` remains what the scoring stages
+integrate over, so a wrong `captured_at` shifts only the dates; a test asserts
+capacity and health are unchanged by it.
+
+Two things are still missing before the box can be ticked: a physical rig
+actually logging (the software is untested against hardware), and a capture long
+enough for daily and weekly aggregation to mean anything — which is days of
+continuous logging, not a lab session.
 
 ## Explicitly not planned
 

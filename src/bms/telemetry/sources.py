@@ -38,7 +38,7 @@ from __future__ import annotations
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Iterator, Mapping, Protocol, Sequence, runtime_checkable
+from typing import Iterable, Iterator, Mapping, Protocol, Sequence, runtime_checkable
 
 # A single raw frame: (timestamp_seconds, arbitration_id, payload_bytes).
 Frame = tuple[float, int, bytes]
@@ -169,12 +169,29 @@ class LiveBusSource:
 
 @dataclass(frozen=True)
 class SignalCoverage:
-    """Which required channels a DBC and signal map can actually supply."""
+    """Which required channels a source can actually supply.
+
+    Built from a DBC and signal map on the CAN path, and from a rig's declared
+    schema on the serial path. The type is shared deliberately: the question
+    "can this source supply every channel the feature layer needs, and if not
+    which consumer breaks" is identical for both transports, and answering it
+    twice would let the two answers drift.
+
+    `transport` only affects wording in `render`. `dbc_path` keeps its name for
+    backwards compatibility with the CAN callers that predate serial ingestion;
+    `source_label` is the transport-neutral accessor.
+    """
 
     dbc_path: str
     available_signals: tuple[str, ...]
     mapped_channels: tuple[str, ...]
     missing_channels: tuple[str, ...]
+    transport: str = "can"
+
+    @property
+    def source_label(self) -> str:
+        """Transport-neutral name for whatever supplied these signals."""
+        return self.dbc_path
 
     @property
     def complete(self) -> bool:
@@ -188,19 +205,56 @@ class SignalCoverage:
         return "COMPLETE" if self.complete else "INCOMPLETE"
 
     def render(self) -> str:
+        available_label = (
+            "decodable signals" if self.transport == "can" else "reported fields"
+        )
         lines = [f"{self.dbc_path}: {self.status}"]
-        lines.append(f"  decodable signals: {list(self.available_signals)}")
+        lines.append(f"  {available_label}: {list(self.available_signals)}")
         lines.append(f"  mapped channels: {list(self.mapped_channels)}")
         for channel in self.missing_channels:
             consumer = REQUIRED_CHANNELS.get(channel, "downstream stages")
             lines.append(f"  MISSING {channel} -> needed by {consumer}")
         if not self.complete:
-            lines.append(
-                "  This DBC cannot drive the full feature pipeline. Supply a "
-                "DBC defining the missing signals, or extend signal_map to "
-                "point at equivalents already on the bus."
-            )
+            if self.transport == "can":
+                lines.append(
+                    "  This DBC cannot drive the full feature pipeline. Supply a "
+                    "DBC defining the missing signals, or extend signal_map to "
+                    "point at equivalents already on the bus."
+                )
+            else:
+                lines.append(
+                    "  This rig cannot drive the full feature pipeline. Add the "
+                    "missing sensor(s) and emit the corresponding field(s), or "
+                    "correct the firmware's HELLO declaration if the rig does "
+                    "measure them under another name."
+                )
         return "\n".join(lines)
+
+
+def coverage_from_channels(
+    channels: Iterable[str],
+    source_label: str,
+    transport: str = "serial",
+    required: Mapping[str, str] = REQUIRED_CHANNELS,
+) -> SignalCoverage:
+    """Build coverage from unified channel names a source claims to supply.
+
+    The serial entry point to the same gate the CAN path uses. A rig declares
+    its fields in its HELLO line; those map to unified channels, and the gate
+    then asks the identical question it asks of a DBC. Reusing
+    `SignalCoverage` rather than inventing a parallel type is what keeps a
+    missing temperature sensor and a DBC without a temperature signal producing
+    the same refusal, with the same explanation of which consumer breaks.
+    """
+    supplied = tuple(sorted(set(channels)))
+    missing = tuple(sorted(set(required) - set(supplied)))
+    return SignalCoverage(
+        dbc_path=source_label,
+        available_signals=supplied,
+        mapped_channels=supplied,
+        missing_channels=missing,
+        transport=transport,
+    )
 
 
 def dbc_signal_names(dbc) -> tuple[str, ...]:

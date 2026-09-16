@@ -1,7 +1,22 @@
 # ADR 0009: The protocol-shift collapse replicates on CALCE, but its shape is dataset-specific
 
-**Status:** Accepted
+**Status:** Accepted; partially superseded by ADR 0012
 **Date:** 2026-08-21
+
+> **Superseded in two places by [ADR 0012](0012-calce-absolute-soh.md) (2026-08-26).**
+>
+> 1. The open item below — Types 5 and 6 scored against a partial-cycle
+>    reference — is resolved. Full-discharge segmentation recovers absolute
+>    references (CS2_5: 0.177 → 1.055 Ah; CS2_24: 0.367 → 1.101 Ah) and
+>    recovers all four cells this ADR reports the screen excluding.
+> 2. **The claim "the learned models add enormously" is withdrawn.** On an
+>    absolute target the age baselines reach LOCO 0.478–0.524 rather than
+>    0.016–0.198, and beat every learned method except `random_forest`.
+>
+> The tables in this ADR were produced with a feature set that was not recorded
+> and cannot now be reproduced exactly — ADR 0012 re-runs a controlled baseline
+> and gets LOCO 0.259 for `lstm` where this ADR reports 0.526. Treat the
+> orderings here as unreproducible; the collapse itself replicates.
 
 ## Context
 

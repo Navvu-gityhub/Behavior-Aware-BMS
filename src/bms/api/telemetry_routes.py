@@ -48,6 +48,12 @@ from src.bms.api.telemetry_schemas import (
     LiveSampleOut,
     LiveStateOut,
     ReplayRequest,
+    SerialDecodeStatsOut,
+    SerialEmulateRequest,
+    SerialFieldOut,
+    SerialLiveRequest,
+    SerialReplayRequest,
+    SerialSchemaOut,
     SignalCoverageOut,
     TelemetryRunOut,
     ThermalPointOut,
@@ -57,13 +63,27 @@ from src.bms.api.telemetry_schemas import (
     TwinUpdateOut,
 )
 from src.bms.telemetry import (
+    FIELDS as SERIAL_FIELDS,
+)
+from src.bms.telemetry import (
     REQUIRED_CHANNELS,
+    SCHEMA_ID,
+    SENTINEL,
+    SERIAL_CHANNEL_MAP,
+    EmulatedRigSource,
     LiveBusSource,
     LogFileSource,
+    RigProfile,
+    SerialPortSource,
     TelemetryResult,
     TwinHistory,
     check_signal_coverage,
+    encode_hello,
+    encode_record,
+    replay_serial_capture,
+    run_serial_pipeline,
     run_telemetry_pipeline,
+    schema_table,
     snapshots_to_frame,
 )
 
@@ -216,6 +236,12 @@ def _run_out(
             result.guardian.replace({np.nan: None}).to_dict(orient="records")
         )
 
+    # Serial runs carry decode statistics a CAN run has no analogue for. Read
+    # via getattr rather than an isinstance branch so this translator stays
+    # transport-agnostic: it is the same function for both, which is the point.
+    serial_stats = getattr(result, "stats", None)
+    header = getattr(result, "header", None)
+
     return TelemetryRunOut(
         source=result.source, status=result.status, battery_id=battery_id,
         n_frames=result.n_frames, n_decoded=result.n_decoded,
@@ -224,6 +250,19 @@ def _run_out(
         cycles=cycles, capacity_yield=yield_out, guardian=guardian_records,
         twin=_twin_out(result.twin), refusals=list(result.refusals),
         fade_prediction=None, fade_prediction_refusal=_FADE_REFUSAL,
+        serial=_serial_stats_out(serial_stats),
+        rig=header.render() if header is not None else None,
+    )
+
+
+def _serial_stats_out(stats) -> SerialDecodeStatsOut | None:
+    if stats is None:
+        return None
+    return SerialDecodeStatsOut(
+        n_lines=stats.n_lines, n_noise=stats.n_noise, n_status=stats.n_status,
+        n_accepted=stats.n_accepted, n_rejected=stats.n_rejected,
+        accepted_fraction=stats.accepted_fraction, reasons=dict(stats.reasons),
+        summary=stats.render(),
     )
 
 
@@ -314,6 +353,185 @@ def telemetry_live(request: LiveCaptureRequest) -> TelemetryRunOut:
 
     _last_run[request.battery_id] = (result, signal_map)
     return _run_out(result, request.battery_id, signal_map)
+
+
+# ---------------------------------------------------------------------------
+# Serial rig — the bench and demo transport
+# ---------------------------------------------------------------------------
+#
+# Three run endpoints mirroring the CAN ones, plus the wire schema. They call
+# `run_serial_pipeline`, which converges on the same `score_telemetry_frame` the
+# CAN endpoints reach, so a serial run and a CAN run over the same battery are
+# scored by one implementation. `_run_out` translates both without branching.
+
+@router.get("/telemetry/serial/schema", response_model=SerialSchemaOut,
+            tags=["telemetry"])
+def serial_schema() -> SerialSchemaOut:
+    """The serial wire contract, served so firmware can be written against it.
+
+    Generated from `serial_schema.FIELDS`, so this endpoint and the parser
+    cannot disagree about what a conforming rig sends.
+    """
+    example_values = {"t": 12.5, "v": 3.91, "i": -1.48, "tc": 27.4, "soc": 82.1}
+    return SerialSchemaOut(
+        schema_id=SCHEMA_ID,
+        sentinel=SENTINEL,
+        fields=[
+            SerialFieldOut(
+                wire_name=spec.wire_name, channel=spec.channel, unit=spec.unit,
+                minimum=spec.minimum, maximum=spec.maximum,
+                required=spec.required, note=spec.note,
+            )
+            for spec in SERIAL_FIELDS
+        ],
+        example_hello=encode_hello(cell_id="RIG_01", period_ms=1000.0),
+        example_record=encode_record(example_values),
+        example_record_compact=encode_record(example_values, compact=True),
+        markdown_table=schema_table(),
+    )
+
+
+@router.get("/telemetry/serial/coverage", response_model=SignalCoverageOut,
+            tags=["telemetry"])
+def serial_coverage(fields: str = Query(
+    default=",".join(SERIAL_CHANNEL_MAP),
+    description="Comma-separated wire field names the rig emits, e.g. 't,v,i,soc'.",
+)) -> SignalCoverageOut:
+    """Check whether a rig's sensor complement can drive the feature pipeline.
+
+    The serial counterpart of `/telemetry/coverage`, and the same gate. Omitting
+    `tc` returns INCOMPLETE and names `high_temp_flag` as the consumer that
+    breaks — which is what a student should check before wiring anything.
+    """
+    from src.bms.telemetry import coverage_from_channels
+
+    channels = [
+        SERIAL_CHANNEL_MAP[name.strip()]
+        for name in fields.split(",")
+        if name.strip() in SERIAL_CHANNEL_MAP
+    ]
+    coverage = coverage_from_channels(
+        channels, source_label="serial_rig", transport="serial"
+    )
+    return _coverage_out(coverage, SERIAL_CHANNEL_MAP)
+
+
+@router.post("/telemetry/serial/emulate", response_model=TelemetryRunOut,
+             tags=["telemetry"])
+def serial_emulate(request: SerialEmulateRequest) -> TelemetryRunOut:
+    """Run the deterministic emulated rig through the full scoring pipeline.
+
+    The demo path: exercises the identical parser, coverage gate and scoring
+    stages a physical board would, with no hardware and no pyserial.
+    """
+    source = EmulatedRigSource(
+        profile=RigProfile(
+            cell_id=request.battery_id,
+            n_cycles=request.n_cycles,
+            sample_period_s=request.sample_period_s,
+        ),
+        compact=request.compact,
+        corrupt_every=request.corrupt_every,
+    )
+    result = run_serial_pipeline(
+        source,
+        cell_id=request.battery_id,
+        require_full_coverage=request.require_full_coverage,
+        min_accepted_fraction=request.min_accepted_fraction,
+        twin_history=_twin_history,
+    )
+    _last_run[request.battery_id] = (result, SERIAL_CHANNEL_MAP)
+    return _run_out(result, request.battery_id, SERIAL_CHANNEL_MAP)
+
+
+@router.post("/telemetry/serial/replay", response_model=TelemetryRunOut,
+             tags=["telemetry"])
+def serial_replay(request: SerialReplayRequest) -> TelemetryRunOut:
+    """Replay a recorded serial capture through the full scoring pipeline."""
+    capture_path = Path(request.capture_path)
+    if not capture_path.exists():
+        raise HTTPException(
+            status_code=404, detail=f"Serial capture not found: {capture_path}"
+        )
+    try:
+        result = replay_serial_capture(
+            capture_path,
+            cell_id=request.battery_id,
+            require_full_coverage=request.require_full_coverage,
+            min_accepted_fraction=request.min_accepted_fraction,
+            twin_history=_twin_history,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+    battery_id = _resolved_battery_id(result, request.battery_id)
+    _last_run[battery_id] = (result, SERIAL_CHANNEL_MAP)
+    return _run_out(result, battery_id, SERIAL_CHANNEL_MAP)
+
+
+@router.post("/telemetry/serial/live", response_model=TelemetryRunOut,
+             tags=["telemetry"])
+def serial_live(request: SerialLiveRequest) -> TelemetryRunOut:
+    """Capture from a serial port for a bounded duration, then score.
+
+    Bounded for the same reason the CAN live endpoint is: an unbounded capture
+    inside a request handler would never return.
+
+    Untested against physical hardware — no rig is attached to this
+    environment, and that limit is recorded rather than implied to be verified.
+    """
+    source = SerialPortSource(
+        name=f"serial:{request.port}",
+        port=request.port,
+        baudrate=request.baudrate,
+        duration_s=request.duration_s,
+    )
+    try:
+        result = run_serial_pipeline(
+            source,
+            cell_id=request.battery_id,
+            require_full_coverage=request.require_full_coverage,
+            min_accepted_fraction=request.min_accepted_fraction,
+            twin_history=_twin_history,
+        )
+    except ImportError as exc:
+        # pyserial is an optional extra; every other serial path runs without it.
+        raise HTTPException(
+            status_code=501,
+            detail=f"{exc} Use /telemetry/serial/emulate to run without it.",
+        ) from exc
+    except (OSError, ValueError) as exc:
+        # A missing, busy or misconfigured port is a request failure. "Busy" is
+        # the common one: a serial monitor left open holds the port.
+        raise HTTPException(
+            status_code=422,
+            detail=(
+                f"Could not capture on {request.port}: {exc}. Check the port "
+                f"exists, that no serial monitor is holding it, and that the "
+                f"baud rate matches the sketch."
+            ),
+        ) from exc
+
+    battery_id = _resolved_battery_id(result, request.battery_id)
+    _last_run[battery_id] = (result, SERIAL_CHANNEL_MAP)
+    return _run_out(result, battery_id, SERIAL_CHANNEL_MAP)
+
+
+def _resolved_battery_id(result, requested: str | None) -> str:
+    """The identity a serial run was actually scored under.
+
+    A rig declares its own `cell_id`, and a request may leave it unset. Keying
+    `_last_run` by the requested value would then file the run under None and
+    make /telemetry/latest miss it.
+    """
+    if requested:
+        return requested
+    header = getattr(result, "header", None)
+    if header is not None and header.cell_id:
+        return header.cell_id
+    if not result.telemetry.empty and "cell_id" in result.telemetry.columns:
+        return str(result.telemetry["cell_id"].iloc[0])
+    return "SERIAL_RIG_UNDECLARED"
 
 
 @router.get("/telemetry/latest/{battery_id}", response_model=TelemetryRunOut,

@@ -46,6 +46,12 @@ from typing import Iterator, Mapping
 
 import pandas as pd
 
+# The one scoring-layer import at module scope. The rest are deferred inside
+# `_score_cycles` to keep the API's cold start cheap, but this is a float
+# constant in a module whose only dependency is pandas - which is already
+# imported here - and duplicating its value would put the same assumption in
+# two files that could then disagree.
+from src.bms.features.behavior_features import DEFAULT_RATED_CAPACITY_AH
 from src.bms.telemetry.cycles import (
     CapacityYield,
     CycleMeasurement,
@@ -228,6 +234,57 @@ def run_telemetry_pipeline(
             stages_completed=tuple(stages),
         )
 
+    return score_telemetry_frame(
+        source_name=source.name, telemetry=telemetry, coverage=coverage,
+        n_frames=n_frames, n_decoded=n_decoded, cell_id=cell_id,
+        twin_history=twin_history, refusals=refusals, stages=stages,
+    )
+
+
+def score_telemetry_frame(
+    source_name: str,
+    telemetry: pd.DataFrame,
+    coverage: SignalCoverage,
+    n_frames: int,
+    n_decoded: int,
+    cell_id: str = "VEHICLE_01",
+    twin_history: TwinHistory | None = None,
+    refusals: list[str] | None = None,
+    stages: list[str] | None = None,
+    rated_capacity_ah: float | None = DEFAULT_RATED_CAPACITY_AH,
+) -> TelemetryResult:
+    """Score a unified-schema telemetry frame through the existing stages.
+
+    This is everything downstream of acquisition: segmentation, coulomb
+    counting, features, risk, health, RUL, Guardian and the twin. It is
+    transport-agnostic on purpose.
+
+    It was extracted from `run_telemetry_pipeline` when serial ingestion was
+    added, and extracted rather than copied for the reason stated at the top of
+    this module: if the serial path had its own segmentation and scoring, a
+    disagreement between a CAN run and a serial run over the same battery would
+    be untraceable. Both transports now converge on a unified-schema frame and
+    share every line of what follows, so a difference in output is a difference
+    in the telemetry.
+
+    `refusals` and `stages` carry forward whatever the acquisition stage already
+    recorded, so a transport-level refusal (a DBC missing a channel, a rig
+    failing its schema check) survives into the final result rather than being
+    replaced by scoring-stage findings.
+
+    `rated_capacity_ah` is the denominator of every C-rate flag. `None` means no
+    capacity is known, and the scoring stage is then refused rather than run
+    against a guess - segmentation, capacity measurement and the yield summary
+    still run, because none of them divide by it. The serial path resolves it
+    from the rig's HELLO declaration or from its caller and passes `None` when
+    it has neither; the CAN path still takes the module default, because a DBC
+    carries no equivalent declaration and giving it one is separate work. That
+    asymmetry is recorded rather than papered over - see
+    `DEFAULT_RATED_CAPACITY_AH`.
+    """
+    refusals = list(refusals or [])
+    stages = list(stages or [])
+
     measurements = measure_cycles(telemetry, cell_id=cell_id)
     summary = capacity_yield(measurements)
     stages.append("segment_cycles")
@@ -242,16 +299,40 @@ def run_telemetry_pipeline(
             "so partial cycles are excluded rather than scaled."
         )
         return TelemetryResult(
-            source=source.name, n_frames=n_frames, n_decoded=n_decoded,
+            source=source_name, n_frames=n_frames, n_decoded=n_decoded,
             coverage=coverage, telemetry=telemetry,
             measurements=tuple(measurements), yield_summary=summary,
             refusals=tuple(refusals), stages_completed=tuple(stages),
         )
 
+    # The two things the scoring stage needs and cannot substitute for: the
+    # channels it reads, and the capacity it divides by. Both are refusals of
+    # the same kind - a plausible stand-in would not make the answer uncertain,
+    # it would make it confidently wrong - so they sit together, and both leave
+    # the segmentation results above intact rather than discarding the run.
     guardian = pd.DataFrame()
-    if coverage.complete:
+    if not coverage.complete:
+        refusals.append(
+            "Scoring skipped: the feature layer requires channels this source "
+            "does not supply, and treating them as absent-equals-safe is the "
+            "NaN-as-healthy defect this project already fixed."
+        )
+    elif rated_capacity_ah is None:
+        refusals.append(
+            "Scoring skipped: no rated capacity is known for this cell, so "
+            "C-rate cannot be computed. `aggressive_discharge_event` and "
+            "`fast_charge_flag` are current divided by rated capacity, and the "
+            "risk, health and RUL figures are all derived from them. A 3.4 Ah "
+            "cell scored against an assumed 2.0 Ah would read 1.7 C while "
+            "drawing 1 C and would trip both flags on every row of the "
+            "capture. Declare `capacity_ah` in the rig's HELLO line, or pass "
+            "`rated_capacity_ah`."
+        )
+    else:
         try:
-            guardian = _score_cycles(telemetry, cycles, cell_id)
+            guardian = _score_cycles(
+                telemetry, cycles, cell_id, rated_capacity_ah=rated_capacity_ah
+            )
             stages.append("score")
         except ValueError as exc:
             # The feature and scoring layers raise ValueError deliberately when
@@ -270,19 +351,13 @@ def run_telemetry_pipeline(
                 f"{type(exc).__name__}: {exc}. This is a defect in "
                 f"telemetry/pipeline.py, not a property of the telemetry."
             ) from exc
-    else:
-        refusals.append(
-            "Scoring skipped: the feature layer requires channels this DBC does "
-            "not supply, and treating them as absent-equals-safe is the "
-            "NaN-as-healthy defect this project already fixed."
-        )
 
     twin_update = evaluate_twin_from_guardian(guardian, twin_history)
     if twin_update.evaluated:
         stages.append("twin")
 
     return TelemetryResult(
-        source=source.name, n_frames=n_frames, n_decoded=n_decoded,
+        source=source_name, n_frames=n_frames, n_decoded=n_decoded,
         coverage=coverage, telemetry=telemetry, cycles=cycles,
         measurements=tuple(measurements), guardian=guardian,
         twin=twin_update, yield_summary=summary, refusals=tuple(refusals),
@@ -291,7 +366,10 @@ def run_telemetry_pipeline(
 
 
 def _score_cycles(
-    telemetry: pd.DataFrame, cycles: pd.DataFrame, cell_id: str
+    telemetry: pd.DataFrame,
+    cycles: pd.DataFrame,
+    cell_id: str,
+    rated_capacity_ah: float = DEFAULT_RATED_CAPACITY_AH,
 ) -> pd.DataFrame:
     """Delegate to the existing scoring stages, in the order `main.py` uses.
 
@@ -318,8 +396,10 @@ def _score_cycles(
     # features see a real cycle index rather than a constant.
     enriched = _attach_cycle_index(telemetry, cycles)
 
-    flagged = compute_behavior_flags(enriched)
-    flagged["stress_score"] = compute_stress_score(flagged)
+    flagged = compute_behavior_flags(enriched, rated_capacity_ah=rated_capacity_ah)
+    flagged["stress_score"] = compute_stress_score(
+        flagged, rated_capacity_ah=rated_capacity_ah
+    )
     featured = add_rolling_features(flagged)
     featured = add_age_features(featured)
 

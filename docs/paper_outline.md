@@ -67,18 +67,63 @@ conditions.
 
 ## What is still missing, in order of how badly
 
-### 1. Replication on a second dataset family — blocking
+### 1. Replication on a second dataset family — **done** (ADR 0009)
 
-Every result above is currently established on NASA alone. A reviewer will
-reject on this ground alone, and would be right to. **CALCE CS2/CX2 is the
-required download**; the commensurability screen already confirms it is well
-posed on depth of discharge, discharge rate and cutoff voltage, giving cohort
-structure on a *different axis* than NASA's temperature. If the LOBO-to-LOCO
-collapse reproduces there, the claim is about protocol shift rather than about
-NASA.
+This section previously read "blocking"; it was not updated when the
+replication landed, and said so for some time after it was false. Corrected
+here.
 
-Oxford and Severson are both MARGINAL as transfer targets (internal resistance
+CALCE CS2+CX2 was loaded and run: 19 cells, 8 cohorts, two cell families,
+43,832 rows, noise ceiling 0.870. **The LOBO-to-LOCO collapse reproduces** on a
+different laboratory's data with cohort structure on depth of discharge and
+discharge rate rather than NASA's temperature. Deltas are negative in all 36
+method-frame combinations across the three frames run.
+
+What did *not* replicate is any method ranking, and ADR 0009 makes that the
+finding rather than an embarrassment: three mutually inconsistent rankings were
+produced by varying nothing but cohort coverage.
+
+Oxford and Severson remain MARGINAL as transfer targets (internal resistance
 only) and are not worth the download for this claim.
+
+**Caveat attached to those numbers, and now addressed** — see item 1b.
+
+### 1b. Absolute SOH on the partial-cycling protocols — **done** (ADR 0012)
+
+The rebuilt study is complete. Headline for the paper: on an absolute SOH
+target, **counting cycles reaches LOCO R² 0.478–0.524 and beats every learned
+method except `random_forest`** (0.670). Against the partial-cycle target the
+same baselines scored 0.016–0.198, which is where ADR 0009's "the learned models
+add enormously" came from. That claim is withdrawn — the advantage was largely
+the flexible models fitting a measurement artifact.
+
+This is a fifth withdrawn ranking claim, and it belongs in the paper's history
+section as one: the project has now produced four incompatible method rankings
+by varying only target derivation, cohort coverage and feature set.
+
+Admissibility 19/23 → 22/22 cells, cohort coverage 8 → 10, ceiling 0.870 →
+0.907. See ADR 0012 for the limitations that bound the comparison.
+
+#### Original entry, retained for context
+
+ADR 0009's own open section records that CS2 Types 5 and 6 cycle partially by
+design, so their SOH was measured against a **partial-cycle reference** of
+roughly 0.26–0.42 Ah on a 1.1 Ah cell. That is relative fade of a repeated
+partial cycle, not absolute state of health, and it applies to three of the
+eight admitted cohorts.
+
+`src/bms/io/calce_full_discharge.py` recovers an absolute reference by
+segmenting sample-level telemetry into contiguous discharge runs and grading
+each against the cell's own voltage cutoff *and* charge capability. Measured
+per-cell references move from 0.177/0.367 Ah (partial) to 1.055/1.101 Ah, which
+is the 1.1 Ah nominal capacity.
+
+It costs most of the rows: a Type 5 or 6 cell yields tens of full discharges out
+of thousands of cycles. That is a property of the protocol, and the paper should
+report the yield rather than hide it.
+
+Until the rebuilt study is complete, ADR 0009's tables stand with the
+partial-reference caveat attached.
 
 ### 2. Curve-based methods — strongly wanted
 

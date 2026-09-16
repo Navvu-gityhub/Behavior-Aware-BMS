@@ -1,0 +1,908 @@
+# Project history — the calibration narrative
+
+> **Superseded figures.** Section 4.14's estimator-variance magnitudes (0.724 R²
+> and 0.351) are quoted below and were **inflated roughly threefold** — see
+> `final_report.md` §4.15.2. The ratio claim survives; the magnitudes do not.
+
+> This was the project README until 2026-09-09, when the README was rewritten to
+> lead with the system rather than the study. Nothing here has been edited: it is
+> kept verbatim because it is the running account of how the modelling
+> conclusions were reached, revised and in several cases withdrawn, and because
+> `tests/test_reported_numbers.py` pins figures quoted below to the artifacts
+> that produced them.
+>
+> For the current state, read `docs/final_report.md`. For the system, read
+> `README.md` and `docs/architecture.md`.
+
+---
+
+# Behavior-Aware EV Battery Health Monitoring and Usage Optimization System
+
+> **A software intelligence layer for EV Battery Management Systems.**
+> Converts BMS telemetry into degradation risk insights, battery health estimates,
+> remaining useful life predictions, and actionable user recommendations —
+> presented on a self-contained interactive dashboard.
+
+---
+
+## Status
+
+**`docs/final_report.md` is the current, authoritative account of what's
+validated and what isn't** — it supersedes the summary below where they
+differ, and additionally covers two follow-on experiments (longer
+prediction horizons; a mixed-effects model) run after this section was
+last updated. The summary below is kept for a quicker read; if it and the
+final report disagree, the final report is right. A polished, figure-
+illustrated `.docx` export lives at `reports/final_report.docx`
+(regenerate with `./scripts/build_report_docx.sh` after editing the
+markdown source — see that script for why it strips the leading title
+block before conversion).
+
+V1 is a working end-to-end pipeline that runs on **simulated telemetry** via
+`python main.py`: schema validation → behavior features → rule-based risk
+scoring → health index → RUL estimation → guardian reports → a self-contained
+HTML dashboard.
+
+**Calibration against real NASA data (34 cells, 7.2M telemetry rows) is
+underway across two passes — see `docs/calibration_report.md` for full
+methodology.**
+
+- **Pass 1 (battery-level, protocols pooled):** none of `health_index`,
+  `risk_score`, or `avg_stress` showed a significant relationship with
+  real capacity fade (p > 0.13, n=33). One real bug was found and fixed —
+  `fast_charge_flag` used a flat 2A threshold that never fired on real
+  data (observed current never exceeded 1.54A); it's now C-rate-based.
+- **Pass 2 (cohort-controlled, cycle-level):** re-running with batteries
+  grouped by NASA's own documented test protocols and comparing per-cycle
+  behavior against per-cycle capacity loss (not one point per battery)
+  found that **temperature exposure is a real, statistically significant,
+  physically-correctly-signed predictor**, consistent in 7 of 7 individual
+  batteries across two independent cohorts. The current-based
+  "aggressive discharge" signal, by contrast, flips sign between
+  room-temperature and 4°C cohorts — it doesn't transfer across ambient
+  conditions in its current form, and is diluting the temperature signal
+  when both are combined into one composite score.
+
+**Practical takeaway:** don't treat any current score as validated, but
+also don't treat this as "nothing here works" — temperature-driven
+degradation is a real, reproducible signal in this pipeline's own feature
+set; the current-based flags need to be temperature-conditioned (not just
+C-rate-based) before they'll transfer the same way. `docs/calibration_report.md`
+has the full breakdown, per-cohort numbers, and next steps (a continuous
+model treating temperature and current as separate, possibly interacting,
+terms rather than fixed linear weights).
+
+CALCE has been fully evaluated and closed out (see
+`docs/calce_dataset_note.md`): a real loader was built for the raw Arbin
+cycler export (`src/bms/io/load_calce_capacity.py`), but the data is
+single-cycle characterization only and its "initial" and "post-storage"
+capacity readings turned out to be the same measurement counted twice —
+no calendar-aging or cycle-fade calibration is possible from the CALCE
+files supplied. Running the pipeline against it did catch a real bug,
+now fixed: missing data (no temperature channel in this export) was being
+silently scored as "temperature is fine" rather than raising.
+
+**A fitted continuous model was attempted (Stage 3) and deliberately not
+shipped.** Controlling for cohort via a fixed effect, `avg_temp` replicates
+as a statistically significant predictor (p<0.0001) — but leave-one-
+battery-out cross-validation gives a mean R^2 of -0.07 across the 33
+batteries: the model does not generalize to an unseen battery, despite the
+in-sample pattern being real. Wiring an unvalidated regression into the
+dashboard would repeat the exact problem this whole calibration effort
+was meant to fix, just with a fitted model instead of hand-set weights.
+It isn't in the pipeline. `docs/calibration_report.md` Section 10 has the
+full result and concrete next steps to close the gap (longer-horizon
+target, per-battery random effects, more batteries).
+
+Known methodological limitation, left undecided on purpose rather than
+silently patched: the RUL formula (`src/bms/rul/rul_estimation.py`) reuses
+temperature, deep-discharge, and fast-charge signals that are *already*
+baked into the health index, so those effects get double-counted in the RUL
+estimate. Fixing this requires refitting against capacity-fade ground truth,
+not another guess — see the module docstring.
+
+---
+
+## Overview
+
+Electric vehicle batteries degrade due to electrochemical aging, thermal stress,
+charge/discharge cycling, and user-dependent behavior. Existing BMS hardware handles
+safety and protection but rarely explains *how user behavior drives long-term degradation*.
+
+This project adds a **behavior-aware analytics layer** on top of any BMS to:
+
+1. **Ingest** battery telemetry (voltage, current, temperature, SoC, speed, distance)
+2. **Extract** behavior features (fast-charging frequency, deep discharge events, thermal stress)
+3. **Score** degradation risk (0–100, rule-based; optional ML scoring hook, unvalidated — see below)
+4. **Compute** a Battery Health Index with an aging-budget model
+5. **Estimate** Remaining Useful Life (RUL in cycles)
+6. **Run** the Battery Guardian AI — explains causes and recommends actions
+7. **Display** an interactive HTML dashboard (no server required)
+
+The system does not replace the BMS. It's an analytics layer above it.
+
+---
+
+## Quick Start
+
+```bash
+# 1. Install dependencies
+pip install -r requirements.txt
+
+# 2. Run the full pipeline (uses simulated data by default)
+python main.py
+
+# 3. Open the dashboard
+#    → dashboard.html  (open in any browser)
+```
+
+### Run with your own data
+
+```bash
+python main.py --data path/to/your_unified_schema_file.csv
+```
+
+Your CSV needs to satisfy `src/bms/preprocessing/schema.py`'s unified schema
+(or its recognized aliases) — see `docs/data_dictionary.md`.
+
+### Run tests
+
+```bash
+python -m pytest tests/
+```
+
+---
+
+## REST API and Digital Twin
+
+```bash
+pip install -r requirements.txt
+uvicorn src.bms.api.app:app --reload
+# or: make api
+```
+
+Then open `http://127.0.0.1:8000` for the live fleet dashboard — click
+"Run Simulation" to populate it, click a battery to see its twin state,
+Guardian report, and health traces. Interactive API docs (auto-generated
+from the same code) are at `http://127.0.0.1:8000/docs`; full write-up in
+`docs/api.md`.
+
+The API is a thin transport layer (`src/bms/api/`) over the pipeline and
+a separate digital-twin domain module (`src/bms/digital_twin/`) that
+tracks each battery's twin state
+(`NORMAL`/`MODERATE_RISK`/`HIGH_RISK`/`FAILURE_IMMINENT`), state
+transitions, and health timeline — see `docs/digital_twin.md` for why
+those two are kept as separate modules. Same caveat as everywhere else in
+this project: every number the dashboard and API show is the existing
+rule-based heuristic, not a validated predictive model.
+
+---
+
+## MERN layer (React + Express, optional)
+
+`mern/` — a React + Express gateway in front of the same Python service,
+for anyone who wants a MERN-shaped client instead of (or alongside) the
+server-rendered dashboard above. It does not reimplement the pipeline —
+Express forwards to the existing FastAPI service; see `docs/mern.md` for
+the full architecture and why the research/calibration scripts
+specifically stay in Python rather than becoming "full MERN."
+
+```bash
+cd mern
+npm run install-all
+npm run dev        # starts Python (uvicorn), Express, and Vite together
+```
+
+Open `http://localhost:5173`.
+
+---
+
+---
+
+## What is validated, and what is not
+
+This table is the honest summary. `docs/final_report.md` has the derivations;
+`docs/adr/` records the decisions that follow from them.
+
+| Claim | Evidence | Verdict |
+|---|---|---|
+| **`capacity_loss`, the target all earlier results used, is 96% noise** | Isotonic signal fraction 0.044 — the ceiling on attainable R² (ADR 0007) | **Established** |
+| **Measured capacity carries a reversible thermal offset** | Mean SOH at cycle ≤ 20: 0.918 at 4 °C vs 0.999 at 44 °C; blocks Arrhenius identifiability (ADR 0007) | **Established** |
+| **LOBO rank carries no information about LOCO rank** | Spearman ρ = +0.084, p = 0.795, n = 12; choosing by LOBO costs 0.309 R² (ADR 0008) | **Supported** |
+| **Behaviour adds ~0.05 R² over cycle count alone** | `age_linear` LOCO R² 0.406 vs XGBoost 0.459, and `age_linear` is the most protocol-robust method tested (Δ −0.076) | **Supported** |
+| **Every method loses skill under protocol shift, on every frame tested** | 36 method-frame combinations plus 220 sweep measurements; Δ R² negative in all of them (ADR 0009, ADR 0010) | **Replicated ×3** |
+| **Unsupervised outliers are not harmful behaviour** | Both IsolationForest and LOF: flagged cycles show *less* fade than unflagged within-cell (p = 1.00 / 0.90); the two detectors agree on only 34 of 135 flags (ADR 0011) | **Established** |
+| **Usage segments are real and rediscover the existing rules** | k=6, silhouette 0.541 vs null 0.153; one segment is 100% deep-discharge, another 100% fast-charge (ADR 0011) | **Established** |
+| **The LOCO estimate is noisier than the effect it is used to measure** | Interquartile range across cohort draws **0.724 R²** vs median between-method difference **0.351 R²**; a nonlinear model beats a straight line on cycle count in only 25% of draws (ADR 0010) | **Established** |
+| ~~The loss depends on cohort coverage~~ | **Refuted by designed experiment.** CALCE raw ρ = +0.257 (p = 0.027) collapses to +0.024 (p = 0.84) once training-set size is regressed out; NASA shows nothing either way | **Withdrawn (ADR 0010)** |
+| ~~A sequence model is the worst transferring method~~ | LSTM was −4.669 on CS2 alone; adding CX2 gives it the **best LOBO (0.971)** and positive LOCO (0.526) | **Withdrawn (ADR 0009)** |
+| ~~Behaviour adds only ~0.05 R² over cycle count~~ | NASA-specific. On CALCE `age_linear` LOCO 0.016 vs `random_forest` 0.693 | **Withdrawn (ADR 0009)** |
+| ~~High-capacity models transfer worse than simple ones~~ | XGBoost is a direct counterexample | **Withdrawn (ADR 0008)** |
+| ~~Regularisation, not capacity, predicts transfer~~ | Contradicted on CALCE — unregularised `random_forest` transfers best there | **Withdrawn (ADR 0009)** |
+| Which model family transfers best | Ordering **inverts** between NASA and CALCE; not identifiable from 12 methods on one dataset | **Not identifiable** |
+| **Conformal 90% intervals undercover on most unseen protocols** | ElasticNet LOCO: 56% of held-out cohorts below nominal, worst 0.262 | **Established** |
+| An activation energy can be estimated from NASA data | Ea = −35 kJ/mol (physically impossible); `assess_identifiability` refuses | **Not identifiable** |
+| Guardian's attribution matches the score it explains | Shapley efficiency axiom, asserted on every call | **Exact** |
+| Trailing temperature relates to measured capacity fade | rho 0.21–0.22, p < 0.0001, correct sign in 7/7 cells across independent cohorts | **Supported** |
+| Fitted v2 ranks an unseen cell within a **known** protocol | Spearman rho = 0.841, p < 0.001 (LOBO-refit, n=33) | **Supported** |
+| Fitted v2 ranks a cell from an **unseen** protocol | rho = −0.295, p = 0.10 (LOCO-refit) | **Refuted** |
+| v1 health index ranks batteries by real fade | rho = −0.269, p = 0.124, 6 distinct values across 33 cells | **Not supported** |
+| Rule weights reflect what drives fade | 61% of the score is constant across the fleet; rule-vs-SHAP rank correlation −0.103 | **Not supported** |
+| Fast-charge penalty is calibrated | `fast_charge_duration` is identically zero in all 2,682 observations | **Unvalidatable on this data** |
+| Cross-dataset (NASA → CALCE) generalisation | Not run — supplied CALCE data is single-cycle, no fade target (ADR 0001) | **Not tested** |
+| SHAP importance reflects degradation drivers | Model fails its gate: LOBO R² = −0.096, LOCO R² = −1.61 | **Inadmissible** |
+
+**The short version:** the pipeline's engineering is sound and its
+explanations are exact with respect to the scores they decompose. The scores
+themselves are not validated predictors of capacity fade, and the project says
+so in the report, in the module docstrings, and on the dashboard's own front
+page. The main contribution is a rigorously diagnosed account of *why* they
+fail, with a specific, costed path to fixing it — not a working predictor.
+
+---
+
+## The benchmark suite
+
+`src/bms/benchmarks/` runs published methods through **this project's own
+gate** — the same `Validator`, the same mandatory leave-one-cohort-out, the
+same age-confound baseline. A method does not get an easier evaluation for
+being well known.
+
+```bash
+python scripts/run_benchmark_study.py            # full sweep (~14 min/target)
+python scripts/run_benchmark_study.py --quick    # reference methods only
+python scripts/run_coverage_study.py             # conformal coverage under shift
+```
+
+| Family | Methods |
+|---|---|
+| Reference | `train_mean`, `age_linear`, `age_quadratic`, `age_isotonic` |
+| Classical | `elasticnet`, `svr_rbf`, `gpr_matern`, `random_forest`, `hist_gradient_boosting`, `xgboost`, `mlp` |
+| Sequence | `lstm` — genuine LSTM over 10 consecutive cycles per cell |
+| Physics | `arrhenius_avg_temp`, `arrhenius_trailing_temp` |
+| Curve-based | `severson_delta_q_variance`, `ica_peak_features`, `sequence_model` |
+
+`xgboost` is the real `xgboost` package, registered separately from
+`hist_gradient_boosting` because they are different algorithms; `lstm` is a
+real sequence model, distinct from `mlp` which is a network over one flat row.
+Both need the optional extra and both are **experimental benchmarks, not
+promoted** — see `docs/benchmark_models.md` for architecture, window
+justification and leakage controls.
+
+```bash
+pip install "behavior-aware-bms[benchmarks]"   # xgboost + torch
+```
+
+The curve-based family reports **UNAVAILABLE with a reason** rather than being
+omitted — the retained NASA frame carries cycle-level aggregates, not per-cycle
+voltage traces. The feature maths is implemented and tested; only the data is
+missing. A results table listing only what happened to be computable reads as a
+complete survey and is not one.
+
+`train_mean` scores exactly R² = 0.0000 on both splits, which is a live
+self-test: any other value means the metric is wired wrong.
+
+### Why this changed the project's headline finding
+
+Running published methods forced a question nobody had asked — *how much signal
+does the target contain?* `benchmarks/targets.signal_to_noise` answers it, and
+the answer reframes four years of null results:
+
+| Target | Max attainable R² | |
+|---|---|---|
+| `capacity_loss` | **0.044** | the target every earlier result used |
+| `soh` / `cumulative_fade` | 0.569 | 31 of 34 cells pass the SOH screen |
+| `horizon_fade_20` | 0.639 | |
+| `horizon_fade_50` | 0.967 | 17 cells survive a 50-cycle horizon |
+
+Every previously published "R² ≈ 0" was measured against a target where 0.044
+was the best possible score. The finding was real but its scope was wrong: *these
+scores do not predict per-cycle capacity delta, which is mostly measurement
+noise* — not *these scores do not predict degradation*. Full account in
+**ADR 0007**.
+
+### The result that came out of it
+
+On `cumulative_fade`, twelve methods through the same gate (**ADR 0008**):
+
+Target `soh`, 31 cells, 9 cohorts, ceiling 0.569 (ADR 0008):
+
+| Method | LOBO MAE | LOCO MAE | LOBO R² | LOCO R² | Δ |
+|---|---:|---:|---:|---:|---:|
+| `xgboost` | **4.21%** | **7.62%** | 0.732 | **0.459** | −0.273 |
+| `age_linear` | 8.54% | 10.71% | 0.483 | 0.406 | **−0.076** |
+| `elasticnet` | 7.61% | 10.31% | 0.609 | 0.355 | −0.254 |
+| `random_forest` | 4.90% | 10.67% | **0.773** | 0.150 | −0.623 |
+| `lstm` | 5.62% | 17.36% | 0.594 | −0.185 | −0.778 |
+| `mlp` | 4.15% | 14.19% | 0.731 | −0.623 | −1.354 |
+| `train_mean` | 11.17% | 11.92% | 0.000 | 0.000 | 0.000 |
+
+**Leave-one-cell-out rank carries essentially no information about
+leave-one-cohort-out rank** — Spearman ρ = +0.084 (p = 0.795, n = 12). A
+leaderboard sorted the way the field sorts them tells you close to nothing
+about which model to deploy across protocols. Choosing by LOBO here still
+costs **0.309 R²**.
+
+**The number that matters most:** `age_linear` — a straight line on cycle
+count — reaches LOCO R² 0.406 against XGBoost's 0.459. **All the behavioural
+modelling buys about 0.05 R² over counting cycles**, and `age_linear` is also
+by far the most robust to protocol shift (Δ = −0.076 against the next-best
+−0.254).
+
+Nothing is wired into the dashboard regardless (ADR 0005).
+
+> ⚠ An earlier version of this table used 32 cells and reported a much more
+> dramatic selection failure (`random_forest` at LOCO −0.515, last of twelve).
+> That rested on a single pathological cell, **B0041**, which the SOH screen's
+> fourth criterion now excludes. The correction is documented in ADR 0008
+> rather than quietly applied.
+
+---
+
+### The three findings worth knowing
+
+1. **Most of the score is a constant.** Several hand-chosen thresholds sit
+   outside the range real data occupies — `avg_stress` maxes at 33 against
+   bands at 50/70, and `fast_charge_duration` is always zero. 61% of the mean
+   risk score is identical for every battery. This explains mechanically why
+   earlier calibration found no correlation: a constant cannot correlate with
+   anything. The behavioural premise was never actually tested.
+   → `python scripts/audit_threshold_reachability.py`
+
+2. **The fitted model memorises protocols, it does not learn physics.**
+   Ranking ability of rho = 0.84 within a known protocol collapses to −0.30
+   on an unseen one. It lives in the fitted per-cohort intercepts, not the
+   temperature coefficient. Leave-one-battery-out could never have shown this,
+   because it always leaves the held-out cell's cohort siblings in training.
+   → `python scripts/validate_health_index_versions.py`
+
+3. **SHAP is gated on out-of-sample skill, and the gate failed.** SHAP
+   attributes a model's predictions to its inputs and says nothing about
+   whether those predictions are any good. Run on a model with no
+   generalisation, it produces a confident-looking ranking of how the model
+   fit noise. The gate is computed, not assumed, and the ranking is published
+   with an explicit bar on citing it as evidence.
+   → `python scripts/fit_shap_attribution_model.py`
+
+---
+
+---
+
+## Adaptive calibration
+
+`src/bms/adaptive/` is a governed calibration system: it screens datasets,
+cross-validates candidate models, and promotes only what survives. **The gate
+is the product, not the model** — the default answer is REJECT. See ADR 0005.
+
+```bash
+python -m src.bms.adaptive screen                    # which datasets can answer the question
+python -m src.bms.adaptive calibrate --dataset nasa  # validate candidates, promote survivors
+python -m src.bms.adaptive status                    # active models and the decision log
+python -m src.bms.adaptive rollback --cohort GLOBAL  # revert, deleting nothing
+```
+
+Five components, each owning one decision and each able to refuse:
+
+| Module | Owns | Refuses when |
+|---|---|---|
+| `datasets.py` | Can this data answer the question? | No fade target, or a fade rate that cannot be estimated |
+| `cohort.py` | Have we seen these conditions? | Operating point outside every observed envelope |
+| `validation.py` | Does this candidate generalise? | Fails LOBO, LOCO, or the age baseline |
+| `store.py` | Is this fit stable enough to deploy? | Coefficient flips sign or moves >50% |
+| `calibrator.py` | Orchestration only | Delegates every judgement above |
+
+### Current state: nothing is promoted
+
+```
+temp_only        REJECTED  (LOBO R2=-0.0016, LOCO R2=-0.0012, vs-age R2=-0.0009)
+temp_and_stress  REJECTED  (LOBO R2=-0.0147, LOCO R2=-0.0168, vs-age R2=-0.0133)
+No candidate was promoted. No cohort has an active model.
+```
+
+That is the correct outcome on current evidence, and `score()` refuses rather
+than falling back to a rejected candidate or to the v1 rule-based index
+(rho = -0.269 against measured fade). The binding constraint is data: every
+verdict here is worth re-running on a second multi-cycle dataset.
+
+> **Scope note (ADR 0007/0008).** These verdicts are against `capacity_loss`,
+> whose R² ceiling is 0.044 — so "nothing is promoted" is partly a statement
+> about the target. Against `cumulative_fade`, four candidates do clear the
+> same gate. The adaptive CLI still defaults to `capacity_loss` for continuity
+> with previously published numbers; re-running it on the better-conditioned
+> target is the next step, tracked in `docs/roadmap.md`.
+
+### The gate caught a false positive its author did not anticipate
+
+As first built, the system **promoted** a candidate it should not have.
+`temp_stress_soc` cleared the original gate with LOCO R2 = +0.0125 against a
+constant baseline. Investigating rather than accepting it showed `avg_soc` has
+a median within-cell correlation of **-0.73 with cycle index** — it is largely
+a proxy for how far through its life a cell is.
+
+Every behavioural feature in this dataset drifts with cycle count, because a
+degrading cell genuinely does run hotter and discharge deeper. So beating a
+constant is a weak claim: a model can clear it by learning "later cycle, more
+loss" and nothing else. Every candidate is now also scored against a baseline
+that predicts the target from cycle count alone. Against that, the same
+candidate scores **-0.0053** — all of its apparent skill was age.
+
+This is age confounding rather than clean leakage, so the fix is a harder
+baseline, not a smaller feature set: excluding every age-correlated feature
+would remove temperature, the one transferable signal this project found.
+
+
+### Transfer targets are screened before they are loaded
+
+A transfer needs a feature that varies in **both** datasets. Constant in the
+source and no coefficient can be fitted; constant in the target and the
+coefficient has nothing to act on. `TransferValidator` refuses to produce a
+metric when nothing survives (ADR 0006).
+
+```bash
+python -m src.bms.adaptive feasibility          # predict from published metadata
+python -m src.bms.adaptive feasibility --measured --dataset nasa   # measure loaded data
+```
+
+Predicted feasibility with NASA as the training source:
+
+| Target | Status | Usable axes |
+|---|---|---|
+| `calce_cs2` | FEASIBLE | cutoff voltage, depth of discharge, discharge rate |
+| `calce_cx2` | FEASIBLE | cutoff voltage, depth of discharge, discharge rate |
+| `calce_cx2_4_thermal` | FEASIBLE | **ambient temperature**, depth of discharge, discharge rate |
+| `stanford_severson` | MARGINAL | internal resistance only |
+
+Three consequences worth stating plainly:
+
+- **NASA to CALCE is well posed on depth of discharge, not temperature.** CS2's
+  15 cells were all cycled at room temperature on one charge profile, so they
+  cannot receive NASA's temperature coefficient. They do vary depth of
+  discharge, discharge rate and cutoff voltage, and so does NASA.
+- **NASA to Stanford is not well posed on either dataset's designed axis.**
+  Severson holds temperature at 30 C in a chamber and varies charge policy;
+  NASA varies temperature and has `fast_charge_duration` identically zero in
+  all 2,682 observations. The axes are orthogonal.
+- **CX2_4 is the only thermally admissible CALCE target, and it is n=1.** It was
+  cycled at 25, 35, 45 and 55 C. One cell can characterise a temperature
+  relationship but cannot support a cell-level generalisation claim.
+
+Adding a dataset is configuration, not code: a `DatasetSpec` with a column map
+and a variation profile.
+
+
+---
+
+---
+
+## Interactive client
+
+The React client in `mern/client` has five views, all bound to real pipeline
+output — no mocked data anywhere.
+
+| View | Shows |
+|---|---|
+| Fleet | simulated fleet, twin state, health traces |
+| CAN Replay | replay a CAN log; cycles, capacity yield, refusals, Guardian explanation |
+| Digital Twin | twin state, snapshot history, state transitions |
+| Thermal | pack temperature over cycle and discharge progress |
+| Transfer Validation | which cross-dataset experiments are admissible, and why not |
+
+```bash
+python -m uvicorn src.bms.api.app:app --port 8000   # Python API
+cd mern/server && npm start                          # Express gateway
+cd mern/client && npm run dev                        # React client
+```
+
+**The pack visualisation shows only what is measured.** The unified schema
+carries one aggregate temperature channel, so cells are drawn greyed with a
+legend separating instrumented from uninstrumented channels. Colouring them
+individually would mean interpolating dozens of values from one measurement
+(ADR 0004). The thermal view uses cycle and discharge progress as its axes for
+the same reason — both are measured; a per-cell axis would not be.
+
+
+---
+
+## CALCE integration
+
+CS2/CX2 cycling archives load through `io/load_calce_cycling.py` and score
+through the same stages as NASA. See `docs/calce_integration.md`.
+
+```python
+from src.bms.io.calce_analysis import analyze_calce_cell
+print(analyze_calce_cell("data/raw/calce/CS2_33").render())
+```
+
+**CALCE records neither temperature nor state of charge.** CS2/CX2 Arbin
+exports carry seventeen columns and none is thermal — the cells were cycled at
+room temperature, which was a property of the room rather than a channel.
+
+So a CS2 cell yields **measured SOH and capacity fade**, and no behavioural risk
+score. Filling `temperature_c` with 23.0 would satisfy the schema and produce a
+thermal stress score for a quantity nobody measured; since a constant cannot
+raise `high_temp_flag`, every CALCE cell would read as thermally unstressed
+regardless of what happened to it.
+
+CX2_4 is the exception: cycled at 25/35/45/55 C with separate thermocouple
+files, which `load_calce_cell(temperature_dir=...)` joins on test time. The
+pipeline follows the instrumentation, not the dataset label.
+
+
+## Real BMS telemetry
+
+Recorded CAN logs and live buses run through the same scoring stages as the
+dataset pipeline. See `docs/telemetry_pipeline.md`.
+
+```python
+import cantools
+from src.bms.telemetry import replay_log
+
+dbc = cantools.database.load_file("src/bms/io/dbc_examples/beacon_reference_pack.dbc")
+result = replay_log("logs/drive.asc", dbc, signal_map, cell_id="VEH_01")
+print(result.render())
+```
+
+**State of health is not a CAN signal.** A bus carries instantaneous current, not
+per-cycle discharge capacity. `telemetry/cycles.py` segments charge/discharge
+phases and integrates current to recover capacity in amp-hours, which is what
+makes SOH obtainable at all.
+
+Partial discharges are excluded from SOH rather than scaled by the observed SOC
+swing — the BMS's SOC is itself derived from a capacity estimate, so normalising
+by it would make the measurement depend on the quantity being measured. Ordinary
+driving is mostly partial cycles, so a log with 400 discharges may support only a
+handful of capacity points, and the run reports that count.
+
+The pipeline refuses in three places: a DBC missing a required channel (the
+shipped `twizy_bms_1.dbc` has no temperature signal, and treating absent as safe
+is the NaN-as-healthy defect already fixed here); no complete discharge cycle;
+and fade prediction, which stays refused while nothing has passed the promotion
+gate.
+
+
+## The BEACON dashboard
+
+`python main.py` writes a self-contained `dashboard.html` — no server, no
+external requests, opens from the filesystem.
+
+It renders **only values the pipeline computes.** The visual design was
+mocked up with placeholder readings (state of health 92.4%, internal
+resistance 24.6 mΩ, "up 1.3% vs last week"); several of those are quantities
+this pipeline cannot produce, and they render as an explicit unavailable
+state rather than a plausible substitute. State of health in particular is
+computed only from measured per-cycle capacity and is **never** derived from
+the aging budget, which is a heuristic severity score on an unrelated scale.
+
+A simulated run carries a banner saying so. The evidence panel puts
+rho = −0.27 on the same page as the headline number it qualifies. See
+ADR 0004 for the reasoning and `tests/test_beacon_dashboard.py` for the
+guarantees that are actually enforced.
+
+```bash
+python main.py                                     # simulated fleet
+python main.py --data path/to.csv --source measured --dataset-label "NASA cleaned"
+```
+
+
+## Project Structure
+
+```
+Behavior-Aware-BMS-main/
+├── main.py                          # Full pipeline entry point
+├── requirements.txt
+├── dashboard.html                   # Generated — open in browser
+│
+├── src/bms/                         # Core Python package
+│   ├── simulation/
+│   │   └── simulate_telemetry.py    # Synthetic telemetry generator (illustrative, not a validated battery model)
+│   ├── io/
+│   │   ├── loader_common.py         # Shared column normalization helpers
+│   │   ├── load_nasa.py             # NASA dataset loader
+│   │   ├── load_calce.py            # CALCE dataset loader
+│   │   ├── load_calce_capacity.py   # CALCE capacity-characterisation workbooks (single-cycle; see docs/calce_dataset_note.md)
+│   │   ├── load_calce_cycling.py    # CALCE Arbin cycling loader (CS2/CX2; see docs/calce_integration.md)
+│   │   ├── calce_analysis.py        # CALCE feasibility + commensurability assessment
+│   │   ├── load_can_dbc.py          # Real-vehicle CAN/DBC decoding (optional: needs cantools)
+│   │   ├── can_vehicle_registry.py  # Multi-vehicle DBC registry + auto-identification
+│   │   └── dbc_examples/            # Verified Twizy DBC + a labelled synthetic fixture
+│   ├── preprocessing/
+│   │   └── schema.py                # Unified BMS schema, aliases, validation
+│   ├── telemetry/                   # Telemetry ingest/replay (see docs/telemetry_pipeline.md)
+│   │   ├── sources.py               # Telemetry source adapters
+│   │   ├── pipeline.py              # Ingest -> schema -> features -> scores
+│   │   ├── cycles.py                # Cycle segmentation and reconciliation
+│   │   └── twin_integration.py      # Bridges telemetry rows into digital_twin
+│   ├── adaptive/                    # Calibration gate — default answer is REJECT (see ADR 0005)
+│   │   ├── datasets.py              # Can this data answer the question?
+│   │   ├── cohort.py                # Have we seen these operating conditions?
+│   │   ├── validation.py            # Does this candidate generalise? (LOBO/LOCO/confound)
+│   │   ├── store.py                 # Versioned model store + stability check
+│   │   ├── calibrator.py            # Orchestration only; adds no criteria of its own
+│   │   ├── dataset_specs.py         # Declared dataset capability specs
+│   │   ├── commensurability.py      # Are two datasets comparable at all? (ADR 0006)
+│   │   ├── transfer.py              # Cross-dataset transfer feasibility
+│   │   └── __main__.py              # CLI: python -m src.bms.adaptive
+│   ├── benchmarks/                  # Published methods, run through the same gate
+│   │   ├── registry.py              # Method registry; availability is reported, never skipped
+│   │   ├── baselines.py             # train_mean, age_linear/quadratic/isotonic
+│   │   ├── classical.py             # ElasticNet, SVR, GPR, RF, HistGB, MLP
+│   │   ├── curves.py                # Severson dQ(V) variance, ICA/DVA (need curve data)
+│   │   ├── physics.py               # Registers the Arrhenius variants
+│   │   ├── targets.py               # Target construction + noise-ceiling estimation (ADR 0007)
+│   │   └── study.py                 # Runs every method x every target through LOBO/LOCO
+│   ├── detect/                      # Unsupervised segmentation + outlier detection (ADR 0011)
+│   │   ├── clustering.py            # K-Means/DBSCAN + null-model separability gate
+│   │   └── anomaly.py               # IsolationForest/LOF + within-cell fade-association test
+│   ├── physics/                     # Physics-grounded models, with external checks
+│   │   ├── arrhenius.py             # fade = A*exp(-Ea/RT)*N^z + identifiability gate
+│   │   └── thermal_confound.py      # Reversible thermal capacity offset (ADR 0007)
+│   ├── uncertainty/
+│   │   └── conformal.py             # Split + Mondrian conformal, coverage under protocol shift
+│   ├── features/
+│   │   ├── behavior_features.py     # Flags, rolling stats, per-battery summary
+│   │   └── cycle_features.py        # Per-cycle aggregation for cycle-level calibration
+│   ├── risk/
+│   │   └── stress_score.py          # Row-level stress score + battery-level risk assessment (rule-based; optional ML hook)
+│   ├── health/
+│   │   ├── health_index.py          # Battery Health Index via aging-budget model (pipeline default)
+│   │   └── health_index_v2.py       # Fitted OLS variant — built, validated, NOT promoted (see ADR 0002)
+│   ├── rul/
+│   │   └── rul_estimation.py        # RUL via Equivalent Aging Factor
+│   ├── explain/
+│   │   └── attribution.py           # Exact closed-form Shapley attribution for the additive rule scores (see ADR 0003)
+│   ├── guardian/
+│   │   └── guardian.py              # Cause attribution + recommendations, derived from the score decomposition
+│   ├── digital_twin/
+│   │   └── twin.py                  # Twin state, transitions, health timeline (see docs/digital_twin.md)
+│   ├── api/
+│   │   ├── app.py                   # FastAPI transport layer (see docs/api.md)
+│   │   ├── store.py                 # In-memory fleet store, non-persistent
+│   │   ├── schemas.py               # Pydantic request/response models
+│   │   ├── telemetry_routes.py      # /telemetry/* and /transfer/* routers
+│   │   └── telemetry_schemas.py     # Pydantic models for the telemetry surface
+│   └── dashboard/
+│       ├── beacon.py                # BEACON dashboard renderer (used by main.py)
+│       ├── beacon_data.py           # Pipeline-output -> display-value mapping, unit-tested (see ADR 0004)
+│       ├── dashboard_legacy.py      # Previous matplotlib/base64 dashboard, kept for reference
+│       └── live_dashboard.html      # Live dashboard served at API's / (see docs/api.md)
+│
+├── configs/
+│   └── dataset_sources.yaml         # Dataset source configuration
+├── data/
+│   ├── raw/                         # Place NASA/CALCE data here (gitignored — not redistributable)
+│   ├── interim/                     # Archive manifests
+│   ├── processed/                   # Per-dataset normalized CSVs (small samples tracked; bulk gitignored)
+│   └── features/                    # Pipeline output CSVs — GENERATED, gitignored; run `python main.py`
+├── models/
+│   └── stress_score_rf_sample_v1.joblib  # sklearn HistGradientBoostingRegressor of unknown provenance (see note below) — not wired into the pipeline by default
+├── notebooks/                       # Original Colab notebooks (reference/history; superseded by src/bms/)
+├── reports/
+│   ├── metrics/                     # NASA-derived research artifacts (TRACKED — see note below)
+│   └── figures/                     # Report figures, regenerated by scripts/generate_report_figures.py
+├── scripts/                         # CLI utility scripts
+│   ├── audit_threshold_reachability.py     # Are the rule cut points reachable in real data? (Section 4.7)
+│   ├── validate_health_index_versions.py   # v1 vs v2, LOBO + LOCO, version decision (Section 4.8)
+│   ├── fit_shap_attribution_model.py       # SHAP vs measured fade, gated on skill (Section 4.9)
+│   └── ...                                 # calibration, loaders, figure generation
+├── tests/                           # 295 tests (230 + 4 skipped without the optional cantools extra)
+│   ├── smoke_day3.py                # Day 3 data ingestion smoke test
+│   ├── test_schema.py               # Unit tests for the unified schema
+│   ├── test_pipeline.py             # Full pipeline end-to-end tests
+│   ├── test_explain.py              # Shapley exactness, drift detection, Guardian consistency
+│   ├── test_beacon_dashboard.py     # Nothing-is-invented + provenance guarantees
+│   ├── test_digital_twin.py         # Digital twin state/transition/timeline tests
+│   ├── test_api.py                  # FastAPI endpoint integration tests
+│   ├── test_telemetry_api.py        # /telemetry/* and /transfer/* route tests
+│   ├── test_telemetry_pipeline.py   # Telemetry ingest/replay/cycle-segmentation tests
+│   ├── test_calce_cycling.py        # CALCE Arbin cycling loader tests (fixture-based)
+│   ├── test_guardian.py             # Guardian diagnosis + evidence-confidence labelling
+│   ├── test_can_dbc.py              # CAN/DBC decode vs published OVMS example (skips without cantools)
+│   ├── test_can_vehicle_registry.py # Multi-vehicle registry (skips without cantools)
+│   ├── test_adaptive_*.py           # Calibration gate: cohort, validation, store, calibrator,
+│   │                                #   datasets, dataset_specs, commensurability, transfer
+│   └── fixtures/                    # Generated Arbin-format CALCE fixtures
+└── docs/                            # Documentation
+    └── adr/                         # Architecture decision records (0001-0006)
+
+mern/                                 # Optional MERN layer -- see docs/mern.md
+├── server/                          # Express gateway (proxies to the Python API, no pipeline logic)
+│   ├── src/app.js, server.js, pythonClient.js, routes/, __tests__/
+│   └── package.json
+└── client/                          # React + Vite frontend, same UI as live_dashboard.html
+    ├── src/App.jsx, api.js, components/
+    │   └── FleetTable, BatteryDetail, StateBar, Sparkline,
+    │       GuardianPanel, TelemetryReplay, ThermalMap, TransferPanel, TwinPanel
+    └── package.json
+```
+
+### What is and isn't tracked in git
+
+Two categories of CSV live under `data/` and `reports/`, and they are treated
+differently on purpose.
+
+**Generated, gitignored — regenerate with `python main.py`:**
+`data/features/*.csv` and the two distribution files
+`reports/metrics/{battery_state_distribution,risk_distribution}.csv`. These are
+written fresh on every pipeline run against simulated telemetry, and nothing
+reads them back in — `main.py` hands the tables to the dashboard in memory, and
+`tests/test_pipeline.py` asserts against a temporary output directory. Tracking
+them meant every run dirtied the working tree by thousands of lines, which is
+how three batches of real source changes went unnoticed in `git status`.
+
+**Tracked, and deliberately so — do not "tidy" these away:**
+every other file under `reports/metrics/` plus `reports/figures/*.png`. These
+are derived from the NASA `cleaned_dataset` (7.2M rows), which is gitignored and
+not redistributable, so they **cannot be regenerated from a clean checkout**.
+They are also live inputs: `continuous_model_training_data.csv` is read by five
+adaptive test modules, the `python -m src.bms.adaptive` CLI, and three fitting
+scripts; `calibration_merged.csv` is read by `tests/test_explain.py`. Ignoring
+them would break the suite on a fresh clone and make `docs/final_report.md`
+unreproducible.
+
+**Note on `models/stress_score_rf_sample_v1.joblib`:** despite the filename,
+this loads as a `sklearn.ensemble.HistGradientBoostingRegressor`, not a
+random forest, and the repo has no record of what it was trained on, what
+features it expects, or how it performs. It is not used by the default
+pipeline. `src/bms/risk/stress_score.try_ml_stress_score()` will attempt to
+load it and silently decline to use it unless its expected feature columns
+can be verified — see that function's docstring before trusting it with
+anything.
+
+---
+
+## Pipeline Steps
+
+| Step | Module | Description |
+|------|--------|-------------|
+| 1 | `simulation/simulate_telemetry.py` | Generate synthetic fleet telemetry (or load CSV via `--data`) |
+| 2 | `preprocessing/schema.py` | Normalize column names to unified BMS schema, validate |
+| 3 | `features/behavior_features.compute_behavior_flags` | Row-level behavior flags |
+| 4 | `risk/stress_score.compute_stress_score` | Row-level rule-based stress score (0–100) |
+| 5 | `features/behavior_features.add_rolling_features` / `add_age_features` | Rolling stats, per-battery-normalized age factor |
+| 6 | `features/behavior_features.summarize_batteries` | Per-battery summary table |
+| 7 | `risk/stress_score.compute_risk_assessment` | Battery-level risk score, level, reason, recommendation |
+| 8 | `health/health_index.compute_health_index` | Aging budget → Battery Health Index → state |
+| 9 | `rul/rul_estimation.compute_rul` | Equivalent aging factor → RUL cycles → replacement policy |
+| 10 | `guardian/guardian.generate_guardian_reports` | Causes, recommendation, human-readable report |
+| 11 | Outputs | CSVs in `data/features/` and `reports/metrics/` |
+| 12 | `dashboard/dashboard.build_dashboard` | Interactive HTML dashboard (`dashboard.html`) |
+
+---
+
+## Battery States (Health Index)
+
+| State | Health Index | Meaning |
+|-------|-------------|---------|
+| HEALTHY | 0 – 29 | Normal operation |
+| WARNING | 30 – 59 | Early degradation indicators |
+| DEGRADED | 60 – 79 | Performance degradation detected |
+| CRITICAL | 80 – 100 | High risk — immediate action required |
+
+## Degradation Risk Levels (Battery-level Risk Score)
+
+| Level | Score | Meaning |
+|-------|-------|---------|
+| LOW | 0 – 39 | Minimal degradation risk |
+| MEDIUM | 40 – 59 | Moderate risk — monitor conditions |
+| HIGH | 60 – 79 | High risk — change behavior |
+| CRITICAL | 80 – 100 | Immediate action required |
+
+This is a 4-band scale matching `docs/risk_rules.md` and the implemented
+code in `src/bms/risk/stress_score.py`. An earlier version of this README
+described a different 3-band scale (Low 0–30 / Medium 31–60 / High 61–100)
+that did not match any implemented code — that was a documentation bug,
+not an alternate design; it has been removed.
+
+Note that Health Index and Risk Score are two **separate** scales computed
+from overlapping but not identical inputs — a battery's health-index state
+and risk-score level will usually track together but are not guaranteed to
+agree, since they're independent rule sets. See `src/bms/risk/stress_score.py`
+module docstring.
+
+---
+
+## Feature Catalog
+
+### Telemetry-level features
+- `stress_score` — row-level degradation stress score (0–100)
+- `aggressive_discharge_event` — binary flag (current < -2A)
+- `fast_charge_flag` — binary flag (current > 2A)
+- `high_temp_flag` — binary flag (temperature > 40°C)
+- `deep_discharge_flag` — binary flag (SoC < 20%)
+- `high_soc_flag` — binary flag (SoC > 90%)
+- `stress_rolling_mean` / `stress_rolling_std` — 50-step rolling stress stats (per battery)
+- `temp_rolling_mean` / `temp_rolling_max` — 50-step rolling temp stats (per battery)
+- `battery_age_factor` — normalised cycle position, 0→1 over *that battery's own* lifetime
+- `cycle_stress_index` — stress × age factor (penalises late-life stress events)
+
+### Per-battery summary features
+- `avg_stress`, `avg_temp`, `avg_soc`
+- `fast_charge_duration` — total fast-charge rows
+- `deep_discharge_duration` — total deep-discharge rows
+- `high_temp_duration` — total high-temp rows
+- `aggressive_discharge_count` — count of aggressive discharge events
+
+---
+
+## Datasets
+
+Place downloaded datasets under:
+
+```
+data/raw/nasa/          ← NASA Battery Dataset (.mat / CSV exports)
+data/raw/calce/         ← CALCE Battery Dataset (Excel / CSV)
+data/raw/stanford/      ← Stanford Battery Dataset
+data/raw/simulated/     ← Auto-generated synthetic data
+```
+
+**NASA Battery Dataset** — available at the CALCE group website and Kaggle.
+**CALCE Battery Dataset** — available at calce.umd.edu.
+
+---
+
+## Requirements
+
+```
+pandas>=2.0.0
+numpy>=1.24.0
+scikit-learn>=1.3.0
+joblib>=1.3.0
+matplotlib>=3.7.0
+scipy>=1.11.0
+openpyxl>=3.1.0
+PyYAML>=6.0.0
+```
+
+---
+
+## Scope
+
+### Included (V1)
+- Simulated EV battery telemetry
+- Data ingestion (NASA, CALCE, simulated CSV)
+- Behavior feature extraction from time-series telemetry
+- Rule-based degradation risk score
+- Battery Health Index with aging budget model
+- Remaining Useful Life estimation
+- Battery Guardian AI recommendations
+- Interactive HTML dashboard
+- Digital twin state/transitions and a REST API (`src/bms/digital_twin/`, `src/bms/api/` — see `docs/digital_twin.md`, `docs/api.md`)
+
+### Excluded (V1)
+- Embedded firmware / real BMS hardware
+- CAN/OBD integration
+- Real-time vehicle deployment
+- Cloud deployment / persistent database (the API's fleet store is in-memory only)
+- Cell balancing circuits
+- A validated predictive model — calibration against measured capacity-fade
+  ground truth has been done (not just planned); the result is that none
+  of the tried approaches validate for deployment yet. See
+  `docs/final_report.md` Sections 4-7 for what was tried and why.
+
+---
+
+## Notebooks
+
+The original Colab notebooks used during development are preserved in `notebooks/`
+for history. They are **superseded** by `src/bms/` — the package versions fix a
+few bugs found while porting (per-battery age normalization, a stale duplicate
+health-index formula, inconsistent risk-band thresholds between the README and
+`docs/risk_rules.md`); see each module's docstring for specifics.
+
+| Notebook | Purpose | Ported to |
+|----------|---------|-----------|
+| `BMS_Project_Setup.ipynb` | Initial data exploration | `src/bms/io/`, `src/bms/preprocessing/` |
+| `03_calce_preprocessing.ipynb` | CALCE data preprocessing | `src/bms/io/load_calce.py` |
+| `04_feature_refinement.ipynb` | Feature engineering | `src/bms/features/behavior_features.py` |
+| `n05_T1v1.ipynb` | Battery-level risk classification | `src/bms/risk/stress_score.py` |
+| `06_battery_health_index.ipynb` | BHI aging budget model | `src/bms/health/health_index.py` |
+| `07_remaining_useful_life.ipynb` | RUL estimation | `src/bms/rul/rul_estimation.py` |
+| `08_battery_guardian.ipynb` | Guardian AI reports | `src/bms/guardian/guardian.py` |
+| `09_digital_twin.ipynb`, `error_analysis.ipynb` | Exploratory, not yet ported | — |
+
+---
+
+## Author
+
+**Naveen Vaidyanathan**
+[GitHub: Navvu-gityhub/Behavior-Aware-BMS](https://github.com/Navvu-gityhub/Behavior-Aware-BMS)
