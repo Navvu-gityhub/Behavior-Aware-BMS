@@ -1,5 +1,6 @@
 import express from 'express';
 import cors from 'cors';
+import { config } from './config.js';
 import morgan from 'morgan';
 
 import { batteriesRouter } from './routes/batteries.js';
@@ -10,7 +11,10 @@ export function createApp() {
   const app = express();
 
   app.use(morgan('dev'));
-  app.use(cors()); // React dev server runs on a different port -- needs this for local dev.
+  // React dev server runs on a different port, so CORS is required for local
+  // dev. Configurable via CORS_ORIGIN -- see config.js for why the default is
+  // permissive and what that does and does not mean here.
+  app.use(cors({ origin: config.corsOrigin }));
   app.use(express.json());
 
   app.use('/api', batteriesRouter);

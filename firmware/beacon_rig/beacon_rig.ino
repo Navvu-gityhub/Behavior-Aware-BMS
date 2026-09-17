@@ -103,12 +103,28 @@
 /* Configuration - the only section you should need to edit.             */
 /* ===================================================================== */
 
+/* Must match the host. 115200 is the project default, and what
+ * src/bms/telemetry/serial_source.py and the docs assume.
+ *
+ * Overridable at build time, so a board whose USB bridge will not sustain the
+ * default needs no edit to this file:
+ *
+ *   arduino-cli compile --fqbn esp8266:esp8266:nodemcuv2
+ *     --build-property compiler.cpp.extra_flags=-DSERIAL_BAUD=9600
+ *     firmware/beacon_rig
+ *
+ * Pass the matching --baudrate to the host. Keeping the repository default at
+ * 115200 matters: baking one board's bridge fault into the shared default
+ * would leave the firmware and the host disagreeing for everyone else.
+ *
+ * 9600 costs nothing at this sampling rate: one JSON record is ~72 bytes, or
+ * 724 bits on the wire at 8N1, so 9600 carries ~13 records per second against
+ * a SAMPLE_PERIOD_MS of 1000 - about 7% channel utilisation. The binding limit
+ * on sample rate is the sensor, not the link. */
+#ifndef SERIAL_BAUD
 #define SERIAL_BAUD      115200
+#endif
 
-/* Sampling period in milliseconds. 1000 ms is a sensible bench default: fast
- * enough to resolve a charge/discharge transition, slow enough that a multi-
- * hour capture stays a manageable file. The host does not resample, so this is
- * the resolution the analysis actually sees. */
 #define SAMPLE_PERIOD_MS 1000
 
 /* Identity reported to the host. One rig, one id. If you run two rigs into one

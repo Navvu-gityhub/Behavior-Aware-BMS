@@ -96,3 +96,20 @@ reports/metrics/calce_cycle_level.csv
 
 # Adaptive calibration runtime store (versions + decision log are run artifacts)
 models/adaptive/
+
+# Scratch output from scripts/run_validation_suite.py -- never the published record.
+reports/metrics/_validation_scratch/
+reports/validation_dashboard.html
+
+# Secrets. Nothing in this project needs a credential today -- there is no LLM
+# integration, no cloud service and no authenticated endpoint -- but an ignored
+# .env costs nothing and an un-ignored one is committed exactly once.
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Firmware build output. Reproducible from the sketch with arduino-cli;
+# the .elf and .map alone are ~8 MB per target.
+build/

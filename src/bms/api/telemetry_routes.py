@@ -38,6 +38,7 @@ from src.bms.adaptive.dataset_specs import (
     get_spec,
     predict_transfer_feasibility,
 )
+from src.bms.api.paths import resolve_request_path
 from src.bms.api.telemetry_schemas import (
     AxisVerdictOut,
     CapacityYieldOut,
@@ -143,7 +144,9 @@ def _load_dbc(dbc_path: str | None):
     """Load a DBC, raising a 4xx for a bad path rather than a 500."""
     import cantools
 
-    path = Path(dbc_path) if dbc_path else DEFAULT_DBC
+    # A caller-supplied DBC path is contained before it is opened; the
+    # built-in default is trusted and needs no check.
+    path = resolve_request_path(dbc_path, "dbc_path") if dbc_path else DEFAULT_DBC
     if not path.exists():
         raise HTTPException(status_code=404, detail=f"DBC not found: {path}")
     try:
@@ -293,7 +296,7 @@ def telemetry_coverage(dbc_path: str | None = None) -> SignalCoverageOut:
              tags=["telemetry"])
 def telemetry_replay(request: ReplayRequest) -> TelemetryRunOut:
     """Replay a recorded CAN log through the full scoring pipeline."""
-    log_path = Path(request.log_path)
+    log_path = resolve_request_path(request.log_path, "log_path")
     if not log_path.exists():
         raise HTTPException(status_code=404, detail=f"CAN log not found: {log_path}")
 
@@ -448,7 +451,7 @@ def serial_emulate(request: SerialEmulateRequest) -> TelemetryRunOut:
              tags=["telemetry"])
 def serial_replay(request: SerialReplayRequest) -> TelemetryRunOut:
     """Replay a recorded serial capture through the full scoring pipeline."""
-    capture_path = Path(request.capture_path)
+    capture_path = resolve_request_path(request.capture_path, "capture_path")
     if not capture_path.exists():
         raise HTTPException(
             status_code=404, detail=f"Serial capture not found: {capture_path}"

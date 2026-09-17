@@ -1,0 +1,146 @@
+{
+  "generated": "2026-09-16T07:41:31+00:00",
+  "mode": "quick",
+  "raw_data_present": true,
+  "drifted_tracked_artifacts": [
+    "reports/figures/fig1_health_index_collapse.png",
+    "reports/figures/fig2_temperature_signal.png",
+    "reports/figures/fig3_horizon_comparison.png",
+    "reports/metrics/coverage_folds.csv",
+    "reports/metrics/coverage_summary.csv",
+    "reports/metrics/coverage_summary.md",
+    "reports/metrics/health_version_task_b_cv.csv",
+    "reports/metrics/health_version_task_b_summary.csv",
+    "reports/metrics/horizon_h10_lobo_cv.csv",
+    "reports/metrics/horizon_h1_lobo_cv.csv",
+    "reports/metrics/horizon_h20_lobo_cv.csv",
+    "reports/metrics/horizon_h50_lobo_cv.csv",
+    "reports/metrics/mixed_effects_diagnostics.csv",
+    "reports/metrics/risk_term_variability.csv",
+    "reports/metrics/threshold_reachability_audit.csv"
+  ],
+  "drift_restored": true,
+  "stages": [
+    {
+      "stage": "pipeline-smoke",
+      "section": "S2 / S3 end-to-end pipeline",
+      "command": "C:\\Users\\Navee\\anaconda3\\python.exe main.py --dashboard-out reports/validation_dashboard.html",
+      "status": "PASS",
+      "exit_code": 0,
+      "duration_s": 3.19,
+      "artifacts": {}
+    },
+    {
+      "stage": "threshold-audit",
+      "section": "S4.7 threshold reachability",
+      "command": "C:\\Users\\Navee\\anaconda3\\python.exe scripts/audit_threshold_reachability.py",
+      "status": "PASS",
+      "exit_code": 0,
+      "duration_s": 2.17,
+      "artifacts": {
+        "risk_term_variability.csv": {
+          "sha256_16": "4923a246ff473218",
+          "changed": true,
+          "present": true
+        }
+      }
+    },
+    {
+      "stage": "health-index-versions",
+      "section": "S4.8 health index v1 vs v2, LOBO + LOCO",
+      "command": "C:\\Users\\Navee\\anaconda3\\python.exe scripts/validate_health_index_versions.py",
+      "status": "PASS",
+      "exit_code": 0,
+      "duration_s": 60.89,
+      "artifacts": {
+        "health_version_task_a_ranking.csv": {
+          "sha256_16": "49eb3e4b849c9ff5",
+          "changed": false,
+          "present": true
+        },
+        "health_version_task_b_cv.csv": {
+          "sha256_16": "4e51e5f7eb50188a",
+          "changed": true,
+          "present": true
+        }
+      }
+    },
+    {
+      "stage": "horizon-regression",
+      "section": "S4.5 longer prediction horizons",
+      "command": "C:\\Users\\Navee\\anaconda3\\python.exe scripts/fit_horizon_regression_model.py",
+      "status": "PASS",
+      "exit_code": 0,
+      "duration_s": 8.03,
+      "artifacts": {
+        "horizon_regression_summary.csv": {
+          "sha256_16": "8c06fda035a8f1aa",
+          "changed": false,
+          "present": true
+        }
+      }
+    },
+    {
+      "stage": "mixed-effects",
+      "section": "S4.6 mixed-effects identifiability",
+      "command": "C:\\Users\\Navee\\anaconda3\\python.exe scripts/fit_mixed_effects_model.py",
+      "status": "PASS",
+      "exit_code": 0,
+      "duration_s": 9.44,
+      "artifacts": {
+        "mixed_effects_diagnostics.csv": {
+          "sha256_16": "1ba1d090c6dcf5ff",
+          "changed": true,
+          "present": true
+        }
+      }
+    },
+    {
+      "stage": "conformal-coverage",
+      "section": "S4.12 / S5.5 coverage within vs across protocol",
+      "command": "C:\\Users\\Navee\\anaconda3\\python.exe scripts/run_coverage_study.py --methods age_linear elasticnet",
+      "status": "PASS",
+      "exit_code": 0,
+      "duration_s": 23.91,
+      "artifacts": {
+        "coverage_folds.csv": {
+          "sha256_16": "908b4bfb395e7c6e",
+          "changed": true,
+          "present": true
+        },
+        "coverage_summary.csv": {
+          "sha256_16": "654fe077914b98da",
+          "changed": true,
+          "present": true
+        }
+      }
+    },
+    {
+      "stage": "benchmark-study-quick",
+      "section": "S4.10-S4.12 (reference methods only)",
+      "command": "C:\\Users\\Navee\\anaconda3\\python.exe scripts/run_benchmark_study.py --quick --out reports/metrics/_validation_scratch",
+      "status": "PASS",
+      "exit_code": 0,
+      "duration_s": 96.78,
+      "artifacts": {}
+    },
+    {
+      "stage": "report-figures",
+      "section": "final_report.md figures 1-3",
+      "command": "C:\\Users\\Navee\\anaconda3\\python.exe scripts/generate_report_figures.py",
+      "status": "PASS",
+      "exit_code": 0,
+      "duration_s": 4.73,
+      "artifacts": {}
+    },
+    {
+      "stage": "manuscript-figures",
+      "section": "ress_draft.md figures 1-3",
+      "command": "C:\\Users\\Navee\\anaconda3\\python.exe scripts/generate_manuscript_figures.py",
+      "status": "PASS",
+      "exit_code": 0,
+      "duration_s": 6.2,
+      "artifacts": {}
+    }
+  ]
+}

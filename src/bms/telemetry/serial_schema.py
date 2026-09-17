@@ -446,12 +446,29 @@ def parse_line(line: str) -> tuple[str, Any]:
     if not stripped:
         return "noise", line
 
-    if not stripped.startswith(SENTINEL):
+    # Resynchronise on the sentinel wherever it appears, not only at position 0.
+    #
+    # A sentinel exists precisely so a reader can recover its place in a stream
+    # that contains bytes it did not expect, and requiring it at the start
+    # forfeits exactly that. A board reset mid-transmission leaves the tail of an
+    # interrupted line in front of the next good record, so the first record
+    # after every reset arrives as `\xfe,\xf0BEACON1 HELLO {...}` - and that
+    # HELLO is the one carrying the cell id and the rated capacity.
+    #
+    # Insisting on position 0 discarded it as noise and produced a capture with
+    # coverage inferred and no declared capacity. Found on a physical NodeMCU;
+    # every capture taken before this fix lost its handshake to it.
+    #
+    # Only leading bytes are dropped. Anything after the sentinel is parsed
+    # normally, so a corrupt body still fails its checksum rather than being
+    # accepted because the line was resynchronised.
+    start = stripped.find(SENTINEL)
+    if start < 0:
         # Boot banners, bootloader chatter, leftover debug prints. Not an
         # error: a board that prints its own banner is behaving normally.
         return "noise", line
 
-    remainder = stripped[len(SENTINEL):].strip()
+    remainder = stripped[start + len(SENTINEL):].strip()
     if not remainder:
         raise LineDecodeError("sentinel with no record type")
 

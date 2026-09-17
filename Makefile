@@ -1,7 +1,7 @@
 .PHONY: install install-dev pipeline api test test-fast lint format typecheck check \
         study coverage-study audit docker docker-up smoke-day3 clean-day3 \
         serial-demo serial-ports serial-capture serial-fixture \
-        hardware-check firmware-compile \
+        hardware-check firmware-compile validate validate-quick \
         calce-full-discharge calce-study-full-discharge calce-study-baseline
 
 # joblib probes the physical core count by shelling out, which fails in some
@@ -135,6 +135,17 @@ coverage-sweep:
 
 detection-study:
 	python scripts/run_detection_study.py
+
+# The whole validation suite behind one command. Orchestrates the sequence
+# documented in docs/final_report.md Appendix A; defines no protocol of its own.
+# Tracked artifacts under reports/ are snapshotted and RESTORED if a stage
+# rewrites them, so this reports reproducibility drift instead of causing it.
+# Pass --accept-changes only after deciding the new values are correct.
+validate:
+	python scripts/run_validation_suite.py
+
+validate-quick:
+	python scripts/run_validation_suite.py --quick
 
 audit:
 	python scripts/audit_threshold_reachability.py

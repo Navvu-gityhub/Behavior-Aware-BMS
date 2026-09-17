@@ -570,3 +570,131 @@ def test_firmware_hello_is_valid_json_this_parser_accepts(firmware):
     assert header.compatible
     assert set(header.channels) == {spec.channel for spec in FIELDS}
     assert header.capacity_ah == 3.4
+
+
+# ---------------------------------------------------------------------------
+# Opening a live port: the gap first contact with hardware exposed
+# ---------------------------------------------------------------------------
+
+
+def test_opening_a_live_port_is_retried_before_giving_up(monkeypatch):
+    """A bridge that refuses one open and accepts the next must not be fatal.
+
+    Found on first contact with a physical board: a USB-serial bridge that has
+    just been flashed commonly refuses the next open for a second or two. The
+    original implementation opened once and propagated the driver's exception,
+    turning a recoverable timing condition into a hard failure.
+    """
+    import serial
+
+    attempts = {"n": 0}
+
+    class FakePort:
+        def __init__(self, *args, **kwargs):
+            attempts["n"] += 1
+            if attempts["n"] < 3:
+                raise serial.SerialException("Cannot configure port")
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *exc):
+            return False
+
+        def reset_input_buffer(self):
+            pass
+
+        def readline(self):
+            return b""
+
+    monkeypatch.setattr(serial, "Serial", FakePort)
+
+    source = SerialPortSource(
+        name="serial:TEST", port="COM_TEST", duration_s=0.0,
+        open_retry_delay_s=0.0,
+    )
+    list(source.lines())
+
+    assert attempts["n"] == 3, (
+        f"expected the third open to succeed, saw {attempts['n']} attempts"
+    )
+
+
+def test_a_port_that_never_opens_names_what_to_check(monkeypatch):
+    """The refusal after the last attempt must be actionable.
+
+    A bare pyserial traceback tells a student nothing they can act on; the
+    message has to name the monitor, the enumeration and the cable.
+    """
+    import serial
+
+    def always_fails(*args, **kwargs):
+        raise serial.SerialException("Cannot configure port")
+
+    monkeypatch.setattr(serial, "Serial", always_fails)
+
+    source = SerialPortSource(
+        name="serial:TEST", port="COM_TEST", open_attempts=2,
+        open_retry_delay_s=0.0,
+    )
+    with pytest.raises(OSError) as excinfo:
+        list(source.lines())
+
+    message = str(excinfo.value)
+    assert "COM_TEST" in message
+    assert "2 attempts" in message
+    for hint in ("serial monitor", "enumerated", "cable", "replug"):
+        assert hint in message, f"refusal does not mention {hint!r}"
+
+
+def test_a_failed_run_does_not_destroy_a_previous_capture(tmp_path):
+    """Recording must not truncate its destination before it has data.
+
+    This deleted the first physical capture this project ever took: the board's
+    USB bridge allowed one open per enumeration, the next run could not reopen
+    the port, and the capture file had already been truncated to zero bytes by
+    the time that failure surfaced. A capture is evidence.
+    """
+    import serial
+
+    path = tmp_path / "bringup.txt"
+    good = RecordingLineSource(
+        inner=EmulatedRigSource(profile=FAST_PROFILE), path=path
+    )
+    list(good.lines())
+    original = path.read_text(encoding="utf-8")
+    assert original.strip(), "fixture capture was not written"
+
+    class DeadPort:
+        name = "serial:DEAD"
+
+        def lines(self):
+            raise serial.SerialException("Cannot configure port")
+            yield  # pragma: no cover - generator marker
+
+    doomed = RecordingLineSource(inner=DeadPort(), path=path)
+    with pytest.raises(serial.SerialException):
+        list(doomed.lines())
+
+    assert path.read_text(encoding="utf-8") == original, (
+        "a run that never produced a line overwrote the previous capture"
+    )
+
+
+def test_an_interrupted_recording_still_writes_what_arrived(tmp_path):
+    """Lazy opening must not cost the partial-capture guarantee."""
+    path = tmp_path / "partial.txt"
+
+    def dies_partway():
+        yield from _rig_lines()[:9]
+        raise RuntimeError("cable yanked")
+
+    from src.bms.telemetry import TextStreamSource
+
+    source = RecordingLineSource(
+        inner=TextStreamSource(name="flaky", stream=dies_partway()), path=path
+    )
+    with pytest.raises(RuntimeError, match="cable yanked"):
+        list(source.lines())
+
+    assert path.read_text(encoding="utf-8").count("\n") == 9

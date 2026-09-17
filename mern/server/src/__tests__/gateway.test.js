@@ -25,6 +25,13 @@ before(async () => {
         const parsed = JSON.parse(body);
         res.end(JSON.stringify({ n_batteries_scored: parsed.n_batteries, transitions: [], battery_ids: [] }));
       });
+    } else if (req.url === '/validation/summary') {
+      res.end(JSON.stringify({
+        available: true,
+        target_ceilings: [{ target: 'capacity_loss', max_attainable_r2: 0.044 }],
+        methods: [{ method: 'age_linear', target: 'capacity_loss', loco_r2: 0.406, r2_ceiling: 0.044 }],
+        limitations: ['six ranking claims were withdrawn'],
+      }));
     } else if (req.url === '/batteries') {
       res.end(JSON.stringify([{ battery_id: 'SIM000', twin_state: 'NORMAL' }]));
     } else if (req.url === '/batteries/KNOWN') {
@@ -93,5 +100,26 @@ test('Python service unreachable returns 502, not a crash', async () => {
     assert.match(res.body.error, /unreachable/);
   } finally {
     process.env.PYTHON_API_BASE_URL = fakePythonUrl; // restore for any later tests
+  }
+});
+
+test('validation evidence is forwarded unchanged', async () => {
+  const res = await request(app).get('/api/validation/summary').expect(200);
+  assert.equal(res.body.available, true);
+  assert.equal(res.body.target_ceilings[0].max_attainable_r2, 0.044);
+});
+
+test('every reported R2 arrives with its target noise ceiling attached', async () => {
+  // The gateway must not be able to strip the ceiling off an R2 in transit.
+  // A model score without its target's ceiling is the misreading this project
+  // spent months inside -- see docs/final_report.md section 4.10.
+  const res = await request(app).get('/api/validation/summary').expect(200);
+  for (const method of res.body.methods) {
+    if (method.loco_r2 !== null && method.loco_r2 !== undefined) {
+      assert.ok(
+        method.r2_ceiling !== null && method.r2_ceiling !== undefined,
+        `${method.method} reports an R2 with no ceiling beside it`
+      );
+    }
   }
 });

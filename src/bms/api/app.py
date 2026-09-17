@@ -32,6 +32,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
 
 from main import run_pipeline
+from src.bms.api.dashboard_routes import router as dashboard_router
 from src.bms.api.schemas import (
     BatteryDetailOut,
     BatterySummaryOut,
@@ -44,6 +45,7 @@ from src.bms.api.schemas import (
 )
 from src.bms.api.store import fleet_store
 from src.bms.api.telemetry_routes import router as telemetry_router
+from src.bms.api.validation_routes import router as validation_router
 from src.bms.digital_twin import build_health_timeline
 from src.bms.simulation.simulate_telemetry import SimulationConfig, simulate_fleet
 
@@ -60,6 +62,12 @@ app = FastAPI(
 # Telemetry, twin and transfer endpoints live in their own router so this
 # module's existing routes are untouched. See api/telemetry_routes.py.
 app.include_router(telemetry_router)
+# Serves what has actually been validated, read from tracked artifacts, so
+# the evidence sits beside the scores rather than only in the report.
+app.include_router(validation_router)
+# The BEACON dashboard payload, served from the same builder the static
+# renderer used, so the React client cannot drift from it.
+app.include_router(dashboard_router)
 
 _DASHBOARD_PATH = Path(__file__).parent.parent / "dashboard" / "live_dashboard.html"
 

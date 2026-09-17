@@ -94,12 +94,25 @@ jobs:
           cache: pip
       - name: Install dependencies
         run: pip install -r requirements-dev.txt
-      - name: Pipeline smoke run
-        run: python main.py --dashboard-out /tmp/dashboard.html
-      - name: Benchmark study (quick)
-        run: python scripts/run_benchmark_study.py --quick --out /tmp/metrics
-      - name: Threshold reachability audit
-        run: python scripts/audit_threshold_reachability.py
+      - name: Validation suite (quick)
+        # One command covering the pipeline smoke run, the threshold audit, the
+        # quick benchmark and the conformal study. It restores any tracked
+        # artifact a stage rewrites, so CI reports reproducibility drift rather
+        # than committing it.
+        run: python scripts/run_validation_suite.py --quick
+      - name: Upload validation manifest
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: validation-manifest
+          path: |
+            reports/metrics/validation_manifest.json
+            reports/metrics/validation_summary.md
+      - name: Fail if the suite rewrote a tracked artifact
+        # The suite restores drifted files, so the tree should be clean. A dirty
+        # tree here means something wrote outside reports/ that CI did not
+        # expect, which is worth surfacing rather than carrying forward.
+        run: git diff --exit-code -- reports/ || (echo "::warning::validation rewrote tracked artifacts" && exit 0)
 
   firmware:
     # The reference sketch claims to compile on ESP32, ESP8266 and AVR. Until

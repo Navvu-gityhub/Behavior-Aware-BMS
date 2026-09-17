@@ -68,6 +68,15 @@ export const api = {
     request(`/transfer/feasibility${source ? `?source=${encodeURIComponent(source)}` : ''}`),
 
   datasets: () => request('/datasets'),
+
+  // --- validation evidence --------------------------------------------------
+  //
+  // Served from the tracked CSVs under reports/metrics/, so the dashboard can
+  // state what was tested rather than only what was scored.
+
+  validationSummary: () => request('/validation/summary'),
+
+  beacon: () => request('/dashboard/beacon'),
 };
 
 export { ApiError };

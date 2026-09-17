@@ -66,6 +66,13 @@ def build_parser() -> argparse.ArgumentParser:
     )
 
     parser.add_argument(
+        "--open-timeout", type=float, default=4.5, metavar="SECONDS",
+        help="How long to keep retrying the port open before giving up "
+             "(default 4.5). Raise it and start this command BEFORE plugging "
+             "the board in when the bridge accepts only one open per "
+             "enumeration -- the run then catches that one open.",
+    )
+    parser.add_argument(
         "--baudrate", type=int, default=DEFAULT_BAUDRATE,
         help=f"Serial baud rate (default {DEFAULT_BAUDRATE}).",
     )
@@ -157,11 +164,18 @@ def main(argv: list[str] | None = None) -> int:
     else:
         source: LineSource
         if args.port:
+            if args.open_timeout > 0:
+                print(
+                    f"Waiting up to {args.open_timeout:.0f}s for {args.port} to "
+                    f"accept a connection. If your bridge allows only one open "
+                    f"per enumeration, plug the board in NOW.\n"
+                )
             source = SerialPortSource(
                 name=f"serial:{args.port}",
                 port=args.port,
                 baudrate=args.baudrate,
                 duration_s=args.duration,
+                open_attempts=max(1, int(args.open_timeout / 0.75)),
             )
         else:
             print(

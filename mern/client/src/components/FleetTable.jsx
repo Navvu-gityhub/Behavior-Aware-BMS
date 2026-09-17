@@ -1,3 +1,5 @@
+import { ProvenanceTag } from './Provenance.jsx';
+
 const STATE_COLOR_VAR = {
   NORMAL: '--normal',
   MODERATE_RISK: '--moderate',
@@ -19,10 +21,10 @@ export function FleetTable({ batteries, selectedId, onSelect }) {
       <thead>
         <tr>
           <th>Battery</th>
-          <th>Twin State</th>
-          <th>Health Idx</th>
-          <th>RUL (cycles)</th>
-          <th>Policy</th>
+          <th>Twin State <ProvenanceTag field="twin_state" /></th>
+          <th>Health Idx <ProvenanceTag field="health_index" /></th>
+          <th>RUL (cycles) <ProvenanceTag field="rul_cycles" /></th>
+          <th>Policy <ProvenanceTag field="replacement_policy" /></th>
         </tr>
       </thead>
       <tbody>

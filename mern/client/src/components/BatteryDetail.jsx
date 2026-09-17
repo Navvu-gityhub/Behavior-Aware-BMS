@@ -1,4 +1,5 @@
 import { Sparkline } from './Sparkline.jsx';
+import { ProvenanceStat, ProvenanceTag, ProvenanceLegend } from './Provenance.jsx';
 
 export function BatteryDetail({ detail, timeline }) {
   if (!detail) {
@@ -17,29 +18,20 @@ export function BatteryDetail({ detail, timeline }) {
       <div className="detail-header">
         <div className="detail-id">{detail.battery_id}</div>
         <span className={`badge ${twin.twin_state}`}>{twin.twin_state.replace('_', ' ')}</span>
+        <ProvenanceTag field="twin_state" />
       </div>
 
+      <ProvenanceLegend />
+
       <div className="detail-stats">
-        <div className="stat">
-          <div className="label">Health Index</div>
-          <div className="value">{twin.health_index.toFixed(0)}</div>
-        </div>
-        <div className="stat">
-          <div className="label">Failure Likelihood</div>
-          <div className="value">{(twin.failure_likelihood * 100).toFixed(0)}%</div>
-        </div>
-        <div className="stat">
-          <div className="label">RUL</div>
-          <div className="value">{twin.rul_cycles.toLocaleString()}</div>
-        </div>
-        <div className="stat">
-          <div className="label">Risk</div>
-          <div className="value">{detail.risk_level}</div>
-        </div>
-        <div className="stat">
-          <div className="label">Policy</div>
-          <div className="value" style={{ fontSize: 13 }}>{twin.replacement_policy}</div>
-        </div>
+        <ProvenanceStat field="health_index" value={twin.health_index.toFixed(0)} />
+        <ProvenanceStat
+          field="failure_likelihood"
+          value={`${(twin.failure_likelihood * 100).toFixed(0)}%`}
+        />
+        <ProvenanceStat field="rul_cycles" value={twin.rul_cycles.toLocaleString()} />
+        <ProvenanceStat field="risk_level" value={detail.risk_level} />
+        <ProvenanceStat field="replacement_policy" value={twin.replacement_policy} />
       </div>
 
       <div className="report-box">{detail.guardian_report}</div>
@@ -60,15 +52,24 @@ export function BatteryDetail({ detail, timeline }) {
         {timeline.length ? (
           <>
             <div className="trace">
-              <div className="trace-label"><span>Stress score</span><span>0–100</span></div>
+              <div className="trace-label">
+                <span>Stress score <ProvenanceTag field="stress_score" /></span>
+                <span>0–100</span>
+              </div>
               <Sparkline points={timeline} dataKey="stress_score" color="var(--accent)" />
             </div>
             <div className="trace">
-              <div className="trace-label"><span>State of charge</span><span>%</span></div>
+              <div className="trace-label">
+                <span>State of charge <ProvenanceTag field="soc" /></span>
+                <span>%</span>
+              </div>
               <Sparkline points={timeline} dataKey="soc" color="var(--soc-color)" unit="%" />
             </div>
             <div className="trace">
-              <div className="trace-label"><span>Temperature</span><span>°C</span></div>
+              <div className="trace-label">
+                <span>Temperature <ProvenanceTag field="temperature_c" /></span>
+                <span>°C</span>
+              </div>
               <Sparkline points={timeline} dataKey="temperature_c" color="var(--temp-color)" unit="°" />
             </div>
           </>

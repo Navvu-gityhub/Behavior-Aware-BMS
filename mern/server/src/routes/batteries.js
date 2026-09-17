@@ -24,6 +24,37 @@ batteriesRouter.post('/pipeline/simulate', async (req, res, next) => {
   }
 });
 
+// GET /api/validation/summary -- what has actually been validated, read by the
+// Python service from the tracked artifacts under reports/metrics/. Proxied
+// rather than recomputed here for the same reason every other route is: the
+// gateway must not become a second place where a number can be produced.
+// GET /api/dashboard/beacon -- the full dashboard payload, assembled by the
+// Python service from the same builder the static renderer used. Proxied, not
+// recomputed: the client renders, it does not decide what is available.
+batteriesRouter.get('/dashboard/beacon', async (req, res, next) => {
+  try {
+    res.json(await callPython('/dashboard/beacon'));
+  } catch (err) {
+    next(err);
+  }
+});
+
+batteriesRouter.get('/validation/summary', async (req, res, next) => {
+  try {
+    res.json(await callPython('/validation/summary'));
+  } catch (err) {
+    next(err);
+  }
+});
+
+batteriesRouter.get('/validation/ceilings', async (req, res, next) => {
+  try {
+    res.json(await callPython('/validation/ceilings'));
+  } catch (err) {
+    next(err);
+  }
+});
+
 batteriesRouter.get('/batteries', async (req, res, next) => {
   try {
     const result = await callPython('/batteries');

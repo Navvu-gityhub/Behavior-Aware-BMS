@@ -130,11 +130,20 @@ class SerialPortSource:
     the same reason `LiveBusSource.duration_s` does: an unbounded generator
     inside a request handler never returns.
 
-    This class is the only place in the project that touches hardware, and it is
-    untested against a physical board - no rig is attached to this environment.
-    That limit is recorded here rather than implied to be verified. Everything
-    downstream of it is exercised by the emulator through the identical parser,
-    so the untested surface is the port read itself, not the pipeline.
+    This class is the only place in the project that touches hardware.
+
+    **Opening is retried.** First contact with a physical board showed why: a
+    USB-serial bridge that has just been flashed, or that is marginal, commonly
+    refuses the next open for a second or two and then accepts it. The original
+    implementation opened once and propagated the exception, which surfaced a
+    recoverable timing condition as a hard failure with a driver-level message
+    nobody could act on. Retrying a bounded number of times is the correct
+    response to a transient, and the refusal after the last attempt still names
+    what to check.
+
+    Retries deliberately do **not** extend to reads. A port that opens and then
+    stops delivering is a different fault, and the accepted-fraction gate in
+    `serial_pipeline` is what judges that.
     """
 
     name: str
@@ -144,6 +153,10 @@ class SerialPortSource:
     read_timeout_s: float = 1.0
     encoding: str = "utf-8"
     reset_on_open: bool = True
+    #: Bounded, because an unbounded retry on a board that is simply absent
+    #: would hang a request handler rather than report the absence.
+    open_attempts: int = 6
+    open_retry_delay_s: float = 0.75
 
     def lines(self) -> Iterator[str]:
         try:
@@ -157,16 +170,90 @@ class SerialPortSource:
 
         import time
 
+        last_error: Exception | None = None
+        connection = None
+        for attempt in range(1, self.open_attempts + 1):
+            try:
+                # Opened AT the target baud rather than opened and then
+                # reconfigured. Some CH340 drivers accept a rate supplied at
+                # open time and refuse the identical rate applied to an already
+                # open handle, which is a real failure mode this project hit.
+                connection = serial.Serial(
+                    port=self.port,
+                    baudrate=self.baudrate,
+                    timeout=self.read_timeout_s,
+                )
+                break
+            except Exception as exc:  # pyserial raises SerialException here
+                last_error = exc
+                if attempt < self.open_attempts:
+                    time.sleep(self.open_retry_delay_s)
+
+        if connection is None:
+            raise OSError(
+                f"{self.name}: could not open {self.port} after "
+                f"{self.open_attempts} attempts over "
+                f"{self.open_attempts * self.open_retry_delay_s:.1f}s. "
+                f"Last error: {last_error}. Check that no serial monitor holds "
+                f"the port, that the board is still enumerated, and that the "
+                f"cable carries data. Some USB-serial bridges accept one open "
+                f"per enumeration and need a physical replug."
+            ) from last_error
+
         started = time.monotonic()
-        with serial.Serial(
-            port=self.port, baudrate=self.baudrate, timeout=self.read_timeout_s
-        ) as connection:
+        with connection:
             if self.reset_on_open:
-                # Most USB-serial boards reset when DTR is asserted. Flushing
-                # after open discards the partial line that a reset leaves in
-                # the buffer; the boot banner that follows is handled by the
-                # sentinel filter rather than by timing guesswork.
-                connection.reset_input_buffer()
+                # Pulse the reset line, then flush.
+                #
+                # This used to flush only, on the assumption that opening the
+                # port asserts DTR and that this resets the board. First contact
+                # with a NodeMCU showed otherwise: its auto-reset circuit is
+                # driven by DTR and RTS *in opposition*, so merely opening the
+                # port leaves the board free-running from whenever it last
+                # booted. The practical consequence is that the HELLO line - the
+                # schema handshake carrying the cell id and its rated capacity -
+                # had already been sent and lost before the host was listening,
+                # and every capture came back with coverage inferred and no
+                # declared capacity.
+                #
+                # Holding EN low and releasing it restarts the sketch while the
+                # host is already reading, so the handshake lands in the stream.
+                # Flush FIRST, then reset. The order is the whole point.
+                #
+                # Flushing after the pulse discards exactly what the pulse was
+                # for: the board boots in a couple of hundred milliseconds and
+                # prints its banner and HELLO immediately, so a flush timed
+                # after the reset throws the handshake away and the capture
+                # comes back with coverage inferred - which is precisely the
+                # symptom this code was added to cure. The stale bytes worth
+                # discarding are the ones buffered *before* the reset.
+                try:
+                    connection.dtr = False
+                    connection.rts = True   # EN low: hold in reset
+                    time.sleep(0.1)
+                    connection.rts = False  # EN high: run
+                    # Flush in the gap between releasing reset and the board's
+                    # first output. Timing matters in both directions and this
+                    # is the only window that satisfies both:
+                    #
+                    #   before the pulse - too early. Anything the board sent
+                    #     while the host was still retrying the open is already
+                    #     in the driver's buffer and arrives anyway, so the
+                    #     capture holds two sessions and is refused for a time
+                    #     reversal at the join.
+                    #   after the board prints - too late. The banner and the
+                    #     HELLO are what the reset was for, and flushing then
+                    #     discards them.
+                    #
+                    # The board needs ~200 ms to come out of reset; the flush
+                    # below costs microseconds, so it lands cleanly in between.
+                    connection.reset_input_buffer()
+                except Exception:
+                    # Some bridges refuse modem-control lines outright. That
+                    # costs the handshake, not the capture: the coverage gate
+                    # falls back to inferring channels from what arrives and
+                    # says so in the result.
+                    pass
 
             while True:
                 if (
@@ -214,16 +301,33 @@ class RecordingLineSource:
             self.name = self.inner.name
 
     def lines(self) -> Iterator[str]:
+        # The destination is opened lazily, on the first line that actually
+        # arrives, and NOT before the inner source has produced anything.
+        #
+        # Opening it up front truncates it, which destroys a previous capture
+        # whenever the next run fails to open the port. That is not a
+        # hypothetical: it deleted this project's first physical capture, taken
+        # from a board whose USB bridge permits one open per enumeration, when
+        # the following run could not reopen the port. A capture is evidence,
+        # and a later failure must never erase it.
         destination = Path(self.path)
-        destination.parent.mkdir(parents=True, exist_ok=True)
-        with destination.open("w", encoding=self.encoding, newline="\n") as handle:
+        handle = None
+        try:
             for line in self.inner.lines():
+                if handle is None:
+                    destination.parent.mkdir(parents=True, exist_ok=True)
+                    handle = destination.open(
+                        "w", encoding=self.encoding, newline="\n"
+                    )
                 handle.write(line + "\n")
                 # Flushed per line for the same reason the write is streamed: an
                 # aborted session must leave a readable file, and a rig sampling
                 # at 1 Hz is nowhere near a rate where this costs anything.
                 handle.flush()
                 yield line
+        finally:
+            if handle is not None:
+                handle.close()
 
 
 def available_ports() -> list[tuple[str, str]]:

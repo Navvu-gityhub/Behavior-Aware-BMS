@@ -118,10 +118,27 @@ def test_coverage_states_which_signal_map_it_used(client):
     assert body["signal_map_used"] == {"v_b_current": "current_a", "v_b_soc": "soc"}
 
 
-def test_a_missing_dbc_is_a_404(client):
+def test_a_missing_dbc_inside_an_allowed_root_is_a_404(client, tmp_path):
+    """Absent-but-permitted is a 404; absent-and-forbidden is a 400 (below)."""
     assert client.get(
-        "/telemetry/coverage", params={"dbc_path": "/nope/absent.dbc"}
+        "/telemetry/coverage", params={"dbc_path": str(tmp_path / "absent.dbc")}
     ).status_code == 404
+
+
+def test_a_dbc_outside_the_allowed_roots_is_refused_before_existence(client):
+    """Containment must win over the existence check.
+
+    If an out-of-bounds path returned 404 for a missing file and something else
+    for a present one, the endpoint would answer "does this file exist?" for any
+    path on the host. It refuses first, and says so.
+    """
+    response = client.get(
+        "/telemetry/coverage", params={"dbc_path": "/nope/absent.dbc"}
+    )
+    assert response.status_code == 400
+    detail = response.json()["detail"]
+    assert "outside the directories" in detail
+    assert "not a statement about whether the file exists" in detail
 
 
 def test_an_unparseable_dbc_is_a_422(client, tmp_path):
@@ -153,10 +170,24 @@ def test_replay_scores_a_real_can_log(client, drive_log):
     assert body["guardian"], "expected a Guardian row"
 
 
-def test_replay_of_a_missing_log_is_a_404(client):
+def test_replay_of_a_missing_log_inside_an_allowed_root_is_a_404(client, tmp_path):
     assert client.post(
-        "/telemetry/replay", json={"log_path": "/nope/absent.asc"}
+        "/telemetry/replay", json={"log_path": str(tmp_path / "absent.asc")}
     ).status_code == 404
+
+
+def test_replay_cannot_be_pointed_at_an_arbitrary_file(client):
+    """The endpoint takes a path from the request body, so it must be contained.
+
+    Without this an unauthenticated caller could ask the service to open
+    ~/.ssh/id_rsa or /etc/passwd; the contents are not echoed wholesale, but
+    decode statistics and rejection reasons are.
+    """
+    for hostile in ("/etc/passwd", "~/.ssh/id_rsa", "C:/Windows/win.ini"):
+        response = client.post("/telemetry/replay", json={"log_path": hostile})
+        assert response.status_code == 400, (
+            f"{hostile} was not refused: {response.status_code}"
+        )
 
 
 def test_capacity_yield_is_reported(client, drive_log):
