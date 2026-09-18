@@ -2,6 +2,16 @@ import { useEffect, useRef, useState } from 'react';
 import { api } from '../api.js';
 import { shellHtml } from './shell.js';
 import { boot } from './renderer.js';
+import { initTheme, bindThemeToggle } from './theme.js';
+
+/**
+ * The bench rig capture the Evidence view reports.
+ *
+ * A repository path, resolved by the API against its root allowlist
+ * (src/bms/api/paths.py) - the browser never names a filesystem location the
+ * service has not already permitted.
+ */
+const RIG_CAPTURE = 'data/interim/rig_stage_b_voltage_verified.txt';
 import './beacon.css';
 import './gate.css';
 
@@ -25,23 +35,41 @@ export function BeaconDashboard() {
 
   useEffect(() => {
     let cancelled = false;
+    let unbindTheme = () => {};
 
-    api
-      .beacon()
-      .then((data) => {
+    // Before the first paint of the shell, so the page never renders dark and
+    // then flips to light a frame later.
+    initTheme();
+
+    // The rig capture is fetched beside the fleet, and a failure to find one is
+    // not an error: most runs have no bench capture, and the section is simply
+    // omitted. Only the fleet payload can fail the whole view.
+    Promise.all([
+      api.beacon(),
+      api
+        .serialReplay(RIG_CAPTURE)
+        .catch(() => null),
+    ])
+      .then(([data, rig]) => {
         if (cancelled || !host.current) return;
 
         // The renderer reads this at boot. Setting it before writing the shell
         // keeps the original contract intact.
-        window.__BEACON__ = data;
-        host.current.innerHTML = shellHtml(data);
+        // The renderer reads the rig off the same object it reads the fleet
+        // off, so the picker and the rig view need no second data path. It is
+        // attached rather than merged into `batteries`: every fleet statistic
+        // iterates that array, and the rig is not a member of the fleet.
+        window.__BEACON__ = { ...data, rig };
+        host.current.innerHTML = shellHtml(data, 'BEACON', rig);
         boot();
+        unbindTheme = bindThemeToggle(host.current);
         setReady(true);
       })
       .catch((e) => !cancelled && setError(e.message));
 
     return () => {
       cancelled = true;
+      unbindTheme();
     };
   }, []);
 

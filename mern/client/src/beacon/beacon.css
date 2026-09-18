@@ -9,7 +9,48 @@
   --sans:ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
   --mono:ui-monospace,SFMono-Regular,"SF Mono","Cascadia Mono",Menlo,Consolas,monospace;
   --e:cubic-bezier(.22,.72,.28,1);
+
+  /* Theme-flippable surfaces. Values are exactly the literals they
+     replaced, so the dark theme is unchanged to the pixel. */
+  --wash:255,255,255;            /* overlay channel: white on dark */
+  --tip-bg:rgba(16,24,40,.96);
+  --panel-bg:rgba(11,18,33,.93);
+  --pop-bg:rgba(11,18,33,.96);
+  --chip-bg:rgba(11,18,33,.94);
+  --scrim-bg:rgba(3,6,12,.55);
+  --sheet-bg:rgba(9,15,28,.96);
+  --shadow:0,0,0;
 }
+
+/* ================= light theme =================
+   Only tokens are redefined; no rule is duplicated. The accent and the
+   four status colours are deliberately kept - they carry meaning, and a
+   status that changes hue between themes is a status you cannot learn.
+   They are darkened just enough to hold contrast on a pale ground. */
+[data-theme="light"]{
+  --bg:#f4f6fa; --deep:#eaeef5;
+  --glass:rgba(0,0,0,.028); --glass-2:rgba(0,0,0,.045);
+  --line:rgba(16,24,40,.10); --line-2:rgba(16,24,40,.17);
+  --ink:#111826; --ink-2:#48566e; --ink-3:#77839a;
+  --acc:#0f9d6b; --acc-2:#0e8fa8;
+  --good:#0f9d6b; --warn:#b07908; --alert:#c25a1c; --critical:#c0392f;
+  --wash:16,24,40;             /* overlay channel: ink on light */
+  --tip-bg:rgba(255,255,255,.97);
+  --panel-bg:rgba(255,255,255,.93);
+  --pop-bg:rgba(255,255,255,.97);
+  --chip-bg:rgba(255,255,255,.95);
+  --scrim-bg:rgba(16,24,40,.28);
+  --sheet-bg:rgba(255,255,255,.97);
+  --shadow:16,24,40;
+
+  /* Page-level tokens from src/index.css. html/body take their colour from
+     --text, so leaving it at the dark value would paint near-white text onto
+     a near-white page. The attribute selector outranks that file's :root
+     regardless of which stylesheet the bundler emits first. */
+  --text:#111826; --text-dim:#48566e; --text-faint:#77839a;
+  --panel:#ffffff; --panel-2:#f7f9fc; --border:rgba(16,24,40,.12);
+}
+
 *{box-sizing:border-box}
 html,body{margin:0;padding:0}
 body{
@@ -24,8 +65,8 @@ body{
 }
 ::selection{background:rgba(52,211,153,.3)}
 ::-webkit-scrollbar{width:10px;height:10px}
-::-webkit-scrollbar-thumb{background:rgba(255,255,255,.12);border-radius:9px;border:3px solid transparent;background-clip:padding-box}
-::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.2);background-clip:padding-box}
+::-webkit-scrollbar-thumb{background:rgba(var(--wash),.12);border-radius:9px;border:3px solid transparent;background-clip:padding-box}
+::-webkit-scrollbar-thumb:hover{background:rgba(var(--wash),.2);background-clip:padding-box}
 ::-webkit-scrollbar-track{background:transparent}
 button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
 :focus-visible{outline:2px solid var(--acc-2);outline-offset:3px;border-radius:6px}
@@ -41,19 +82,19 @@ h1,h2,h3,p{margin:0}
 /* ================= icon dock ================= */
 .dock{position:fixed;left:0;top:0;bottom:0;width:66px;z-index:60;display:flex;flex-direction:column;
   align-items:center;padding:18px 0 16px;gap:6px;
-  background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,.012));
+  background:linear-gradient(180deg,rgba(var(--wash),.035),rgba(var(--wash),.012));
   border-right:1px solid var(--line);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}
 .dmark{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;margin-bottom:16px;
   background:linear-gradient(150deg,rgba(52,211,153,.22),rgba(34,211,238,.16));
   border:1px solid rgba(52,211,153,.3)}
 .dbtn{position:relative;width:42px;height:42px;border-radius:12px;display:grid;place-items:center;
   color:var(--ink-3);transition:color .16s var(--e),background .16s var(--e)}
-.dbtn:hover{color:var(--ink);background:rgba(255,255,255,.055)}
+.dbtn:hover{color:var(--ink);background:rgba(var(--wash),.055)}
 .dbtn[aria-current="true"]{color:var(--acc);background:rgba(52,211,153,.11)}
 .dbtn[aria-current="true"]::before{content:"";position:absolute;left:-13px;top:50%;transform:translateY(-50%);
   width:2px;height:18px;border-radius:0 2px 2px 0;background:var(--acc)}
 .dbtn .tt{position:absolute;left:52px;top:50%;transform:translateY(-50%) translateX(-4px);
-  padding:5px 10px;border-radius:8px;background:rgba(16,24,40,.96);border:1px solid var(--line-2);
+  padding:5px 10px;border-radius:8px;background:var(--tip-bg);border:1px solid var(--line-2);
   font-size:12px;color:var(--ink);white-space:nowrap;opacity:0;pointer-events:none;
   transition:opacity .14s var(--e),transform .14s var(--e);box-shadow:0 10px 26px -10px rgba(0,0,0,.8);z-index:5}
 .dbtn:hover .tt{opacity:1;transform:translateY(-50%)}
@@ -81,7 +122,7 @@ h1,h2,h3,p{margin:0}
 .statechip{display:inline-flex;align-items:center;gap:7px;margin-top:8px;padding:3.5px 11px;
   border-radius:999px;font-size:11.5px;border:1px solid var(--line);background:var(--glass)}
 .pop{position:absolute;top:calc(100% + 10px);left:0;width:290px;z-index:80;padding:7px;
-  background:rgba(11,18,33,.93);backdrop-filter:blur(26px) saturate(170%);-webkit-backdrop-filter:blur(26px) saturate(170%);
+  background:var(--panel-bg);backdrop-filter:blur(26px) saturate(170%);-webkit-backdrop-filter:blur(26px) saturate(170%);
   border:1px solid var(--line-2);border-radius:var(--r-lg);box-shadow:0 24px 60px -18px rgba(0,0,0,.85);
   opacity:0;transform:translateY(-6px) scale(.99);pointer-events:none;transition:.17s var(--e)}
 .pop[data-open="true"]{opacity:1;transform:none;pointer-events:auto}
@@ -92,7 +133,7 @@ h1,h2,h3,p{margin:0}
 .cells{display:flex;flex-direction:column;gap:1px}
 .cellbtn{display:flex;align-items:center;gap:9px;width:100%;border-radius:9px;padding:7px 9px;
   color:var(--ink-2);font-size:12.5px;transition:background .12s}
-.cellbtn:hover{background:rgba(255,255,255,.06);color:var(--ink)}
+.cellbtn:hover{background:rgba(var(--wash),.06);color:var(--ink)}
 .cellbtn[aria-pressed="true"]{background:rgba(52,211,153,.13);color:var(--ink)}
 .cellbtn .cid{font:600 12px var(--mono)}
 .cellbtn .cst{margin-left:auto;font-size:11px;color:var(--ink-3)}
@@ -128,7 +169,7 @@ h1,h2,h3,p{margin:0}
 .navarrow{position:absolute;top:46%;transform:translateY(-50%);width:38px;height:38px;z-index:3;
   border-radius:50%;display:grid;place-items:center;color:var(--ink-3);
   transition:color .16s,background .16s,transform .16s var(--e)}
-.navarrow:hover{color:var(--ink);background:rgba(255,255,255,.07)}
+.navarrow:hover{color:var(--ink);background:rgba(var(--wash),.07)}
 .navarrow.prev{left:-6px}.navarrow.next{right:-6px}
 .navarrow.prev:hover{transform:translateY(-50%) translateX(-2px)}
 .navarrow.next:hover{transform:translateY(-50%) translateX(2px)}
@@ -185,7 +226,7 @@ h1,h2,h3,p{margin:0}
 .rank{display:grid;grid-template-columns:minmax(110px,1.1fr) minmax(0,2.4fr) 54px;align-items:center;
   gap:14px;padding:9px 0;border-bottom:1px solid var(--line);font-size:12.5px;color:var(--ink-2)}
 .rank:last-child{border-bottom:0}
-.rank .track{height:6px;border-radius:3px;background:rgba(255,255,255,.06);overflow:hidden}
+.rank .track{height:6px;border-radius:3px;background:rgba(var(--wash),.06);overflow:hidden}
 .rank .track i{display:block;height:100%;border-radius:3px;transition:width .6s var(--e)}
 .rank .amt{text-align:right;font-family:var(--mono);color:var(--ink)}
 
@@ -193,7 +234,7 @@ h1,h2,h3,p{margin:0}
 .dv{display:grid;grid-template-columns:minmax(110px,1fr) minmax(0,2.2fr) 52px;align-items:center;
   gap:14px;padding:9px 0;border-bottom:1px solid var(--line);font-size:12.5px;color:var(--ink-2)}
 .dv:last-child{border-bottom:0}
-.dv .track{position:relative;height:6px;background:rgba(255,255,255,.06);border-radius:3px}
+.dv .track{position:relative;height:6px;background:rgba(var(--wash),.06);border-radius:3px}
 .dv .track i{position:absolute;top:0;bottom:0;border-radius:3px;transition:width .6s var(--e),left .6s var(--e)}
 .dv .zero{position:absolute;top:-3px;bottom:-3px;left:50%;width:1px;background:var(--line-2)}
 .dv .amt{text-align:right;font-family:var(--mono)}
@@ -215,21 +256,21 @@ h1,h2,h3,p{margin:0}
 .tbl td{padding:0 16px 0 0;height:38px;border-bottom:1px solid var(--line);color:var(--ink-2);white-space:nowrap}
 .tbl td:first-child{padding-left:14px}
 .tbl tbody tr{cursor:pointer;transition:background .12s}
-.tbl tbody tr:hover{background:rgba(255,255,255,.035)}
+.tbl tbody tr:hover{background:rgba(var(--wash),.035)}
 .tbl tbody tr[aria-selected="true"]{background:rgba(52,211,153,.09)}
 .tbl tbody tr[aria-selected="true"] td:first-child{box-shadow:inset 2px 0 0 var(--acc)}
 .tbl .id{font:600 12.5px var(--mono);color:var(--ink)}
 .tbl .n{font-family:var(--mono);color:var(--ink)}
 .tbl .muted{color:var(--ink-3)}
 .tbl .st{display:inline-flex;align-items:center;gap:7px}
-.hbar{display:inline-block;width:42px;height:3px;border-radius:2px;background:rgba(255,255,255,.08);
+.hbar{display:inline-block;width:42px;height:3px;border-radius:2px;background:rgba(var(--wash),.08);
   overflow:hidden;vertical-align:middle;margin-right:10px}
 .hbar i{display:block;height:100%;border-radius:2px}
 
 .chart{position:relative}
 .chart svg{display:block;width:100%;height:auto}
 .tip{position:absolute;z-index:10;pointer-events:none;opacity:0;transform:translate(-50%,-134%);
-  background:rgba(11,18,33,.96);border:1px solid var(--line-2);border-radius:9px;padding:6px 10px;
+  background:var(--pop-bg);border:1px solid var(--line-2);border-radius:9px;padding:6px 10px;
   font-size:11.5px;white-space:nowrap;box-shadow:0 12px 28px -10px rgba(0,0,0,.8);transition:opacity .1s}
 .tip .tl{color:var(--ink-3);font-size:10.5px}
 .tip b{display:block;font-family:var(--mono);font-size:12.5px;margin-top:1px}
@@ -281,7 +322,7 @@ h1,h2,h3,p{margin:0}
 .fab .badge{position:absolute;top:2px;right:2px;width:12px;height:12px;border-radius:50%;
   border:2.5px solid var(--bg)}
 .fab .flabel{position:absolute;right:70px;top:50%;transform:translateY(-50%);white-space:nowrap;
-  font-size:12px;color:var(--ink-2);background:rgba(11,18,33,.94);border:1px solid var(--line-2);
+  font-size:12px;color:var(--ink-2);background:var(--chip-bg);border:1px solid var(--line-2);
   border-radius:8px;padding:5px 10px;opacity:0;pointer-events:none;transition:opacity .15s}
 .fab:hover .flabel{opacity:1}
 
@@ -295,31 +336,31 @@ h1,h2,h3,p{margin:0}
 .gph .t{font-size:9.5px;letter-spacing:.16em;color:var(--ink-3);font-weight:600}
 .gph .x{margin-left:auto;width:26px;height:26px;border-radius:8px;display:grid;place-items:center;
   color:var(--ink-3);transition:color .15s,background .15s}
-.gph .x:hover{color:var(--ink);background:rgba(255,255,255,.06)}
+.gph .x:hover{color:var(--ink);background:rgba(var(--wash),.06)}
 .gdx{display:flex;align-items:flex-start;gap:12px;margin-bottom:14px}
 .gdx .ic{width:34px;height:34px;border-radius:11px;flex:none;display:grid;place-items:center}
 .gdx .tl{font-size:16px;font-weight:600;letter-spacing:-.015em;line-height:1.25}
 .gdx .cf{font-size:11.5px;color:var(--ink-3);margin-top:3px}
-.gbar{height:3px;border-radius:2px;background:rgba(255,255,255,.08);overflow:hidden;margin-bottom:18px}
+.gbar{height:3px;border-radius:2px;background:rgba(var(--wash),.08);overflow:hidden;margin-bottom:18px}
 .gbar i{display:block;height:100%;border-radius:2px;transition:width .7s var(--e)}
 .gsec{font-size:9.5px;letter-spacing:.16em;color:var(--ink-3);font-weight:600;margin:0 0 10px}
 .gev{display:flex;flex-direction:column;gap:8px;margin-bottom:18px}
 .gev div{display:flex;align-items:flex-start;gap:9px;font-size:12.5px;color:var(--ink-2);line-height:1.5}
 .gev .sd{margin-top:6px}
-.gnote{background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:var(--r);
+.gnote{background:rgba(var(--wash),.04);border:1px solid var(--line);border-radius:var(--r);
   padding:12px 13px;font-size:12.5px;line-height:1.6;color:var(--ink);margin-bottom:14px}
 .gcav{font-size:11px;color:var(--ink-3);line-height:1.55;margin-bottom:16px}
 .gbtn{display:flex;align-items:center;justify-content:center;gap:9px;width:100%;padding:10px;
-  border-radius:11px;border:1px solid var(--line-2);background:rgba(255,255,255,.045);
+  border-radius:11px;border:1px solid var(--line-2);background:rgba(var(--wash),.045);
   font-size:12.5px;font-weight:500;transition:background .17s var(--e),border-color .17s var(--e)}
 .gbtn:hover{background:rgba(52,211,153,.11);border-color:rgba(52,211,153,.4)}
 
 /* ================= twin sheet ================= */
-.scrim{position:fixed;inset:0;z-index:84;background:rgba(3,6,12,.55);backdrop-filter:blur(2px);
+.scrim{position:fixed;inset:0;z-index:84;background:var(--scrim-bg);backdrop-filter:blur(2px);
   opacity:0;pointer-events:none;transition:opacity .22s var(--e)}
 .scrim[data-open="true"]{opacity:1;pointer-events:auto}
 .sheet{position:fixed;right:0;top:0;bottom:0;z-index:85;width:min(560px,100vw);overflow-y:auto;
-  padding:26px 30px 40px;background:rgba(9,15,28,.96);
+  padding:26px 30px 40px;background:var(--sheet-bg);
   backdrop-filter:blur(28px);-webkit-backdrop-filter:blur(28px);
   border-left:1px solid var(--line-2);box-shadow:-30px 0 70px -24px rgba(0,0,0,.9);
   transform:translateX(100%);transition:transform .3s var(--e)}
@@ -330,7 +371,7 @@ h1,h2,h3,p{margin:0}
 .shh .s{font-size:12px;color:var(--ink-3);margin-top:4px}
 .shh .x{margin-left:auto;width:30px;height:30px;border-radius:9px;display:grid;place-items:center;
   color:var(--ink-3);transition:color .15s,background .15s;flex:none}
-.shh .x:hover{color:var(--ink);background:rgba(255,255,255,.06)}
+.shh .x:hover{color:var(--ink);background:rgba(var(--wash),.06)}
 
 /* ================= responsive ================= */
 @media (max-width:1180px){
@@ -363,3 +404,49 @@ h1,h2,h3,p{margin:0}
 @media (max-width:560px){ .metrics{grid-template-columns:minmax(0,1fr)} }
 @media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
 @media print{.dock,.fab,.gpanel,.sheet,.scrim{display:none}.shell{margin-left:0}.view{display:block!important}}
+
+/* ================= theme toggle =================
+   The icon shows the theme you would switch TO, which is the convention
+   people already read: a sun on a dark page means "go light". */
+.themebtn{margin-top:auto;margin-bottom:6px}
+.themebtn .ic-sun{display:block}
+.themebtn .ic-moon{display:none}
+[data-theme="light"] .themebtn .ic-sun{display:none}
+[data-theme="light"] .themebtn .ic-moon{display:block}
+
+/* ================= measured hardware panel (home) =================
+   Deliberately not styled like the fleet tiles above it. The fleet is dataset
+   replay or simulation; these four values came off an instrument. Making them
+   look the same would be the visual equivalent of reporting an estimate as a
+   measurement, which is the one thing this dashboard exists not to do. */
+.rig{width:100%;margin-top:16px;border:1px solid rgba(52,211,153,.26);border-radius:var(--r);
+  background:linear-gradient(180deg,rgba(52,211,153,.05),rgba(52,211,153,.015));overflow:hidden}
+.rig .rhead{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:11px 14px;
+  border-bottom:1px solid rgba(52,211,153,.18)}
+.rig .rorigin{display:inline-flex;align-items:center;gap:6px;padding:3px 8px;border-radius:6px;
+  background:rgba(52,211,153,.14);border:1px solid rgba(52,211,153,.3);
+  font-family:var(--mono);font-size:9.5px;letter-spacing:.08em;color:var(--good);white-space:nowrap}
+.rig .rtitle{font-size:12.5px;font-weight:600;color:var(--ink)}
+.rig .rid{font-family:var(--mono);font-size:11px;color:var(--ink-3)}
+.rig .rstat{margin-left:auto;font-family:var(--mono);font-size:10px;letter-spacing:.06em;
+  color:var(--ink-3)}
+.rig .rgrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1px;
+  background:var(--line)}
+.rig .rt{padding:12px 14px 13px;background:var(--bg)}
+.rig .rk{font-size:10px;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-3);
+  margin-bottom:5px}
+.rig .rv{font-size:20px;font-weight:600;letter-spacing:-.02em;color:var(--ink);
+  font-variant-numeric:tabular-nums;line-height:1.15}
+.rig .rv.na{font-size:12.5px;font-weight:600;color:var(--critical);letter-spacing:0}
+.rig .rv small{font-size:12px;font-weight:500;color:var(--ink-2);margin-left:3px}
+.rig .ru{margin-top:4px;font-family:var(--mono);font-size:9.5px;color:var(--ink-3)}
+.rig .rnote{padding:10px 14px;border-top:1px solid var(--line);font-size:11.5px;
+  color:var(--ink-2);line-height:1.55}
+.rig .rnote b{color:var(--critical);font-weight:600}
+@media(max-width:780px){.rig .rgrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* The rig sits in the battery picker but is not a fleet member. The dashed
+   rule above it says so before the label does. */
+.cellbtn.rigcell{border-top:1px dashed var(--line-2);margin-top:5px;padding-top:9px}
+.cellbtn.rigcell .cst{color:var(--good)}
+.cellbtn.rigcell .hi{color:var(--ink-3)}

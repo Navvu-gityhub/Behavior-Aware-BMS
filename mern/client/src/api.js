@@ -53,6 +53,13 @@ export const api = {
       body: JSON.stringify(payload),
     }),
 
+  serialReplay: (capturePath) =>
+    request('/telemetry/serial/replay', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ capture_path: capturePath }),
+    }),
+
   latestRun: (id) => request(`/telemetry/latest/${encodeURIComponent(id)}`),
 
   liveState: (id, window) =>

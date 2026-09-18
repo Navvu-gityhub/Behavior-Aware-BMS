@@ -37,6 +37,20 @@ telemetryRouter.get('/telemetry/coverage', async (req, res, next) => {
   }
 });
 
+// -- serial rig --------------------------------------------------------------
+//
+// The bench rig's own capture. Forwarded explicitly, like every other route
+// here, so the browser reaches only what this gateway has considered.
+
+telemetryRouter.post('/telemetry/serial/replay', async (req, res, next) => {
+  try {
+    const result = await callPython('/telemetry/serial/replay', { method: 'POST', body: req.body });
+    res.json(result);
+  } catch (err) {
+    next(err);
+  }
+});
+
 // -- replay and live capture -------------------------------------------------
 
 telemetryRouter.post('/telemetry/replay', async (req, res, next) => {

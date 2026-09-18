@@ -342,12 +342,21 @@ def run_serial_pipeline(
             + coverage.render().split("\n", 1)[1].strip()
         )
         if require_full_coverage:
+            # The refusal is about what this rig CANNOT support, not about what
+            # it measured. Those records parsed, passed their range checks and
+            # carry real readings on the channels that are present; assembling
+            # them costs one pass and lets a caller report the measurements
+            # beside the refusal. Nothing downstream is scored from this frame
+            # on this path - `stages_completed` still stops at "parse".
             return _as_serial_result(
                 TelemetryResult(
                     source=source.name,
                     n_frames=stats.n_lines,
                     n_decoded=stats.n_accepted,
                     coverage=coverage,
+                    telemetry=records_to_frame(
+                        records, resolved_cell_id, captured_at=captured_at
+                    ),
                     refusals=tuple(refusals),
                     stages_completed=tuple(stages),
                 ),

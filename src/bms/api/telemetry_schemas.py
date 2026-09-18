@@ -240,6 +240,21 @@ class SerialDecodeStatsOut(BaseModel):
     summary: str
 
 
+class MeasuredChannelOut(BaseModel):
+    """One channel a capture actually delivered, with its observed range.
+
+    `unit` travels with the numbers because the schema declares units per
+    field and a reader of a bare float cannot recover them.
+    """
+
+    channel: str
+    unit: str
+    n: int
+    minimum: float
+    maximum: float
+    mean: float
+
+
 class TelemetryRunOut(BaseModel):
     source: str
     status: str = Field(description="SCORED, SCORED_WITH_REFUSALS or REFUSED")
@@ -262,6 +277,16 @@ class TelemetryRunOut(BaseModel):
         ),
     )
     fade_prediction_refusal: str = ""
+    measured: list["MeasuredChannelOut"] = Field(
+        default_factory=list,
+        description=(
+            "Per-channel summary of what the transport actually delivered. "
+            "Present even when the run is REFUSED: a capture can carry real "
+            "measurements on some channels and still be unscoreable for want "
+            "of another, and reporting only the refusal would hide the "
+            "measurements that were made."
+        ),
+    )
     serial: Optional[SerialDecodeStatsOut] = Field(
         default=None,
         description=(

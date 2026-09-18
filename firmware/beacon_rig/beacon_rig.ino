@@ -125,6 +125,43 @@
 #define SERIAL_BAUD      115200
 #endif
 
+/* Real sensors, or the synthetic profile?
+ *
+ * 0 keeps the shipped behaviour: a synthetic profile so the sketch is
+ * verifiable on a bare board with nothing attached. 1 reads an INA219 over I2C
+ * and an LM35 on the ADC, and REFUSES rather than substituting a value when
+ * either is absent. Override at build time:
+ *
+ *   --build-property compiler.cpp.extra_flags=-DUSE_REAL_SENSORS=1
+ *
+ * The default stays 0 so a clean checkout still flashes and emits on a board
+ * with no sensors wired, which is what the bring-up procedure above assumes. */
+#ifndef USE_REAL_SENSORS
+#define USE_REAL_SENSORS 0
+#endif
+
+/* Pins for the real-sensor build. I2C is bit-banged by the ESP8266 core, so
+ * these are free choices; D1/D2 avoid every strapping pin. */
+#define PIN_I2C_SDA      4    /* D2 */
+#define PIN_I2C_SCL      5    /* D1 */
+#define PIN_LM35         A0
+
+/* LM35 scaling for a NodeMCU v3: the board divides A0 by 220k/100k, so the pin
+ * reads 0-3.2 V across 1024 counts (3.125 mV/count), and the LM35 gives
+ * 10 mV/C. One count is therefore 0.3125 C. MEASURE YOUR OWN DIVIDER - a bare
+ * ESP-12 has no divider at all and needs 0.0977 here. */
+#define LM35_C_PER_COUNT 0.3125f
+#define LM35_SAMPLES     32
+
+/* Below this, treat the LM35 as disconnected rather than cold.
+ *
+ * A0 is held near ground by the divider's lower leg, so an unplugged sensor
+ * reads about 0 C - inside the schema's -40..150 C range, and therefore
+ * indistinguishable from a real measurement to the host. This floor is what
+ * makes that failure detectable. It is a bench-rig assumption: a cell in a
+ * room is never at 4 C. Do not use it where the rig might genuinely be cold. */
+#define LM35_MIN_PLAUSIBLE_C 5.0f
+
 #define SAMPLE_PERIOD_MS 1000
 
 /* Identity reported to the host. One rig, one id. If you run two rigs into one
@@ -150,7 +187,7 @@
  * A 3400 mAh cell is 3.4f, not 3400.0f.
  *
  * It is also used by the fallback coulomb-counting SOC estimate below. */
-#define NOMINAL_CAPACITY_AH 2.0f
+#define NOMINAL_CAPACITY_AH 2.2f   /* HONGLI ICR-18650-2200mAh, printed rating */
 
 /* Protocol constants. Do not change these without changing the host: the host
  * refuses a schema id it does not implement rather than guessing that the
@@ -174,6 +211,17 @@
 /* ===================================================================== */
 
 static unsigned long g_startMillis = 0;
+
+/* Sensor hardware. Declared here rather than inside the hardware layer only
+ * because Arduino's generated prototypes need the types in scope. */
+#if USE_REAL_SENSORS
+#include <Wire.h>
+#include <Adafruit_INA219.h>
+static Adafruit_INA219 g_ina219;
+static bool g_inaReady = false;
+static float g_lm35Counts = 0.0f;   /* last raw A0 average, for the refusal text */
+static bool  g_haveTemp   = false;  /* probed once at startup - see initSensors */
+#endif
 
 /* Forward declarations. The Arduino IDE generates these automatically, but
  * stating them keeps the file valid C++ for any other toolchain (PlatformIO,
@@ -215,7 +263,19 @@ static String num(float value, int decimals = 4) {
 static void emitHello() {
   String body = "{";
   body += "\"schema\":\"" BEACON_SCHEMA "\",";
+  /* Declare the sensors this rig ACTUALLY HAS, probed at startup - not the
+   * ones it was designed around. The host holds a rig to its own declaration
+   * and rejects records that omit a channel HELLO promised, which is right:
+   * a channel that vanishes mid-capture is a fault and should be loud. So the
+   * honest move is to promise less, not to deliver a fabricated value. */
+#if USE_REAL_SENSORS
+  body += "\"fields\":[\"t\"";
+  if (g_inaReady) body += ",\"v\",\"i\",\"soc\"";
+  if (g_haveTemp) body += ",\"tc\"";
+  body += "],";
+#else
   body += "\"fields\":[\"t\",\"v\",\"i\",\"tc\",\"soc\"],";
+#endif
   body += "\"cell_id\":\"" CELL_ID "\",";
   body += "\"device\":\"" BEACON_DEVICE "\",";
   body += "\"firmware\":\"" BEACON_FIRMWARE "\",";
@@ -233,20 +293,35 @@ static void emitStatus(const char *text) {
   emit("S", String(text));
 }
 
+/* A channel that could not be measured is OMITTED, not zeroed and not sent as
+ * NAN. The host requires only `t` on a data record - see TIME_FIELD and the
+ * note on REQUIRED_WIRE_FIELDS in serial_schema.py - and its coverage gate
+ * decides separately which metrics the delivered channels can support. So a
+ * dead thermometer costs you the temperature features and nothing else; the
+ * voltage and current beside it are still real measurements and still scored.
+ *
+ * Refusing the whole record instead would discard good data to report a bad
+ * sensor, which is a different mistake from the one this project guards
+ * against, and just as wrong. */
 static void emitSample(float t, float v, float i, float tc, float soc) {
+  bool haveV  = !isnan(v);
+  bool haveI  = !isnan(i);
+  bool haveTc = !isnan(tc);
+  bool haveSoc = !isnan(soc) && haveI;   /* coulomb count is meaningless without current */
+
 #if EMIT_COMPACT
-  String body = "t=" + num(t, 3)
-              + " v=" + num(v)
-              + " i=" + num(i)
-              + " tc=" + num(tc, 3)
-              + " soc=" + num(soc, 2);
+  String body = "t=" + num(t, 3);
+  if (haveV)   body += " v=" + num(v);
+  if (haveI)   body += " i=" + num(i);
+  if (haveTc)  body += " tc=" + num(tc, 3);
+  if (haveSoc) body += " soc=" + num(soc, 2);
 #else
-  String body = "{\"t\":" + num(t, 3)
-              + ",\"v\":" + num(v)
-              + ",\"i\":" + num(i)
-              + ",\"tc\":" + num(tc, 3)
-              + ",\"soc\":" + num(soc, 2)
-              + "}";
+  String body = "{\"t\":" + num(t, 3);
+  if (haveV)   body += ",\"v\":" + num(v);
+  if (haveI)   body += ",\"i\":" + num(i);
+  if (haveTc)  body += ",\"tc\":" + num(tc, 3);
+  if (haveSoc) body += ",\"soc\":" + num(soc, 2);
+  body += "}";
 #endif
   emit("D", body);
 }
@@ -294,6 +369,25 @@ void loop() {
   float temperatureC = readTemperatureC();
   float socPercent   = readSocPercent(currentA, SAMPLE_PERIOD_MS / 1000.0f);
 
+  /* Announce a channel appearing or disappearing, once per transition. Saying
+   * it every second would bury the data records it is meant to annotate. */
+#if USE_REAL_SENSORS
+  static int lastTempOk = -1;   /* -1 = nothing reported yet */
+  int tempOk = isnan(temperatureC) ? 0 : 1;
+  if (tempOk != lastTempOk) {
+    if (tempOk) {
+      emitStatus("temperature channel available");
+    } else {
+      String why = "temperature channel unavailable: LM35 raw="
+                 + String(g_lm35Counts, 1) + " counts ("
+                 + String(g_lm35Counts * LM35_C_PER_COUNT, 1) + " C), below "
+                 + String(LM35_MIN_PLAUSIBLE_C, 1) + " C floor - check wiring";
+      emitStatus(why.c_str());
+    }
+    lastTempOk = tempOk;
+  }
+#endif
+
   emitSample(elapsedS, voltageV, currentA, temperatureC, socPercent);
 }
 
@@ -310,6 +404,34 @@ void loop() {
  */
 
 void initSensors() {
+#if USE_REAL_SENSORS
+  Wire.begin(PIN_I2C_SDA, PIN_I2C_SCL);
+  g_inaReady = g_ina219.begin();
+  if (!g_inaReady) {
+    /* Say so and keep running. The readers below then return NAN and the
+     * sample is refused, which is the honest outcome: the host sees a gap
+     * with a stated reason rather than a plausible constant. */
+    emitStatus("INA219 not responding on I2C 0x40 - voltage and current refused");
+  } else {
+    emitStatus("INA219 ready at 0x40");
+  }
+  pinMode(PIN_LM35, INPUT);
+
+  /* One probe, at startup, to decide what to declare. Averaged the same way
+   * the reader averages so the decision and the measurement agree. */
+  long probe = 0;
+  for (int i = 0; i < LM35_SAMPLES; i++) { probe += analogRead(PIN_LM35); delay(1); }
+  g_lm35Counts = probe / (float)LM35_SAMPLES;
+  g_haveTemp = (g_lm35Counts * LM35_C_PER_COUNT) >= LM35_MIN_PLAUSIBLE_C;
+  if (!g_haveTemp) {
+    String why = "no temperature sensor: A0 reads " + String(g_lm35Counts, 1)
+               + " counts (" + String(g_lm35Counts * LM35_C_PER_COUNT, 1)
+               + " C) - channel not declared";
+    emitStatus(why.c_str());
+  } else {
+    emitStatus("LM35 ready on A0");
+  }
+#endif
   /* Sensor bring-up goes here. For example, with an INA219:
    *
    *   #include <Adafruit_INA219.h>
@@ -342,7 +464,12 @@ float readVoltageV() {
    *
    * Or, with an INA219: return ina219.getBusVoltage_V();
    */
+#if USE_REAL_SENSORS
+  if (!g_inaReady) return NAN;          /* refuse, never substitute */
+  return g_ina219.getBusVoltage_V();
+#else
   return syntheticVoltageV();
+#endif
 }
 
 float readCurrentA() {
@@ -354,7 +481,14 @@ float readCurrentA() {
    * Verify with a known load before trusting it: put the cell under load and
    * confirm the printed value is negative.
    */
+#if USE_REAL_SENSORS
+  if (!g_inaReady) return NAN;
+  /* Negated so discharge reads negative with the cell on VIN+ and the load on
+   * VIN-. Swap the sign here, not the leads, if your wiring is the other way. */
+  return -g_ina219.getCurrent_mA() / 1000.0f;
+#else
   return syntheticCurrentA();
+#endif
 }
 
 float readTemperatureC() {
@@ -368,7 +502,19 @@ float readTemperatureC() {
    * host rejects those records rather than averaging them into a health index.
    * That is intended: do not clamp them here.
    */
+#if USE_REAL_SENSORS
+  /* Averaged because the ESP8266 ADC is noisy at this scale: the LM35 uses
+   * only the bottom fifth of the range, so a few counts of noise is a degree.
+   * 32 samples cuts it by about 5.7x. */
+  long sum = 0;
+  for (int i = 0; i < LM35_SAMPLES; i++) { sum += analogRead(PIN_LM35); delay(1); }
+  g_lm35Counts = sum / (float)LM35_SAMPLES;
+  float celsius = g_lm35Counts * LM35_C_PER_COUNT;
+  if (celsius < LM35_MIN_PLAUSIBLE_C) return NAN;   /* disconnected, not cold */
+  return celsius;
+#else
   return syntheticTemperatureC();
+#endif
 }
 
 float readSocPercent(float currentA, float dtSeconds) {

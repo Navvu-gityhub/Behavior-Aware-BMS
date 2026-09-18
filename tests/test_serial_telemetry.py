@@ -1103,7 +1103,13 @@ def test_the_reference_firmware_declares_its_rated_capacity():
     sketch from being the thing that trips it.
     """
     text = _sketch_text()
-    assert 'capacity_ah' in text.split("static void emitHello", 1)[1][:600], (
+    # Scoped to the function body rather than a fixed number of characters from
+    # its start: `emitHello` grew when the rig began declaring only the sensors
+    # it actually probed, and a byte-count window fails on length rather than on
+    # the thing it means to check. The body ends where the line is emitted.
+    after = text.split("static void emitHello", 1)[1]
+    body = after.split('emit("HELLO"', 1)[0]
+    assert 'capacity_ah' in body, (
         "the reference firmware's HELLO no longer declares capacity_ah. The "
         "host refuses to compute C-rate without it, so this sketch would flash "
         "successfully and then be refused on every capture."

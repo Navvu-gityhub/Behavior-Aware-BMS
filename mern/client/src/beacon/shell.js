@@ -71,12 +71,160 @@ function evidenceHtml(fleet) {
 </section>`;
 }
 
+
+
+/**
+ * The measured-hardware panel for the home view.
+ *
+ * Sits beneath the provenance banner so the two are read together: the banner
+ * describes where the FLEET came from, this panel describes where these four
+ * numbers came from, and they are usually not the same place. It is styled
+ * unlike the fleet tiles on purpose - see the note in beacon.css.
+ *
+ * Returns '' when no rig capture was replayed, so the home view is unchanged
+ * for a run that has no hardware behind it.
+ */
+function rigHomeHtml(rig) {
+  if (!rig) return '';
+
+  const by = {};
+  (rig.measured || []).forEach((m) => { by[m.channel] = m; });
+
+  const fmt = (m, decimals, unit) => {
+    if (!m) return null;
+    const range = m.minimum === m.maximum
+      ? 'constant'
+      : `${m.minimum.toFixed(decimals)} to ${m.maximum.toFixed(decimals)}`;
+    return {
+      value: `${m.mean.toFixed(decimals)}<small>${unit}</small>`,
+      note: `n=${m.n} · ${range}`,
+    };
+  };
+
+  const v = fmt(by.voltage_v, 4, ' V');
+  const i = fmt(by.current_a, 4, ' A');
+  const missing = (rig.coverage && rig.coverage.missing_channels) || [];
+  const tempMissing = missing.indexOf('temperature_c') >= 0;
+  const t = tempMissing ? null : fmt(by.temperature_c, 1, ' °C');
+  const pct = rig.serial ? Math.round(rig.serial.accepted_fraction * 100) : null;
+  const dur = by.test_time_s;
+
+  const tile = (label, cell) => `<div class="rt"><div class="rk">${esc(label)}</div>` +
+    (cell
+      ? `<div class="rv">${cell.value}</div><div class="ru">${esc(cell.note)}</div>`
+      : '<div class="rv na">not measured</div><div class="ru">no sensor fitted</div>') +
+    '</div>';
+
+  const scored = rig.status === 'SCORED' || rig.status === 'SCORED_WITH_REFUSALS';
+
+  return `
+<div class="rig">
+  <div class="rhead">
+    <span class="rorigin">MEASURED · LIVE HARDWARE</span>
+    <span class="rtitle">Bench rig</span>
+    <span class="rid">${esc(rig.battery_id)}</span>
+    <span class="rstat">${pct !== null ? `${pct}% OF RECORDS ACCEPTED` : esc(rig.status)}</span>
+  </div>
+  <div class="rgrid">
+    ${tile('Terminal voltage', v)}
+    ${tile('Current, signed', i)}
+    ${tile('Cell temperature', t)}
+    <div class="rt"><div class="rk">Health index &middot; RUL</div>
+      <div class="rv ${scored ? '' : 'na'}">${scored ? 'scored' : 'refused'}</div>
+      <div class="ru">${dur ? `over ${dur.maximum.toFixed(0)} s` : ''}</div></div>
+  </div>
+  <div class="rnote">${scored
+    ? 'Coverage is complete, so this capture was scored through the same pipeline as the fleet.'
+    : `<b>Not scored.</b> Coverage is incomplete without ${esc(missing.join(', ') || 'a required channel')}, so no health index, RUL or state of health exists for this rig. The measurements above are unaffected — they were made, and they stand.`}</div>
+</div>`;
+}
+
+/**
+ * The bench rig's own capture, rendered beside the dataset fleet.
+ *
+ * This section exists because a rig can measure some channels honestly and
+ * still be unscoreable for want of another. Showing only the refusal would
+ * throw away real measurements; showing only the measurements would imply a
+ * health score the coverage gate declined to produce. Both appear, labelled.
+ *
+ * `rig` is null when no capture has been replayed, and the section is then
+ * omitted entirely rather than rendered empty.
+ */
+function rigHtml(rig) {
+  if (!rig) return '';
+
+  const scored = rig.status === 'SCORED' || rig.status === 'SCORED_WITH_REFUSALS';
+  const accepted = rig.serial
+    ? `${rig.serial.n_accepted}/${rig.serial.n_accepted + rig.serial.n_rejected}`
+    : `${rig.n_decoded}/${rig.n_frames}`;
+  const acceptPct = rig.serial ? Math.round(rig.serial.accepted_fraction * 100) : null;
+
+  const unitFor = { voltage_v: 'V', current_a: 'A', temperature_c: '°C', soc: '%' };
+  const labelFor = {
+    voltage_v: 'Terminal voltage', current_a: 'Current, signed',
+    temperature_c: 'Cell temperature', soc: 'State of charge',
+    test_time_s: 'Capture duration',
+  };
+
+  const measuredRows = (rig.measured || [])
+    .filter((m) => m.channel !== 'test_time_s' && m.channel !== 'soc')
+    .map((m) => {
+      const u = unitFor[m.channel] || m.unit || '';
+      const range = m.minimum === m.maximum
+        ? `${m.mean.toFixed(4)} ${u}`
+        : `${m.mean.toFixed(4)} ${u} <u>${m.minimum.toFixed(4)} – ${m.maximum.toFixed(4)}</u>`;
+      return `<div class="row"><div class="k"><span>${esc(labelFor[m.channel] || m.channel)}</span></div>
+        <div class="v good">${range}</div></div>`;
+    }).join('');
+
+  const missingRows = ((rig.coverage && rig.coverage.missing_channels) || [])
+    .map((c) => `<div class="row"><div class="k"><span>${esc(labelFor[c] || c)}</span></div>
+      <div class="v critical">not supplied by this rig</div></div>`).join('');
+
+  const duration = (rig.measured || []).find((m) => m.channel === 'test_time_s');
+
+  return `
+<section class="sec">
+  <div class="sechead"><div><h2>Bench rig &mdash; ${esc(rig.battery_id)}</h2>
+    <div class="sub">Measured on physical hardware over USB serial. Unlike the fleet above, these are
+      instrument readings, not dataset replay or simulation.</div></div>
+    <div class="right">${esc(rig.status)}</div></div>
+  <div class="g12">
+    <div class="c7"><div class="kv">
+      <div class="row"><div class="k"><span>Records accepted</span></div>
+        <div class="v good">${accepted}${acceptPct !== null ? ` <u>${acceptPct}%</u>` : ''}</div></div>
+      ${measuredRows}
+      ${missingRows}
+      ${duration ? `<div class="row"><div class="k"><span>Capture duration</span></div>
+        <div class="v">${duration.maximum.toFixed(1)}<u> s</u></div></div>` : ''}
+      <div class="row"><div class="k"><span>Health index, RUL, state of health</span></div>
+        <div class="v ${scored ? 'good' : 'critical'}">${scored ? 'scored' : 'refused'}</div></div>
+    </div></div>
+    <div class="c5">
+      <div class="steps">
+        <div class="step"><span class="i">01</span><span>Every value on the left was measured by an
+          instrument on a real cell and carried over a checksummed wire. Nothing here is replayed or
+          simulated.</span></div>
+        <div class="step"><span class="i">02</span><span>The rig declares its sensor complement in its
+          HELLO line. A channel it cannot measure is not declared and not sent, rather than being
+          filled with a plausible constant.</span></div>
+        <div class="step"><span class="i">03</span><span>${scored
+          ? 'Coverage is complete, so the capture was scored through the same pipeline the fleet uses.'
+          : 'Coverage is incomplete, so no health index, RUL or state of health is produced for this rig. The measurements above stand; the scores do not exist.'}</span></div>
+      </div>
+      ${(rig.refusals || []).length
+        ? `<div class="caveat">${esc(String(rig.refusals[0]).split(String.fromCharCode(10))[0])}</div>` : ''}
+    </div>
+  </div>
+</section>`;
+}
+
 /**
  * Build the shell for one payload.
  *
  * `title` stays "BEACON" so the brand mark matches the prototype exactly.
  */
-export function shellHtml(data, title = 'BEACON') {
+export function shellHtml(data, title = 'BEACON', rig = null) {
   const { provenance: prov, fleet } = data;
 
   const need = fleet.n_needing_action;
@@ -103,6 +251,16 @@ export function shellHtml(data, title = 'BEACON') {
     <svg width="17" height="17" viewBox="0 0 24 24" fill="#34d399"><path d="M13 2L4.5 13.5H11L10 22l8.5-11.5H12L13 2z"/></svg>
   </div>
     ${navHtml()}
+  <button class="dbtn themebtn" id="themeToggle" aria-label="Toggle light and dark theme">
+    <svg class="ic-moon" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a6.8 6.8 0 0 0 10.5 10.5z"/></svg>
+    <svg class="ic-sun" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="4.2"/>
+      <path d="M12 2.4v2.3M12 19.3v2.3M4.2 4.2l1.7 1.7M18.1 18.1l1.7 1.7M2.4 12h2.3M19.3 12h2.3M4.2 19.8l1.7-1.7M18.1 5.9l1.7-1.7"/></svg>
+    <span class="tt">Theme</span>
+  </button>
   <div class="dver">v1.0</div>
 </nav>
 
@@ -175,6 +333,7 @@ export function shellHtml(data, title = 'BEACON') {
         </button>
 
         ${notice}
+        ${rigHomeHtml(rig)}
       </div>
     </section>
 
@@ -197,7 +356,7 @@ export function shellHtml(data, title = 'BEACON') {
       <div id="riskMount"></div>
     </section>
 
-    <section class="view" id="view-evidence">${evidenceHtml(fleet)}</section>
+    <section class="view" id="view-evidence">${rigHtml(rig)}${evidenceHtml(fleet)}</section>
 
     <footer class="foot">
       <p>${esc(title)} renders the output of the BEACON pipeline. Every value is computed by the pipeline; no

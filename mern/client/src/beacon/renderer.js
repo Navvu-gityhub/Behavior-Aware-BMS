@@ -481,16 +481,100 @@ function wireCharts(){
 }
 
 function selectBattery(id){
+  if(isRig(id)){ current={id:id,__rig:true}; render(); return; }
   const b=D.batteries.find(x=>x.id===id);
   if(!b||b.id===current.id) return;
   current=b; render();
 }
+
+/* ================= bench rig =================
+ * The rig is a real cell on a bench, and it belongs in the battery picker for
+ * the same reason the fleet does. It is deliberately NOT added to D.batteries:
+ * every fleet statistic, the scatter, the grid and the mean health index
+ * iterate that array, and a member with no health index would either crash
+ * them or silently skew them. It gets its own entry and its own render path
+ * instead, so the fleet numbers stay exactly what they were.
+ */
+function rigId(){ return D.rig ? D.rig.battery_id : null; }
+function isRig(id){ return !!rigId() && id === rigId(); }
+
+function rigChannel(name){
+  return (D.rig && D.rig.measured || []).find(m => m.channel === name) || null;
+}
+
+function rigMetric(label, channel, decimals, unit, icon, color){
+  const m = rigChannel(channel);
+  if(!m){
+    return metric(label, icon, color,
+      naMetric("No sensor fitted. The rig declares the channels it has and omits the rest."));
+  }
+  const range = m.minimum === m.maximum ? "constant"
+    : `${m.minimum.toFixed(decimals)} to ${m.maximum.toFixed(decimals)}`;
+  return metric(label, icon, color,
+    `<div class="mv">${m.mean.toFixed(decimals)}<u>${esc(unit)}</u></div>
+     <div class="mf">measured &middot; n=${m.n} &middot; ${esc(range)}</div>`);
+}
+
+function renderRigView(){
+  const r = D.rig;
+  const v = rigChannel("voltage_v");
+  const missing = (r.coverage && r.coverage.missing_channels) || [];
+  const dur = rigChannel("test_time_s");
+
+  $("#socLabel").textContent = v ? "TERMINAL VOLTAGE · MEASURED" : "STATE OF HEALTH";
+  $("#socValue").innerHTML = v
+    ? `${v.mean.toFixed(4)}<u>V</u>`
+    : `<span style="font-size:22px;font-weight:400;color:var(--ink-3)">Not available</span>`;
+  $("#socNote").innerHTML = "State of health needs measured per-cycle capacity, which needs a complete channel set. This rig does not supply "
+    + `<code>${esc(missing.join(", ") || "every required channel")}</code>, so the cell is drawn empty and no health index, RUL or SOH is produced. The voltage above was measured.`;
+  $("#socNote").style.display = "block";
+
+  /* Drawn empty: there is no state of health to fill it with, and filling it
+     from the voltage would imply a conversion nobody has validated. */
+  $("#batStage").innerHTML = batterySVG(null, "warn", "state of health");
+
+  $("#kpis").innerHTML = [
+    rigMetric("TERMINAL VOLTAGE", "voltage_v", 4, "V", IC.soc, "#22d3ee"),
+    rigMetric("CURRENT, SIGNED", "current_a", 4, "A", IC.risk, "#22d3ee"),
+    rigMetric("TEMPERATURE", "temperature_c", 1, "°C", IC.temp, "#fb923c"),
+    metric("HEALTH INDEX", IC.idx, "#fbbf24",
+      naMetric("Coverage is incomplete, so no health index was produced.")),
+    metric("RECORDS ACCEPTED", IC.soh, "#34d399",
+      `<div class="mv good">${r.serial ? Math.round(r.serial.accepted_fraction*100) : 100}<u>%</u></div>
+       <div class="mf">${r.serial ? esc(r.serial.summary) : ""}</div>`),
+  ].join("");
+
+  const refusal = (r.refusals && r.refusals[0]) ? String(r.refusals[0]).split(String.fromCharCode(10))[0] : "";
+  $("#guardianMount").innerHTML = `<section class="sec"><div class="sechead"><div><h2>Guardian</h2>
+    <div class="sub">Attribution needs a score to decompose.</div></div></div>
+    <div class="caveat">No risk score exists for this rig, so there is nothing to attribute. ${esc(refusal)}</div></section>`;
+
+  $("#rowA").innerHTML = `<section class="sec"><div class="sechead"><div><h2>Bench rig &mdash; ${esc(r.battery_id)}</h2>
+    <div class="sub">Physical hardware over USB serial${dur?`, ${dur.maximum.toFixed(0)} s capture`:""}. Instrument readings, not dataset replay.</div></div>
+    <div class="right">${esc(r.status)}</div></div>
+    <div class="kv">
+      <div class="row"><div class="k"><span>Transport</span></div><div class="v">${esc((r.rig||"").split("  ")[0]||"serial")}</div></div>
+      <div class="row"><div class="k"><span>Records accepted</span></div><div class="v good">${r.serial?esc(r.serial.summary):"—"}</div></div>
+      <div class="row"><div class="k"><span>Channels missing</span></div><div class="v critical">${esc(missing.join(", ")||"none")}</div></div>
+      <div class="row"><div class="k"><span>Health index &middot; RUL &middot; SOH</span></div><div class="v critical">refused</div></div>
+    </div>
+    <div class="caveat">Every value this rig measured is shown. Every value it could not measure is named, not substituted.</div></section>`;
+
+  $("#switchId").textContent = r.battery_id;
+  $$(".cellbtn").forEach(el => el.setAttribute("aria-pressed", String(el.dataset.id === r.battery_id)));
+  $("#stateChip").innerHTML = `<span class="sd warn"></span><span>measured &middot; not scored</span>`;
+}
+
 function stepBattery(dir){
+  // Stepping walks the fleet. From the rig it re-enters at the first battery,
+  // because the rig has no position in a fleet it is not part of.
+  if(current.__rig){ selectBattery(D.batteries[0].id); return; }
   const i=D.batteries.findIndex(x=>x.id===current.id);
   selectBattery(D.batteries[(i+dir+D.batteries.length)%D.batteries.length].id);
 }
 
 function render(){
+  if(current.__rig){ renderRigView(); return; }
   const b=current, soc=param(b,"Mean state of charge");
 
   // The hero reads state of health when the dataset supports it, and mean state
@@ -561,7 +645,12 @@ function boot(){
       <span class="sd ${toneClass(b.state_tone)}"></span>
       <span class="cid">${esc(b.id)}</span>
       <span class="cst">${esc(b.state.toLowerCase())}</span>
-      <span class="hi">${b.health_index.toFixed(0)}</span></button>`).join("");
+      <span class="hi">${b.health_index.toFixed(0)}</span></button>`).join("")
+    + (D.rig ? `<button class="cellbtn rigcell" data-id="${esc(D.rig.battery_id)}" aria-pressed="false">
+      <span class="sd warn"></span>
+      <span class="cid">${esc(D.rig.battery_id)}</span>
+      <span class="cst">bench rig &middot; measured</span>
+      <span class="hi">&mdash;</span></button>` : "");
 
   document.addEventListener("click", e=>{
     const cell=e.target.closest(".cellbtn");

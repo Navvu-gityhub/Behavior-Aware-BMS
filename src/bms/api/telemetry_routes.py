@@ -48,6 +48,7 @@ from src.bms.api.telemetry_schemas import (
     LiveCaptureRequest,
     LiveSampleOut,
     LiveStateOut,
+    MeasuredChannelOut,
     ReplayRequest,
     SerialDecodeStatsOut,
     SerialEmulateRequest,
@@ -255,7 +256,36 @@ def _run_out(
         fade_prediction=None, fade_prediction_refusal=_FADE_REFUSAL,
         serial=_serial_stats_out(serial_stats),
         rig=header.render() if header is not None else None,
+        measured=_measured_channels(result),
     )
+
+
+def _measured_channels(result: TelemetryResult) -> list[MeasuredChannelOut]:
+    """Summarise the channels the capture delivered.
+
+    Deliberately computed from `result.telemetry` rather than from the scored
+    output, because the frame survives a coverage refusal and the scored output
+    does not. A rig missing one sensor still measured the others, and those
+    measurements are real: reporting the refusal alone would throw them away.
+    """
+    frame = getattr(result, "telemetry", None)
+    if frame is None or getattr(frame, "empty", True):
+        return []
+
+    units = {spec.channel: spec.unit for spec in SERIAL_FIELDS}
+    rows: list[MeasuredChannelOut] = []
+    for channel in sorted(result.coverage.mapped_channels):
+        if channel not in frame.columns:
+            continue
+        series = pd.to_numeric(frame[channel], errors="coerce").dropna()
+        if series.empty:
+            continue
+        rows.append(MeasuredChannelOut(
+            channel=channel, unit=units.get(channel, ""), n=int(series.size),
+            minimum=float(series.min()), maximum=float(series.max()),
+            mean=float(series.mean()),
+        ))
+    return rows
 
 
 def _serial_stats_out(stats) -> SerialDecodeStatsOut | None:
