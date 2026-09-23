@@ -3,11 +3,14 @@
 How to connect a microcontroller rig to BEACON, and what the software already
 does while you have no hardware at all.
 
-**Status: the software path is complete and tested end to end against an
-emulated rig. It has never been run against a physical board**, because none is
-attached to this environment. That limit is stated here rather than implied to
-be verified; the section [What is genuinely untested](#what-is-genuinely-untested)
-says exactly which surface it covers.
+**Status: the software path is complete, and it has now been run against a
+physical board.** A NodeMCU ESP8266 with an INA219 current/voltage monitor and
+an LM35 temperature sensor, on one HONGLI ICR-18650-2200mAh cell, has driven
+three captures through the whole chain. What that does and does not establish is
+set out in [What the bring-up established](#what-the-bring-up-established) and
+[What is still untested](#what-is-still-untested). The short version: the
+transport and the refusal path are verified against real silicon; the health and
+RUL models are not, and cannot be by a cell that was never cycled.
 
 ---
 
@@ -498,12 +501,45 @@ reported, and the accepted fraction is what the refusal above is based on.
 
 ---
 
-## What is genuinely untested
+## What the bring-up established
 
-`SerialPortSource.lines()` — the `pyserial` port read itself — has never run
-against a physical board. Nothing downstream of it is in that category: the
-emulator drives the identical parser, gate, schema check and scoring stages, so
-the untested surface is the port read, not the pipeline.
+Three captures are committed under `data/interim/`. Every figure here is
+computed from those files.
+
+| Capture | Declared channels | Records | Cadence | Measured |
+|---|---|---|---|---|
+| `rig_stage_a.txt` | `t`, `v`, `i`, `tc`, `soc` | 151 | 1.000 s | **stub firmware — synthetic, not a hardware result** |
+| `rig_stage_b_voltage_verified.txt` | `t`, `v`, `i`, `soc` (INA219 up, LM35 refused) | 83 over 82 s | 1.000 s, 0 gaps, monotonic | 3.9871 V, sd 1.9 mV; current at the ±0.4 mA noise floor |
+| `rig_demo.txt` | `t`, `tc` (LM35 up, INA219 refused) | 85 over 84 s | 1.000 s, 0 gaps, monotonic | 32.11 °C, sd 0.086 °C |
+
+Established by these runs:
+
+- `SerialPortSource.lines()` works against a real port. Every measured voltage
+  is an exact multiple of the INA219's 4 mV bus LSB, which is what a genuine
+  read from that part looks like and what a fabricated one would not.
+- **Sensor-complement declaration works.** The firmware probes each sensor at
+  boot, emits a status record naming what failed, and lists in `HELLO` only the
+  channels it can supply. The host scores those and refuses the rest by name.
+- No dropped samples and no timing jitter in any capture, at roughly 7.5%
+  channel utilisation at 9600 baud.
+
+Note the second column of the table. **The two sensors have never been up
+simultaneously.** No capture yet carries voltage, current and temperature
+together, so no hardware capture has exercised the thermal rules alongside the
+electrical ones.
+
+## What is still untested
+
+- **Any load step.** All three captures are of a cell at rest. No
+  charge/discharge transition has been measured, so cycle segmentation,
+  coulomb counting and every C-rate-derived flag remain emulator-only.
+- **Any duration beyond 90 seconds.** Drift, thermal settling and buffer
+  behaviour over hours are unobserved.
+- **More than one cell.** n = 1.
+- **The health, RUL and risk models.** These were fitted on cycled research
+  cells. A single uncycled cell held at 3.99 V cannot confirm or refute them,
+  and no figure in the research half of this project should be cited as
+  hardware-validated.
 
 The software side of readiness *is* tested: `tests/test_hardware_readiness.py`
 (`make hardware-check`) covers the wire contract, checksum integrity on both
@@ -527,17 +563,25 @@ procedural, so state it in any claim you make: **which of `readVoltageV`,
 `readCurrentA`, `readTemperatureC` and `readSocPercent` were real.** A result
 from a rig with three stubs and one sensor is not a hardware result.
 
-What a first bring-up would most plausibly expose, in order:
+This trap was observed, not just anticipated: `rig_stage_a.txt` is 151
+well-formed records from a board with no sensors attached, and it scores. It is
+kept as the counter-example, labelled as such in the table above.
 
-1. **DTR reset behaviour.** Most USB-serial boards reset when the port opens, so
-   the first capture may begin mid-line. The sentinel filter handles the boot
-   banner that follows; `reset_input_buffer()` handles the partial line. Neither
-   is verified against real timing.
-2. **Baud mismatch.** Produces garbage that fails the sentinel check, so it
-   surfaces as "no usable telemetry records" — which names the baud rate as a
-   cause. Correct behaviour, unverified in the field.
-3. **Sign and scale.** The two conventions above. The refusals exist; whether
-   their wording is enough to fix a real rig quickly is not yet known.
+What the first bring-up actually exposed, in the order it happened:
+
+1. **Baud mismatch — confirmed, and worse than predicted.** The CH340 bridge on
+   this NodeMCU accepts only 9600 and 19200 baud; 115200 produced garbage that
+   failed the sentinel check. The refusal wording did name baud rate as a cause
+   and was what led to the fix, so the design held. Everything was reflashed at
+   9600 via a build-property override.
+2. **Port contention.** `arduino-cli upload` fails with "Cannot configure port"
+   because esptool reconfigures baud on a handle that is already open. Only one
+   port may be open per USB enumeration; `scripts/flash_rig.py` works around it.
+3. **DTR reset behaviour — no problem observed.** The sentinel filter and
+   `reset_input_buffer()` handled the boot banner and the partial first line
+   without intervention on every capture.
+4. **Sign and scale — not yet exercised.** With the cell at rest, current never
+   left the noise floor, so neither convention has been stressed.
 
 ---
 

@@ -8,6 +8,38 @@ remaining-useful-life estimates — served over a REST API to a React dashboard.
 Written in Python (FastAPI, pandas, scikit-learn), Node (Express), React (Vite)
 and C++ (Arduino firmware). ~27,500 lines, 33 test modules, 7-job CI, containerised.
 
+## Demo
+
+A recorded walkthrough of the running system — pipeline, dashboard and the
+serial rig.
+
+<video src="https://github.com/Navvu-gityhub/Behavior-Aware-BMS/raw/main/docs/media/beacon_demo.mp4" controls muted playsinline width="100%"></video>
+
+*(If the player does not load, [download or view `docs/media/beacon_demo.mp4`](https://github.com/Navvu-gityhub/Behavior-Aware-BMS/raw/main/docs/media/beacon_demo.mp4).)*
+
+What the rig captures in [`data/interim/`](data/interim/) actually contain —
+every figure below is computed from the committed files, not quoted from memory:
+
+| Capture | Channels the board declared | Records | Cadence | Measured |
+|---|---|---|---|---|
+| [`rig_stage_b_voltage_verified.txt`](data/interim/rig_stage_b_voltage_verified.txt) | `t`, `v`, `i`, `soc` — INA219 up, LM35 refused | 83 over 82 s | 1.000 s, 0 gaps, monotonic | 3.9871 V (sd 1.9 mV); current at the ±0.4 mA noise floor |
+| [`rig_demo.txt`](data/interim/rig_demo.txt) | `t`, `tc` — LM35 up, INA219 refused | 85 over 84 s | 1.000 s, 0 gaps, monotonic | 32.11 °C (sd 0.086 °C) |
+
+Note the second column. The two sensors have **never been up at the same
+time**, and neither capture pretends otherwise: the firmware probes each sensor
+at boot, emits a status line naming what failed, and declares in its `HELLO`
+only the channels it can actually supply. The host then scores the channels
+present and refuses the rest by name. That is the refusal design of this
+codebase running on real hardware against its own missing sensor — which is a
+better test of it than a capture where everything worked.
+
+The same records, decoded into a spreadsheet with per-channel summary statistics:
+**[`BEACON_Hardware_Telemetry_Log.xlsx`](BEACON_Hardware_Telemetry_Log.xlsx)**.
+
+---
+
+## Quickstart
+
 ```bash
 git clone https://github.com/Navvu-gityhub/Behavior-Aware-BMS.git
 cd Behavior-Aware-BMS
@@ -111,8 +143,8 @@ utilisation.
 design: component selection, shunt sizing, pin assignment, power budget, and a
 measurement error budget carried through to capacity accuracy.
 **→ [`docs/hardware_integration.md`](docs/hardware_integration.md)** — wire
-protocol, bring-up procedure, and an honest account of what has never been run
-against a board.
+protocol, the bring-up record with measured figures, what the first real board
+exposed, and what remains untested.
 
 ---
 
@@ -143,11 +175,22 @@ README's previous life, with the full calibration narrative and every figure.
 
 ## Status
 
-The pipeline, API, gateway, client, container build and CI are working. The
-serial path is exercised end to end by an emulator and **has never run against a
-physical board** — `SerialPortSource.lines()` is the one untested surface, and
-[`docs/hardware_integration.md`](docs/hardware_integration.md) says so rather
-than implying otherwise.
+The pipeline, API, gateway, client, container build and CI are working.
+
+The serial path now runs against a **physical board** — a NodeMCU ESP8266 with
+an INA219 current/voltage monitor and an LM35 temperature sensor on a single
+HONGLI ICR-18650 cell. `SerialPortSource.lines()`, previously the one untested
+surface, has carried three captures end to end: board → wire protocol → parser
+→ checksum → coverage gate → scoring → dashboard. Timing held at 1.000 s with
+no dropped samples in any capture.
+
+Read that result narrowly. It is **one cell, at rest, for under 90 seconds**,
+with no load step and no charge/discharge cycle. It demonstrates that the
+transport, the protocol, the gate and the refusal path work against real
+silicon. It is *not* a validation of the health or RUL models, which were fitted
+on cycled research cells and cannot be confirmed or refuted by a cell that was
+never cycled. [`docs/hardware_integration.md`](docs/hardware_integration.md)
+carries the full bring-up record and the remaining gaps.
 
 Not done, in dependency order: persistence (the fleet store is in-memory by
 design), structured logging and metrics, a load-test harness, async serial

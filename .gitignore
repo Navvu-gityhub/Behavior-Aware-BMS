@@ -113,3 +113,7 @@ reports/validation_dashboard.html
 # Firmware build output. Reproducible from the sketch with arduino-cli;
 # the .elf and .map alone are ~8 MB per target.
 build/
+
+# Excel lock files
+~$*.xlsx
+~$*.docx
