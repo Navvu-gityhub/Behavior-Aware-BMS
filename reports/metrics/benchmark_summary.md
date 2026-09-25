@@ -18,22 +18,24 @@ Benchmark study — target 'soh'
   2585 rows, 31 cells, 9 cohorts
   R2 ceiling from target noise floor: 0.5687
 
-  method                           LOBO R2   LOCO R2     delta  status
-  xgboost                           0.7324    0.4590   -0.2734  PROMOTED
-  age_linear                        0.4826    0.4063   -0.0764  rejected
-  elasticnet                        0.6089    0.3547   -0.2543  PROMOTED
-  gpr_matern                        0.7251    0.2070   -0.5181  rejected
-  random_forest                     0.7733    0.1499   -0.6234  PROMOTED
-  svr_rbf                           0.6510    0.0874   -0.5635  rejected
-  age_quadratic                     0.3357    0.0344   -0.3013  PROMOTED
-  age_isotonic                      0.2780    0.0182   -0.2598  rejected
-  train_mean                        0.0000    0.0000    0.0000  rejected
-  lstm                              0.5935   -0.1849   -0.7783  rejected
-  hist_gradient_boosting            0.7701   -0.2645   -1.0346  rejected
-  mlp                               0.7311   -0.6226   -1.3537  rejected
-  arrhenius_trailing_temp          -0.8147   -1.3316   -0.5169  rejected  [!] models 'cumulative_fade'
-  arrhenius_avg_temp               -1.0453   -1.6009   -0.5556  rejected  [!] models 'cumulative_fade'
-  ica_peak_features                      -         -         -  UNAVAILABLE
-  sequence_model                         -         -         -  UNAVAILABLE
-  severson_delta_q_variance              -         -         -  UNAVAILABLE
+  method                           LOBO R2   LOCO R2        LOCO 95% CI     delta  status
+  xgboost                           0.7324    0.4590    [-2.803, 0.856]   -0.2734  PROMOTED
+  age_linear                        0.4826    0.4063    [-0.428, 0.506]   -0.0764  rejected
+  elasticnet                        0.6089    0.3547    [-1.651, 0.760]   -0.2543  PROMOTED
+  gpr_matern                        0.7251    0.2070    [-3.717, 0.427]   -0.5181  rejected
+  random_forest                     0.7733    0.1499    [-1.093, 0.901]   -0.6234  PROMOTED
+  svr_rbf                           0.6510    0.0874    [-2.545, 0.562]   -0.5635  rejected
+  age_quadratic                     0.3357    0.0344    [-0.569, 0.822]   -0.3013  PROMOTED
+  age_isotonic                      0.2780    0.0182    [-1.016, 0.843]   -0.2598  rejected
+  train_mean                        0.0000    0.0000     [0.000, 0.000]    0.0000  rejected
+  lstm                              0.5935   -0.1849    [-2.090, 0.655]   -0.7783  rejected
+  hist_gradient_boosting            0.7701   -0.2645    [-1.584, 0.642]   -1.0346  rejected
+  mlp                               0.7311   -0.6226    [-1.896, 0.560]   -1.3537  rejected
+  arrhenius_trailing_temp          -0.8147   -1.3316   [-19.596, 0.780]   -0.5169  rejected  [!] models 'cumulative_fade'
+  arrhenius_avg_temp               -1.0453   -1.6009   [-20.958, 0.800]   -0.5556  rejected  [!] models 'cumulative_fade'
+  ica_peak_features                      -         -                  -         -  UNAVAILABLE
+  sequence_model                         -         -                  -         -  UNAVAILABLE
+  severson_delta_q_variance              -         -                  -         -  UNAVAILABLE
+
+  CI: 95% percentile bootstrap of the median, resampling LOCO folds. It covers spread across the cohorts present, NOT transfer to an unseen one.
 ```

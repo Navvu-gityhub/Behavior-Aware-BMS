@@ -67,6 +67,69 @@ def r2_against(y: np.ndarray, pred: np.ndarray, baseline: np.ndarray) -> float:
     return float("nan") if ss_tot <= 0 else 1.0 - ss_res / ss_tot
 
 
+# Resamples for the fold bootstrap. 2000 is enough that the percentile
+# endpoints are stable to about the third decimal, which is finer than the
+# fold-to-fold spread this interval is reporting.
+BOOTSTRAP_RESAMPLES = 2000
+
+# Fixed so a re-run reproduces the interval exactly. The seed is an argument
+# everywhere below; this is only the default.
+BOOTSTRAP_SEED = 20260925
+
+# Below this many completed folds no interval is returned. Three folds admit
+# only a handful of distinct resample medians, so the "interval" would be two
+# of the three observed values and would read as precision that is not there.
+MIN_FOLDS_FOR_CI = 4
+
+
+def bootstrap_median_ci(
+    values: Sequence[float],
+    confidence: float = 0.95,
+    n_resamples: int = BOOTSTRAP_RESAMPLES,
+    seed: int = BOOTSTRAP_SEED,
+) -> tuple[float, float]:
+    """Percentile bootstrap interval for the median, resampling over folds.
+
+    WHY THE FOLD IS THE RESAMPLING UNIT
+    -----------------------------------
+    Rows within a fold are not independent -- they are consecutive cycles of
+    one cell -- so resampling rows would treat 2,585 correlated measurements
+    as 2,585 independent ones and return an interval far too narrow. The fold
+    is the unit the validator already treats as independent, so it is the unit
+    resampled here.
+
+    WHAT THIS INTERVAL DOES NOT COVER
+    ---------------------------------
+    It describes uncertainty in the median **over the cohorts actually
+    present**. It does NOT describe uncertainty about an unseen cohort, and
+    those are different quantities by exactly the margin this project's
+    central result measures: LOBO to LOCO skill loss is a between-cohort
+    effect, and a bootstrap over nine cohorts cannot see the tenth.
+
+    So a narrow LOCO interval means "the median is well determined across
+    these nine protocols", never "the method will transfer to a new one".
+
+    It is also coarse. With nine folds the percentile endpoints can only land
+    on observed fold values, so the interval is discrete and a little jumpy.
+    That is a property of having nine cohorts, not of the estimator, and
+    widening the resample count does not fix it. Returns NaN endpoints below
+    `MIN_FOLDS_FOR_CI` rather than reporting an interval that narrow.
+    """
+    finite = np.asarray(
+        [v for v in values if np.isfinite(v)], dtype=float
+    )
+    if len(finite) < MIN_FOLDS_FOR_CI:
+        return (float("nan"), float("nan"))
+
+    rng = np.random.default_rng(seed)
+    draws = rng.integers(0, len(finite), size=(n_resamples, len(finite)))
+    medians = np.median(finite[draws], axis=1)
+
+    tail = (1.0 - confidence) / 2.0
+    low, high = np.percentile(medians, [100 * tail, 100 * (1 - tail)])
+    return (float(low), float(high))
+
+
 @dataclass(frozen=True)
 class FoldResult:
     """One held-out group."""
@@ -140,6 +203,32 @@ class CrossValidationResult:
     def fraction_beating_baseline(self) -> float:
         done = self.completed
         return sum(f.beat_baseline for f in done) / len(done) if done else float("nan")
+
+    @property
+    def n_completed(self) -> int:
+        """Folds that produced a finite R2 -- the bootstrap's sample size.
+
+        Reported alongside every interval. An interval computed from five
+        folds and one computed from thirty-three are not comparable, and the
+        width alone does not distinguish them.
+        """
+        return sum(
+            1 for f in self.completed if np.isfinite(f.r2_vs_global_mean)
+        )
+
+    def median_ci(
+        self,
+        metric: str = "r2_vs_global_mean",
+        confidence: float = 0.95,
+        seed: int = BOOTSTRAP_SEED,
+    ) -> tuple[float, float]:
+        """Bootstrap interval for the median of one fold-level metric.
+
+        See `bootstrap_median_ci` for what the interval does and does not
+        cover -- in particular that it says nothing about an unseen cohort.
+        """
+        values = [getattr(f, metric) for f in self.completed]
+        return bootstrap_median_ci(values, confidence=confidence, seed=seed)
 
     def to_frame(self) -> pd.DataFrame:
         return pd.DataFrame([vars(f) for f in self.folds])

@@ -139,13 +139,27 @@ class MethodResult:
                 "loco_fraction_beating": nan,
                 "lobo_r2_vs_age": nan, "loco_r2_vs_age": nan,
                 "n_train_median": nan, "n_test_median": nan,
+                "lobo_r2_ci_low": nan, "lobo_r2_ci_high": nan,
+                "loco_r2_ci_low": nan, "loco_r2_ci_high": nan,
+                "lobo_n_folds": 0, "loco_n_folds": 0,
                 "promoted": False,
             })
             return base
 
         lobo_r2 = lobo.median_r2
         loco_r2 = loco.median_r2 if loco else nan
+        # Every point estimate in this table is a median over a handful of
+        # folds. Reporting it bare is what this project criticises other
+        # benchmark tables for, so the interval travels with it.
+        lobo_ci = lobo.median_ci()
+        loco_ci = loco.median_ci() if loco else (nan, nan)
         base.update({
+            "lobo_r2_ci_low": lobo_ci[0],
+            "lobo_r2_ci_high": lobo_ci[1],
+            "loco_r2_ci_low": loco_ci[0],
+            "loco_r2_ci_high": loco_ci[1],
+            "lobo_n_folds": lobo.n_completed,
+            "loco_n_folds": loco.n_completed if loco else 0,
             "lobo_mae": lobo.median_mae,
             "lobo_rmse": lobo.median_rmse,
             "loco_mae": loco.median_mae if loco else nan,
@@ -195,7 +209,8 @@ class StudyResult:
             f"  {self.n_rows} rows, {self.n_cells} cells, {self.n_cohorts} cohorts",
             f"  R2 ceiling from target noise floor: {self.r2_ceiling:.4f}",
             "",
-            f"  {'method':<30} {'LOBO R2':>9} {'LOCO R2':>9} {'delta':>9}  status",
+            f"  {'method':<30} {'LOBO R2':>9} {'LOCO R2':>9} "
+            f"{'LOCO 95% CI':>18} {'delta':>9}  status",
         ]
         for result in sorted(
             self.results,
@@ -205,18 +220,33 @@ class StudyResult:
             row = result.row()
             if row["status"] != "SCORED":
                 lines.append(
-                    f"  {result.method:<30} {'-':>9} {'-':>9} {'-':>9}  "
-                    f"{row['status']}"
+                    f"  {result.method:<30} {'-':>9} {'-':>9} {'-':>18} "
+                    f"{'-':>9}  {row['status']}"
                 )
                 continue
             marker = "PROMOTED" if row["promoted"] else "rejected"
             if result.target_mismatch:
                 marker += f"  [!] models '{result.target_mismatch.split(chr(39))[1]}'"
+            # `row()` is typed dict[str, object], so bind through float() to
+            # let the type checker see these are numbers.
+            ci_low = float(row["loco_r2_ci_low"])  # type: ignore[arg-type]
+            ci_high = float(row["loco_r2_ci_high"])  # type: ignore[arg-type]
+            ci = (
+                f"[{ci_low:.3f}, {ci_high:.3f}]"
+                if np.isfinite(ci_low) and np.isfinite(ci_high)
+                else f"n={row['loco_n_folds']} too few"
+            )
             lines.append(
                 f"  {result.method:<30} {row['lobo_r2']:>9.4f} "
-                f"{row['loco_r2']:>9.4f} {row['loco_minus_lobo']:>9.4f}  "
-                f"{marker}"
+                f"{row['loco_r2']:>9.4f} {ci:>18} "
+                f"{row['loco_minus_lobo']:>9.4f}  {marker}"
             )
+        lines.append("")
+        lines.append(
+            "  CI: 95% percentile bootstrap of the median, resampling "
+            "LOCO folds. It covers spread across the cohorts present, "
+            "NOT transfer to an unseen one."
+        )
         return "\n".join(lines)
 
 
