@@ -168,12 +168,20 @@ class CalceLoadReport:
     files_skipped: tuple[tuple[str, str], ...] = ()
     unavailable_channels: tuple[str, ...] = ()
     has_temperature: bool = False
+    truncated_at_cycle: int | None = None
 
     def render(self) -> str:
         lines = [
             f"{self.cell_id}: {self.n_rows:,} rows across {self.n_cycles} cycles "
             f"from {self.n_files} file(s)"
         ]
+        if self.truncated_at_cycle is not None:
+            lines.append(
+                f"  TRUNCATED: reading stopped after cycle "
+                f"{self.truncated_at_cycle}; this cell's later life was not "
+                f"read and no end-of-life or full-trajectory quantity may be "
+                f"derived from this frame"
+            )
         if self.unavailable_channels:
             lines.append(
                 f"  not recorded by this dataset: {list(self.unavailable_channels)}"
@@ -375,6 +383,7 @@ def load_calce_cell(
     cell_dir: str | Path,
     cell_id: str | None = None,
     temperature_dir: str | Path | None = None,
+    max_cycles: int | None = None,
 ) -> tuple[pd.DataFrame, CalceLoadReport]:
     """Load every cycling file for one CALCE cell into one telemetry frame.
 
@@ -382,6 +391,10 @@ def load_calce_cell(
     reasons, and the channels this dataset does not record. The report is
     returned rather than logged because "CS2 has no temperature channel" is a
     fact a caller must act on, not a diagnostic to discard.
+
+    `max_cycles` stops reading early and sets `truncated_at_cycle` on the
+    report; see `load_calce_archive` for what may and may not be derived from a
+    truncated frame.
     """
     cell_dir = Path(cell_dir)
     if not cell_dir.exists():
@@ -401,15 +414,24 @@ def load_calce_cell(
     frames: list[pd.DataFrame] = []
     used: list[str] = []
     skipped: list[tuple[str, str]] = []
+    truncated: int | None = None
+    running_cycles = 0
 
     for path in candidates:
         try:
-            frames.append(_read_one(path))
+            frame = _read_one(path)
+            frames.append(frame)
             used.append(path.name)
+            running_cycles += _cycles_in(frame)
         except Exception as exc:
             # A corrupt or non-cycling file in the directory must not abort the
             # cell. It is recorded so a thin result is explainable.
             skipped.append((path.name, f"{type(exc).__name__}: {exc}"))
+            continue
+        # See load_calce_archive for what truncation does and does not permit.
+        if max_cycles is not None and running_cycles >= max_cycles:
+            truncated = running_cycles
+            break
 
     if not frames:
         raise ValueError(
@@ -440,13 +462,30 @@ def load_calce_cell(
         files_skipped=tuple(skipped),
         unavailable_channels=unavailable,
         has_temperature=has_temperature,
+        truncated_at_cycle=truncated,
     )
     return telemetry, report
+
+
+def _cycles_in(frame: pd.DataFrame) -> int:
+    """How many cycles one file contributes once reconciled.
+
+    Mirrors the offset arithmetic in `_reconcile_cycle_index`. It is separate
+    so a caller can count cycles as files are read, without concatenating
+    first -- which is the whole point of being able to stop early.
+    """
+    if "cycle" not in frame.columns:
+        return 1
+    cycles = pd.to_numeric(frame["cycle"], errors="coerce")
+    if cycles.notna().sum() == 0:
+        return 1
+    return int(cycles.max() - cycles.min() + 1)
 
 
 def load_calce_archive(
     archive_path: str | Path,
     cell_id: str | None = None,
+    max_cycles: int | None = None,
 ) -> tuple[pd.DataFrame, CalceLoadReport]:
     """Load one cell directly from its distributed `.zip`, without extracting.
 
@@ -457,6 +496,23 @@ def load_calce_archive(
     Members are ordered by the date in their filename, exactly as the
     directory loader does, because a zip's member order is arbitrary and
     lexical order puts `10_04_10` before `9_20_10`.
+
+    `max_cycles` stops reading once that many cycles have been accumulated.
+    Default `None` reads everything, so existing callers are unaffected.
+
+    THIS IS A TRUNCATION, AND THE REPORT SAYS SO
+    --------------------------------------------
+    An early-life feature -- Severson's Delta-Q between cycles 10 and 100 --
+    needs the first few files of a 23-file archive, and reading the remaining
+    twenty costs minutes per cell for data the feature discards. But a
+    truncated frame is NOT a frame of that cell: its last cycle is an artifact
+    of where reading stopped, not of where the cell died.
+
+    So `truncated_at_cycle` is set on the report, and anything derived from a
+    truncated frame that depends on the cell's full life -- cycle life,
+    end-of-life, total throughput, final state of health -- is wrong. The
+    field exists so that is visible rather than inferred from a suspiciously
+    round cycle count.
     """
     archive_path = Path(archive_path)
     if not archive_path.exists():
@@ -466,6 +522,7 @@ def load_calce_archive(
     frames: list[pd.DataFrame] = []
     used: list[str] = []
     skipped: list[tuple[str, str]] = []
+    truncated: int | None = None
 
     with zipfile.ZipFile(archive_path) as archive:
         members = [
@@ -478,12 +535,19 @@ def load_calce_archive(
                 f"telemetry files (looked for {sorted(_DATA_SUFFIXES)})."
             )
 
+        running_cycles = 0
         for name in sorted(members, key=lambda n: _sort_key(Path(n))):
             try:
-                frames.append(_read_member(archive, name))
+                frame = _read_member(archive, name)
+                frames.append(frame)
                 used.append(Path(name).name)
+                running_cycles += _cycles_in(frame)
             except Exception as exc:
                 skipped.append((Path(name).name, f"{type(exc).__name__}: {exc}"))
+                continue
+            if max_cycles is not None and running_cycles >= max_cycles:
+                truncated = running_cycles
+                break
 
     if not frames:
         raise ValueError(
@@ -506,6 +570,7 @@ def load_calce_archive(
             c for c in CALCE_UNAVAILABLE_CHANNELS if c not in telemetry.columns
         ),
         has_temperature="temperature_c" in telemetry.columns,
+        truncated_at_cycle=truncated,
     )
 
 
