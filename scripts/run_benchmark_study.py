@@ -84,6 +84,16 @@ def main() -> None:
     parser.add_argument("--quick", action="store_true",
                         help="Run only the fast reference methods.")
     parser.add_argument(
+        "--methods", nargs="*", default=None,
+        help=(
+            "Run only these registered methods, by name. A method not named "
+            "is absent from the table entirely rather than shown as rejected, "
+            "so any run using this must state which methods it excluded and "
+            "why. Intended for a controlled comparison where two runs must "
+            "share a method set, not for trimming a table until it reads well."
+        ),
+    )
+    parser.add_argument(
         "--features", nargs="*", default=None,
         help=(
             "Override each method's default feature set. Required for datasets "
@@ -132,7 +142,16 @@ def main() -> None:
         print(f"  {row['target']:<20} {row['signal_fraction']:.4f}  "
               f"({row['n_cells']} cells, {row['n_rows']} rows)")
 
-    methods = [get(name) for name in QUICK_METHODS] if args.quick else None
+    if args.quick and args.methods:
+        raise SystemExit("--quick and --methods are mutually exclusive.")
+    if args.methods:
+        methods = [get(name) for name in args.methods]
+        names = ", ".join(args.methods)
+        print(f"Method subset: {len(methods)} of the registry ({names})")
+    elif args.quick:
+        methods = [get(name) for name in QUICK_METHODS]
+    else:
+        methods = None
 
     frames: list[pd.DataFrame] = []
     renders: list[str] = []

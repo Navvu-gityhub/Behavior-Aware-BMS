@@ -1,0 +1,2 @@
+target,n_cells,n_rows,signal_variance,noise_variance,signal_fraction,max_attainable_r2
+soh,18,9950,0.0026829898485541525,0.0002108835955829479,0.9271275680661877,0.9271275680661877
