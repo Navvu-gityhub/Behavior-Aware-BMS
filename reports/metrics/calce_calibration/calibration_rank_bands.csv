@@ -1,0 +1,4 @@
+rank_band,n_folds,median_r2_raw,median_r2_k1
+rank held (rho >= 0.90),11,0.7259,0.8798
+partial (0.70 - 0.90),11,-0.1469,0.5288
+rank lost (rho < 0.70),2,-0.8493,-0.0206
