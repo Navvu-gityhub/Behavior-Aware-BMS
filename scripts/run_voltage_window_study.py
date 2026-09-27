@@ -62,6 +62,11 @@ DEFAULT_CURVES = Path("data/interim/calce_curves")
 DEFAULT_TRUTH = Path("reports/metrics/calce_full_discharge.csv")
 DEFAULT_OUT = Path("reports/metrics/calce_voltage_window")
 
+# A window must be measurable on at least this fraction of the median cell's
+# cycles to be eligible. Without the gate the selector picks whichever window
+# reads fewest cycles, because a small, easy subset gives the best error.
+MIN_COHORT_COVERAGE = 0.80
+
 # Windows swept. All sit inside the LCO plateau and avoid the steep knees,
 # where a small voltage error moves the charge reading a long way.
 WINDOWS: tuple[WindowSpec, ...] = (
@@ -108,6 +113,7 @@ def main() -> int:
 
     # One scored table per window, computed once and reused by every fold.
     tables: dict[str, pd.DataFrame] = {}
+    coverage: dict[str, float] = {}
     for spec in WINDOWS:
         table = window_soh_table(
             curves, truth=truth[["cell_id", "cycle", "soh"]], spec=spec)
@@ -118,17 +124,35 @@ def main() -> int:
             table["cohort"] = table["cohort"].fillna(table["cohort_truth"])
         scored = table.dropna(subset=["soh_window", "soh", "cohort"])
         tables[str(spec)] = scored
+        # Coverage is per cell, then medianed. A pooled fraction is dominated
+        # by whichever cells have the most cycles and hides a window that is
+        # unmeasurable on half the fleet.
+        per_cell = table.groupby("cell_id")["window_charge_ah"].apply(
+            lambda c: float(c.notna().mean()))
+        coverage[str(spec)] = float(per_cell.median())
         print(f"  {spec}: {len(scored)} scored rows, "
-              f"coverage {table['window_charge_ah'].notna().mean():.1%}")
+              f"median per-cell coverage {coverage[str(spec)]:.1%}")
 
     cohorts = sorted(truth["cohort"].dropna().unique())
     global_mean = float(truth["soh"].mean())
     rows: list[dict] = []
 
     for held in cohorts:
-        # Choose the window on the other cohorts only.
+        # Choose the window on the other cohorts only, and on coverage FIRST.
+        #
+        # Selecting by error alone picks a window that is unmeasurable on most
+        # cells: 4.05-3.40 V scores well on the cycles it can read and can
+        # read 0.1% of CS2_35's, because that cell charges to 4.00 V and never
+        # reaches 4.05. An estimator that refuses 999 cycles in 1000 is not
+        # better than one that answers them, whatever its error on the
+        # remainder. So coverage is a gate and error is the tie-break.
+        eligible = {n: t for n, t in tables.items()
+                    if coverage[n] >= MIN_COHORT_COVERAGE}
+        if not eligible:
+            eligible = {max(coverage, key=coverage.get): tables[
+                max(coverage, key=coverage.get)]}
         scores = {}
-        for name, table in tables.items():
+        for name, table in eligible.items():
             other = table[table["cohort"] != held]
             if other.empty:
                 continue
@@ -157,6 +181,7 @@ def main() -> int:
         rows.append({
             "cohort": held,
             "window_chosen": chosen,
+            "window_coverage": round(coverage[chosen], 3),
             "n_rows": len(test),
             "n_cells": int(test["cell_id"].nunique()),
             "ratio_mae": float(np.mean(np.abs(est - y))),
