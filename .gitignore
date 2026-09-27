@@ -117,3 +117,6 @@ build/
 # Excel lock files
 ~$*.xlsx
 ~$*.docx
+
+# Cached curve frames: regenerable from data/raw, large, per-cell
+data/interim/calce_curves/
