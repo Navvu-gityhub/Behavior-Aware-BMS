@@ -75,6 +75,35 @@ DEFAULT_V_LOW = 3.60
 # estimate, because it divides all of them.
 DEFAULT_REFERENCE_CYCLES = 5
 
+# OHMIC COMPENSATION
+# ------------------
+# The window is defined on terminal voltage, and terminal voltage under load
+# is not the cell's open-circuit voltage: it sags by roughly I*R0. That offset
+# GROWS as the cell ages and its resistance rises, so a window at fixed
+# terminal voltages slowly slides along the true curve - reading a different
+# part of the discharge late in life than it did early, and attributing the
+# difference to capacity.
+#
+# The size of the problem scales with rate. On CALCE's 1.23C cells the drop is
+# 0.134-0.141 V against a 0.50 V window: 28% of it. On the 0.20C cell it is
+# 0.018 V, and there the effect is invisible.
+#
+# The literature reconstructs OCV by compensating the overpotential before
+# running incremental capacity analysis, for exactly this reason. Compensating
+# the voltage and holding the window fixed is arithmetically the same as
+# holding the voltage and shifting the window by the same offset, and the
+# second needs no re-derivation of the curve, so that is what is done here.
+#
+# Measured, per cell, against capacity ground truth:
+#
+#     group          raw MAE   compensated   improved
+#     1.23C cells     0.0682      0.0348       4 of 4
+#     below 1.2C      0.0303      0.0265       7 of 12
+#
+# The ordering is the point: the correction earns its place where the physics
+# says it should and is near-neutral where the drop is small. It is optional
+# because it needs a per-cycle resistance the curve frame does not carry.
+
 # A cycle must deliver at least this fraction of the reference cycles' TOTAL
 # discharge to be treated as comparable to them.
 #
@@ -203,6 +232,7 @@ def window_charge_by_cycle(
     curves: pd.DataFrame,
     spec: WindowSpec = WindowSpec(),
     min_coverage: float = MIN_WINDOW_COVERAGE,
+    overpotential: pd.DataFrame | None = None,
 ) -> pd.DataFrame:
     """One row per (cell, cycle): the window charge, or NaN with a reason."""
     required = {"cell_id", "cycle", "voltage_v", "capacity_ah_curve"}
@@ -213,16 +243,37 @@ def window_charge_by_cycle(
             f"frame with load_calce_curves.extract_discharge_curves."
         )
 
+    offsets: dict[tuple, float] = {}
+    if overpotential is not None:
+        missing_o = {"cell_id", "cycle", "ir_drop_v"} - set(overpotential.columns)
+        if missing_o:
+            raise ValueError(
+                f"window_charge_by_cycle: overpotential is missing "
+                f"{sorted(missing_o)}"
+            )
+        for row in overpotential.itertuples():
+            drop = float(row.ir_drop_v)
+            if np.isfinite(drop):
+                offsets[(row.cell_id, int(row.cycle))] = drop
+
     rows: list[dict] = []
     group_cols = ["cell_id", "cycle"]
     for (cell_id, cycle), block in curves.groupby(group_cols, sort=True):
+        # Shifting the window down by this cycle's ohmic sag is the same
+        # measurement as holding the window and compensating the voltage.
+        drop = offsets.get((cell_id, int(cycle)), 0.0)
+        cycle_spec = (
+            spec if drop == 0.0
+            else WindowSpec(spec.v_high - drop, spec.v_low - drop)
+        )
         record = {
             "cell_id": cell_id,
             "cycle": int(cycle),
+            "ir_drop_v": drop,
             "window_charge_ah": window_charge(
                 block["voltage_v"].to_numpy(dtype=float),
                 block["capacity_ah_curve"].to_numpy(dtype=float),
-                spec, min_coverage,
+                cycle_spec, min_coverage,
             ),
         }
         if "cohort" in block.columns:
@@ -238,6 +289,7 @@ def window_soh_table(
     reference_cycles: int = DEFAULT_REFERENCE_CYCLES,
     min_coverage: float = MIN_WINDOW_COVERAGE,
     min_discharge_fraction: float = MIN_DISCHARGE_FRACTION,
+    overpotential: pd.DataFrame | None = None,
 ) -> pd.DataFrame:
     """Per-cycle SOH estimated from the window ratio, optionally scored.
 
@@ -245,12 +297,20 @@ def window_soh_table(
     only to score the estimate; nothing about it enters the estimate, which is
     what makes the comparison meaningful rather than circular.
 
+    `overpotential`, when given, must carry `cell_id`, `cycle` and `ir_drop_v`
+    - the ohmic sag at that cycle's discharge current, `|I| * R0`. Each cycle's
+    window is then shifted down by its own offset, which is the same as
+    measuring a fixed window on the compensated (open-circuit) voltage. See
+    the note above OHMIC COMPENSATION for what it is worth and where.
+
     The reference is the MEDIAN window charge of the first `reference_cycles`
     measurable cycles of that cell. Median rather than mean because a single
     anomalous early discharge would otherwise scale every later estimate of
     that cell.
     """
-    charges = window_charge_by_cycle(curves, spec, min_coverage)
+    charges = window_charge_by_cycle(
+        curves, spec, min_coverage, overpotential=overpotential
+    )
 
     # Total charge per cycle, used to tell a full discharge from a truncated
     # one. Taken from the same curve frame, so it needs no external join.

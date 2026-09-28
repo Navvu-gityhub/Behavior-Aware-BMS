@@ -394,3 +394,67 @@ def test_the_floor_sits_below_automotive_retirement():
     would refuse every genuinely aged cell the estimator is meant to serve.
     """
     assert MIN_PLAUSIBLE_SOH < 0.80
+
+
+# ---------------------------------------------------------------------------
+# Ohmic compensation
+# ---------------------------------------------------------------------------
+
+def test_compensation_recovers_a_cell_whose_voltage_sags():
+    """A cell under load reads low; the window must follow the sag.
+
+    This is the CX2_Type2 case: at 1.23C the ohmic drop is 0.14 V against a
+    0.50 V window, so an uncompensated window reads a different part of the
+    discharge as the cell's resistance grows, and calls the difference fade.
+    """
+    blocks, drops = [], []
+    for cycle in range(1, 11):
+        sag = 0.0 if cycle <= 5 else 0.12        # resistance grows mid-life
+        voltage, charge = _curve(capacity_ah=1.10, v_start=4.15 - sag,
+                                 v_end=2.70 - sag)
+        blocks.append(pd.DataFrame({"cell_id": "A", "cycle": cycle,
+                                    "voltage_v": voltage,
+                                    "capacity_ah_curve": charge}))
+        drops.append({"cell_id": "A", "cycle": cycle, "ir_drop_v": sag})
+    curves = pd.concat(blocks, ignore_index=True)
+
+    uncompensated = window_soh_table(curves, spec=SPEC, reference_cycles=5)
+    compensated = window_soh_table(
+        curves, spec=SPEC, reference_cycles=5,
+        overpotential=pd.DataFrame(drops),
+    )
+    # The cell never faded: every ratio should read 1.0.
+    late_raw = uncompensated[uncompensated["cycle"] > 5]["soh_window"]
+    late_ok = compensated[compensated["cycle"] > 5]["soh_window"]
+    assert abs(late_ok.mean() - 1.0) < abs(late_raw.mean() - 1.0), (
+        "compensation must move the estimate toward the true, unfaded value"
+    )
+    assert late_ok.mean() == pytest.approx(1.0, abs=0.03)
+
+
+def test_compensation_is_a_no_op_when_the_drop_is_zero():
+    curves = _frame({"A": [1.10] * 5 + [0.99]})
+    drops = pd.DataFrame({"cell_id": "A", "cycle": range(1, 7), "ir_drop_v": 0.0})
+    plain = window_soh_table(curves, spec=SPEC, reference_cycles=5)
+    zeroed = window_soh_table(curves, spec=SPEC, reference_cycles=5,
+                              overpotential=drops)
+    assert np.allclose(plain["soh_window"].dropna(),
+                       zeroed["soh_window"].dropna())
+
+
+def test_a_cycle_with_no_offset_supplied_is_left_uncompensated():
+    """Partial coverage must not silently shift the cycles it does cover."""
+    curves = _frame({"A": [1.10] * 6})
+    drops = pd.DataFrame([{"cell_id": "A", "cycle": 6, "ir_drop_v": 0.10}])
+    table = window_soh_table(curves, spec=SPEC, reference_cycles=5,
+                             overpotential=drops)
+    assert table[table["cycle"] < 6]["ir_drop_v"].eq(0.0).all()
+    assert table[table["cycle"] == 6]["ir_drop_v"].iloc[0] == pytest.approx(0.10)
+
+
+def test_overpotential_missing_columns_are_named():
+    curves = _frame({"A": [1.10] * 6})
+    with pytest.raises(ValueError) as excinfo:
+        window_soh_table(curves, spec=SPEC,
+                         overpotential=pd.DataFrame({"cell_id": ["A"]}))
+    assert "ir_drop_v" in str(excinfo.value)
