@@ -6,7 +6,13 @@ and scores them through one shared pipeline into health, risk and
 remaining-useful-life estimates — served over a REST API to a React dashboard.
 
 Written in Python (FastAPI, pandas, scikit-learn), Node (Express), React (Vite)
-and C++ (Arduino firmware). ~27,500 lines, 33 test modules, 7-job CI, containerised.
+and C++ (Arduino firmware). ~27,500 lines, 39 test modules, 9-job CI, containerised.
+
+It ships two estimators that **fit nothing across cells** — SOH from charge in a
+fixed voltage window (2.7% median error) and RUL from a cell's own fade trend
+(within ±20 cycles, 88% of the time near end of life) — because the fitted
+models measurably do not transfer across protocols. See
+[The research half](#the-research-half).
 
 ## Demo
 
@@ -150,19 +156,59 @@ exposed, and what remains untested.
 
 ## The research half
 
-BEACON started as a battery-degradation study and the modelling work is real,
-but the results are largely **negative**, and that is the interesting part.
+BEACON started as a battery-degradation study. The fitted models did not
+transfer across protocols, that was measured rather than assumed, and the two
+estimators that now work were built to route around it.
 
-- The obvious target, `capacity_loss`, turned out to be **96% measurement
-  noise** — an isotonic signal fraction of 0.044 is the *maximum attainable* R²,
-  which retroactively explains every "R² ≈ 0" result the project had recorded.
-- **Selecting a model by leave-one-cell-out cross-validation picks a worse model
-  under protocol shift.** This is the project's one durable claim: across four
-  dataset framings, every method loses skill under leave-one-cohort-out, without
-  exception.
-- **Every method-ranking claim has been withdrawn, five times over.** Rankings
-  moved by varying only the target derivation, the cohort coverage and the
-  feature set — never the model. The instability is the finding.
+### What does not work, and how thoroughly
+
+- The obvious target, `capacity_loss`, is **96% measurement noise** — an
+  isotonic signal fraction of 0.044 is the *maximum attainable* R², which
+  retroactively explains every "R² ≈ 0" result the project had recorded.
+- **Every method loses skill under leave-one-cohort-out**, across four dataset
+  framings, without exception. Selecting a model by leave-one-*cell*-out
+  — what most papers report — picks a worse model under protocol shift.
+- **No LOCO ranking is supportable at all.** Bootstrapping over folds, every
+  interval spans zero and every interval overlaps every other one: XGBoost's
+  LOCO R² is 0.459 with a 95% CI of [−2.803, 0.856]. Six ranking claims were
+  withdrawn on that basis. The benchmark table now ships its intervals, because
+  a project that diagnoses overclaiming from point estimates should not print
+  them.
+- **Curve features do not rescue it.** Severson's ΔQ(V) variance and ICA peak
+  features were added to the same rows, same cells, same gate — one of four
+  methods improved, none by more than fold-to-fold noise, and the collapse is
+  unchanged. So it is not attributable to the features being usage aggregates.
+
+### What works
+
+Both estimators fit **nothing across cells**, which is why neither can suffer
+the collapse above — there is no training cohort to transfer from.
+
+| | result | scope |
+|---|---|---|
+| **SOH** from charge in a fixed voltage window | **2.7% median error**, worst 8.7% | on the 11 of 16 cells the plausibility gate accepts |
+| **RUL** by extrapolating a cell's own fade trend | **within ±20 cycles, 88%** of the time | when inside 25 cycles of end of life |
+
+SOH is the ratio of charge delivered between two fixed terminal voltages now
+to the same window early in that cell's life. It survives partial discharge,
+which is what a vehicle actually produces, and needs one reference measurement
+of the same cell — which production BMS firmware already stores at manufacture.
+
+**The gate is the part that makes it usable.** Ungated, the estimator's worst
+cell reported 52% error while looking confident. Those cells claim their window
+charge fell 86–97% while measured capacity fell ~20%, and a cell holding 3% of
+its original charge is scrap. So a ratio below 0.50 is refused as a broken
+measurement rather than reported as poor health — a physical test, not a
+statistical one, needing no ground truth. Worst-case error improves 6×.
+
+Two literature-backed hypotheses were tested first and **both failed**:
+constant-current *charge* curves (worse on four of five cells here, because
+CALCE logs the charge leg sparsely) and rate-induced voltage depression
+(refuted — the failing and working cells run at the same 0.50C).
+
+**→ [`reports/metrics/calce_voltage_window/`](reports/metrics/calce_voltage_window/)**
+and **[`calce_rul_horizon/`](reports/metrics/calce_rul_horizon/)** carry the
+per-fold numbers.
 
 Fourteen ADRs record how those conclusions were reached and reversed. Two
 document experiments that refuted their own premise.
@@ -191,6 +237,18 @@ silicon. It is *not* a validation of the health or RUL models, which were fitted
 on cycled research cells and cannot be confirmed or refuted by a cell that was
 never cycled. [`docs/hardware_integration.md`](docs/hardware_integration.md)
 carries the full bring-up record and the remaining gaps.
+
+**Estimators.** The voltage-window SOH estimator and the fade-extrapolation
+RUL estimator are validated against CALCE capacity ground truth and carry
+their scope with them: SOH is reported only for cells the plausibility gate
+accepts (11 of 16), and RUL only holds to ±20 cycles near end of life. Neither
+is wired into the scoring pipeline's default path yet — they are library
+modules with study scripts, not the shipped `compute_rul`, which still uses an
+unvalidated hand-picked weighting its own docstring flags.
+
+The conventional 80% end-of-life threshold is **not** validated: CALCE's
+full-discharge trajectories end near 0.81 and one cell of 22 crosses it, so
+every RUL figure here is measured at 0.90.
 
 Not done, in dependency order: persistence (the fleet store is in-memory by
 design), structured logging and metrics, a load-test harness, async serial
