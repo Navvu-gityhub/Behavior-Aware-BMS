@@ -32,6 +32,7 @@ import pytest
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from src.bms.health.voltage_window import (
+    MIN_PLAUSIBLE_SOH,
     MIN_WINDOW_COVERAGE,
     WindowSpec,
     per_cell_fit,
@@ -228,3 +229,101 @@ def test_per_cell_fit_without_truth_is_refused():
     with pytest.raises(ValueError) as excinfo:
         per_cell_fit(window_soh_table(curves, spec=SPEC))
     assert "soh" in str(excinfo.value)
+
+
+# ---------------------------------------------------------------------------
+# The charge leg accumulates the other way
+# ---------------------------------------------------------------------------
+
+def _charge_curve(capacity_ah: float = 1.10, v_start: float = 3.00,
+                  v_end: float = 4.20, n: int = 400):
+    """A constant-current charge: voltage rises, charge accumulates with it."""
+    voltage = np.linspace(v_start, v_end, n)
+    fraction = (voltage - v_start) / (v_end - v_start)
+    return voltage, fraction * capacity_ah
+
+
+def test_charge_phase_window_is_positive():
+    """Q grows with voltage on charge; a signed difference would go negative."""
+    voltage, charge = _charge_curve()
+    assert window_charge(voltage, charge, SPEC) > 0
+
+
+def test_charge_and_discharge_windows_agree_on_a_symmetric_cell():
+    """Same capacity, same window, opposite legs: the charge moved matches.
+
+    The two legs sweep the window in opposite directions, so this is the test
+    that the magnitude convention holds rather than one leg being negated.
+    """
+    v_dis, q_dis = _curve(capacity_ah=1.10, v_start=4.20, v_end=3.00)
+    v_chg, q_chg = _charge_curve(capacity_ah=1.10, v_start=3.00, v_end=4.20)
+    assert window_charge(v_dis, q_dis, SPEC) == pytest.approx(
+        window_charge(v_chg, q_chg, SPEC), rel=0.02)
+
+
+def test_a_faded_charge_curve_reads_its_fade():
+    v, full = _charge_curve(capacity_ah=1.10)
+    _, faded = _charge_curve(capacity_ah=0.88)
+    ratio = window_charge(v, faded, SPEC) / window_charge(v, full, SPEC)
+    assert ratio == pytest.approx(0.80, rel=0.01)
+
+
+# ---------------------------------------------------------------------------
+# The physical plausibility gate
+# ---------------------------------------------------------------------------
+
+def test_an_implausible_ratio_is_withheld_not_clipped():
+    """A value below the floor must vanish, not be rounded into range.
+
+    Clipping to MIN_PLAUSIBLE_SOH would put a wrong number inside the band a
+    reader expects, which is harder to notice than a missing one.
+    """
+    capacities = [1.10] * 5 + [0.20]          # ratio ~0.18, physically absurd
+    curves = _frame({"A": capacities})
+    table = window_soh_table(curves, spec=SPEC, reference_cycles=5)
+    last = table[table["cycle"] == 6].iloc[0]
+    assert last["implausible"]
+    assert np.isnan(last["soh_window_accepted"])
+    assert last["soh_window"] < MIN_PLAUSIBLE_SOH   # raw value still inspectable
+    assert "scrap" in last["refusal"]
+
+
+def test_a_healthy_cell_passes_the_gate_untouched():
+    capacities = [1.10] * 5 + [1.05, 1.00, 0.95, 0.90]
+    curves = _frame({"A": capacities})
+    table = window_soh_table(curves, spec=SPEC, reference_cycles=5)
+    assert not table["implausible"].any()
+    assert not table["cell_refused"].any()
+    assert table["soh_window_accepted"].notna().sum() == len(capacities)
+
+
+def test_a_cell_mostly_implausible_is_refused_entirely():
+    """Trimming the bad rows and scoring the rest would flatter the method.
+
+    The surviving rows would be the early ones, which is exactly where the
+    estimator had not yet failed.
+    """
+    capacities = [1.10] * 5 + [0.2] * 10
+    curves = _frame({"A": capacities})
+    table = window_soh_table(curves, spec=SPEC, reference_cycles=5)
+    assert table["cell_refused"].all()
+    assert table["soh_window_accepted"].isna().all()
+    assert "whole cell is refused" in table.iloc[-1]["refusal"]
+
+
+def test_one_bad_cell_does_not_refuse_its_neighbour():
+    """The cell-level verdict must be per cell, not pooled across the frame."""
+    curves = _frame({"good": [1.10] * 5 + [1.0] * 5,
+                     "bad": [1.10] * 5 + [0.2] * 10})
+    table = window_soh_table(curves, spec=SPEC, reference_cycles=5)
+    assert not table[table["cell_id"] == "good"]["cell_refused"].any()
+    assert table[table["cell_id"] == "bad"]["cell_refused"].all()
+
+
+def test_the_floor_sits_below_automotive_retirement():
+    """The gate must not fire on cells that are merely old.
+
+    Retirement is conventionally 80% state of health; a floor at or above that
+    would refuse every genuinely aged cell the estimator is meant to serve.
+    """
+    assert MIN_PLAUSIBLE_SOH < 0.80

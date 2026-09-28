@@ -120,6 +120,31 @@ DEFAULT_CYCLE_B = 100
 # variance that is numerically defined and physically meaningless.
 MIN_VOLTAGE_SPAN_V = 0.1
 
+# Which leg of the cycle a curve is taken from.
+#
+# WHY CHARGE IS WORTH HAVING, NOT JUST DISCHARGE
+# ----------------------------------------------
+# A discharge curve is shaped by whatever the load did. In a vehicle that is
+# the driver, so the current is neither constant nor repeatable between
+# cycles, and a Q(V) window measured on it mixes degradation with driving.
+#
+# Charging is the opposite: CC-CV is a controlled protocol, so the
+# constant-current leg is close to the same experiment every time. The
+# review literature on onboard SOH estimation works from partial
+# constant-current CHARGE segments for that reason. Whether it actually
+# helps on this data is an experiment, not an assumption, and
+# `scripts/run_voltage_window_study.py --phase charge` is how it is run.
+#
+# The CV tail needs no special handling here: the current tapers during it,
+# so the rate-fraction threshold below drops it along with the rests.
+PHASES: tuple[str, ...] = ("discharge", "charge")
+
+# Capacity counter each phase accumulates into.
+_PHASE_CAPACITY = {
+    "discharge": "capacity_ah",
+    "charge": "charge_capacity_ah",
+}
+
 
 @dataclass(frozen=True)
 class CurveExtractionReport:
@@ -193,8 +218,13 @@ def extract_discharge_curves(
     telemetry: pd.DataFrame,
     rate_fraction: float = DISCHARGE_RATE_FRACTION,
     min_points: int = MIN_CURVE_POINTS,
+    phase: str = "discharge",
 ) -> tuple[pd.DataFrame, CurveExtractionReport]:
-    """Reduce CALCE sample-level telemetry to per-cycle discharge Q(V) curves.
+    """Reduce CALCE sample-level telemetry to per-cycle Q(V) curves.
+
+    `phase` selects the discharge leg (default, current negative) or the
+    constant-current charge leg (current positive, counted into
+    `charge_capacity_ah`). See PHASES for why the charge leg is worth having.
 
     Returns a long frame with one row per (cell, cycle, sample point) and a
     report naming every cycle that was refused and why.
@@ -205,7 +235,13 @@ def extract_discharge_curves(
     cell. Selecting on the schedule would bind this loader to one experiment
     design, which is the opposite of what a cross-cohort feature needs.
     """
-    required = {"cell_id", "cycle", "voltage_v", "current_a", "capacity_ah"}
+    if phase not in PHASES:
+        raise ValueError(f"extract_discharge_curves: phase must be one of "
+                         f"{list(PHASES)}, got {phase!r}")
+    capacity_col = _PHASE_CAPACITY[phase]
+    sign = -1.0 if phase == "discharge" else 1.0
+
+    required = {"cell_id", "cycle", "voltage_v", "current_a", capacity_col}
     missing = required - set(telemetry.columns)
     if missing:
         raise ValueError(
@@ -237,9 +273,9 @@ def extract_discharge_curves(
                 dtype=float
             )
 
-            discharging = current < 0
+            discharging = (current * sign) > 0
             if not discharging.any():
-                refusals["no discharge samples (current never negative)"] += 1
+                refusals[f"no {phase} samples (current never the right sign)"] += 1
                 continue
             if discharging.sum() < min_points:
                 # Distinct from the case above on purpose. "No discharge" and
@@ -248,26 +284,26 @@ def extract_discharge_curves(
                 # -- and merging them would send a reader looking for the
                 # wrong one.
                 refusals[
-                    f"fewer than {min_points} discharge samples in the cycle"
+                    f"fewer than {min_points} {phase} samples in the cycle"
                 ] += 1
                 continue
 
             # Threshold relative to this cycle's own rate. See the constant.
             median_rate = float(np.median(np.abs(current[discharging])))
             if not np.isfinite(median_rate) or median_rate <= 0:
-                refusals["discharge current not finite"] += 1
+                refusals[f"{phase} current not finite"] += 1
                 continue
-            at_rate = current <= -(rate_fraction * median_rate)
+            at_rate = (current * sign) >= (rate_fraction * median_rate)
 
             span = _longest_discharge_run(at_rate)
             if span is None:
-                refusals["no contiguous discharge segment at rate"] += 1
+                refusals[f"no contiguous {phase} segment at rate"] += 1
                 continue
 
             segment = rows.iloc[span]
             if len(segment) < min_points:
                 refusals[
-                    f"discharge segment shorter than {min_points} points"
+                    f"{phase} segment shorter than {min_points} points"
                 ] += 1
                 continue
 
@@ -275,7 +311,7 @@ def extract_discharge_curves(
                 segment["voltage_v"], errors="coerce"
             ).to_numpy(dtype=float)
             capacity = pd.to_numeric(
-                segment["capacity_ah"], errors="coerce"
+                segment[capacity_col], errors="coerce"
             ).to_numpy(dtype=float)
 
             finite = np.isfinite(voltage) & np.isfinite(capacity)
@@ -315,6 +351,7 @@ def extract_discharge_curves(
 
     curves = pd.concat(pieces, ignore_index=True)
     curves["dataset"] = "calce"
+    curves["phase"] = phase
     report = CurveExtractionReport(
         n_cells=int(frame["cell_id"].nunique()),
         n_cycles_seen=seen,

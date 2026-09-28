@@ -41,6 +41,10 @@ def main() -> int:
     parser.add_argument("--raw-dir", type=Path, default=DEFAULT_RAW)
     parser.add_argument("--out-dir", type=Path, default=DEFAULT_OUT)
     parser.add_argument("--max-cycles", type=int, default=None)
+    parser.add_argument("--phase", default="discharge",
+                        choices=["discharge", "charge"])
+    parser.add_argument("--cells", nargs="*", default=None,
+                        help="Only these cell ids.")
     args = parser.parse_args()
 
     args.out_dir.mkdir(parents=True, exist_ok=True)
@@ -48,6 +52,8 @@ def main() -> int:
     print(f"{len(sources)} cells under {args.raw_dir}", flush=True)
 
     for index, source in enumerate(sources, start=1):
+        if args.cells and source.cell_id not in args.cells:
+            continue
         out = args.out_dir / f"{source.cell_id}.parquet"
         label = f"[{index}/{len(sources)}] {source.cell_id}"
         if out.exists():
@@ -73,7 +79,7 @@ def main() -> int:
         if source.cohort:
             telemetry["cohort"] = source.cohort
 
-        curves, creport = extract_discharge_curves(telemetry)
+        curves, creport = extract_discharge_curves(telemetry, phase=args.phase)
         if curves.empty:
             print(f"{label}: no curves", flush=True)
             continue

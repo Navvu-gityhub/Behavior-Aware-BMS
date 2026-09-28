@@ -75,6 +75,36 @@ DEFAULT_V_LOW = 3.60
 # estimate, because it divides all of them.
 DEFAULT_REFERENCE_CYCLES = 5
 
+# A window ratio below this is refused as a measurement, not reported as a
+# state of health.
+#
+# WHY A PHYSICAL FLOOR CATCHES THE FAILURE MODE THIS METHOD HAS
+# --------------------------------------------------------------
+# The estimator assumes the discharge curve scales uniformly. When that breaks
+# it does not return noise - it returns a confident number that is badly
+# wrong, which is the worst shape a failure can take. On CALCE, CS2_3 and
+# CS2_9 report their window charge falling 86% and 97% over life while their
+# measured capacity falls about 20%.
+#
+# But a lithium-ion cell holding 3% of its original charge is not a degraded
+# cell, it is scrap. Automotive retirement is at 80%, and a research cell is
+# finished well before 50%. So a ratio under this floor is not a health
+# reading that happens to be low; it is evidence the window is no longer
+# measuring capacity on this cell.
+#
+# That makes the check physical rather than statistical, and it needs no
+# ground truth - which is what lets it run in deployment, where there is
+# none. Across the 16 CALCE cells with enough cycles to score, the total fall
+# in window ratio separates cleanly: 0.19 to 0.31 for the fourteen cells the
+# method handles, 0.86 and 0.97 for the two it does not.
+MIN_PLAUSIBLE_SOH = 0.50
+
+# A cell whose measurable cycles fall below the floor this often is reported
+# as untrustworthy in full, not merely trimmed. Past this point the surviving
+# rows are the early ones, and scoring only those would flatter the method by
+# discarding exactly the cycles where it failed.
+MAX_IMPLAUSIBLE_FRACTION = 0.20
+
 # A cycle must span at least this fraction of the requested window to be
 # measured. Below it the discharge did not really traverse the window and the
 # interpolation would be reading mostly extrapolated nothing.
@@ -124,8 +154,16 @@ def window_charge(
     q = interpolate_curve(voltage, capacity, grid)
     if not np.all(np.isfinite(q)):
         return float("nan")
-    # Q accumulates as voltage falls, so the low-voltage end holds more charge.
-    return float(q[0] - q[1])
+    # Magnitude, because the two legs accumulate in opposite directions: on a
+    # discharge Q grows as voltage falls, on a constant-current charge it
+    # grows as voltage rises. The charge moved across the window is the same
+    # physical quantity either way, and taking the signed difference would
+    # return a negative "charge" for every charge-phase curve.
+    #
+    # Q is monotonic in V within one leg, so the magnitude is unambiguous;
+    # a curve that doubled back would have been refused upstream by the
+    # contiguous-segment selection in load_calce_curves.
+    return float(abs(q[0] - q[1]))
 
 
 def window_charge_by_cycle(
@@ -202,6 +240,37 @@ def window_soh_table(
     table = pd.concat(frames, ignore_index=True)
     table["v_high"] = spec.v_high
     table["v_low"] = spec.v_low
+
+    # Physical plausibility, applied per row and then per cell. See
+    # MIN_PLAUSIBLE_SOH for why this is a floor on the measurement rather than
+    # a clip on the output: an implausible value is withheld, never rounded up
+    # into the plausible range, because a wrong number inside the expected band
+    # is harder to notice than a missing one.
+    table["implausible"] = (
+        table["soh_window"].notna()
+        & (table["soh_window"] < MIN_PLAUSIBLE_SOH)
+    )
+    measurable = table["soh_window"].notna()
+    share = (
+        table[measurable].groupby("cell_id")["implausible"].mean()
+        if measurable.any() else pd.Series(dtype=float)
+    )
+    table["cell_implausible_fraction"] = table["cell_id"].map(share)
+    table["cell_refused"] = (
+        table["cell_implausible_fraction"] > MAX_IMPLAUSIBLE_FRACTION
+    ).fillna(False)
+    table["refusal"] = ""
+    table.loc[table["implausible"], "refusal"] = (
+        f"window ratio below {MIN_PLAUSIBLE_SOH}; a cell at that charge would "
+        f"be scrap, so the window is not tracking capacity here"
+    )
+    table.loc[table["cell_refused"], "refusal"] = (
+        f"more than {MAX_IMPLAUSIBLE_FRACTION:.0%} of this cell's measurable "
+        f"cycles are physically implausible; the whole cell is refused"
+    )
+    table["soh_window_accepted"] = table["soh_window"].where(
+        ~(table["implausible"] | table["cell_refused"])
+    )
 
     if truth is not None:
         keep = [c for c in ("cell_id", "cycle", "soh") if c in truth.columns]
