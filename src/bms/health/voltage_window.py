@@ -75,6 +75,39 @@ DEFAULT_V_LOW = 3.60
 # estimate, because it divides all of them.
 DEFAULT_REFERENCE_CYCLES = 5
 
+# A cycle must deliver at least this fraction of the reference cycles' TOTAL
+# discharge to be treated as comparable to them.
+#
+# THE FAILURE THIS CATCHES, AND HOW IT WAS FOUND
+# -----------------------------------------------
+# A voltage window measures charge between two terminal voltages. It cannot
+# tell a cell that has faded from a cycle that was simply cut short - both
+# deliver less charge across the window - and a partial discharge therefore
+# reads as catastrophic capacity loss.
+#
+# CS2_9 is the case that exposed it. Its late cycles traverse the full
+# 4.07-2.70 V range in about 100 samples while delivering 0.03 Ah, against
+# 1.13 Ah in 3,690 samples early on. Scored against its measured capacity the
+# window ratio said the cell had lost 97% of its charge; the cell had lost 8%.
+# The earlier explanation for that cell - that loss of active material had
+# broken the uniform-scaling assumption - was WRONG. It is not degradation at
+# all, it is a partial discharge being read as a full one.
+#
+# The check compares each cycle's total delivered charge against the
+# reference cycles', so it is per cell and needs no ground truth. It is what
+# `io/calce_full_discharge.py` does for the cycle-level frame, applied here.
+#
+# WHY 0.50 AND NOT HIGHER
+# -----------------------
+# A genuinely faded cell also delivers less total charge, so this threshold
+# bounds the range the estimator can measure: below 50% state of health a real
+# discharge is indistinguishable here from a truncated one, and both are
+# refused. That is a stated limit rather than a hidden one, and it sits far
+# below the 80% automotive retirement convention, so it does not refuse cells
+# the estimator is meant to serve. CS2_9's degenerate cycles deliver 2.7% of
+# their reference, so any threshold in this region catches them.
+MIN_DISCHARGE_FRACTION = 0.50
+
 # A window ratio below this is refused as a measurement, not reported as a
 # state of health.
 #
@@ -204,6 +237,7 @@ def window_soh_table(
     spec: WindowSpec = WindowSpec(),
     reference_cycles: int = DEFAULT_REFERENCE_CYCLES,
     min_coverage: float = MIN_WINDOW_COVERAGE,
+    min_discharge_fraction: float = MIN_DISCHARGE_FRACTION,
 ) -> pd.DataFrame:
     """Per-cycle SOH estimated from the window ratio, optionally scored.
 
@@ -218,23 +252,43 @@ def window_soh_table(
     """
     charges = window_charge_by_cycle(curves, spec, min_coverage)
 
+    # Total charge per cycle, used to tell a full discharge from a truncated
+    # one. Taken from the same curve frame, so it needs no external join.
+    totals = (
+        curves.groupby(["cell_id", "cycle"])["capacity_ah_curve"]
+        .max().rename("cycle_charge_ah").reset_index()
+    )
+    charges = charges.merge(totals, on=["cell_id", "cycle"], how="left")
+
     frames: list[pd.DataFrame] = []
     for _cell_id, block in charges.groupby("cell_id", sort=True):
         block = block.sort_values("cycle").copy()
         usable = block[block["window_charge_ah"].notna()]
         if usable.empty:
             block["window_reference_ah"] = float("nan")
+            block["cycle_charge_reference_ah"] = float("nan")
+            block["partial_discharge"] = False
             block["soh_window"] = float("nan")
             frames.append(block)
             continue
-        reference = float(
-            usable["window_charge_ah"].head(reference_cycles).median()
-        )
+        head = usable.head(reference_cycles)
+        reference = float(head["window_charge_ah"].median())
+        total_reference = float(head["cycle_charge_ah"].median())
         block["window_reference_ah"] = reference
-        block["soh_window"] = (
+        block["cycle_charge_reference_ah"] = total_reference
+
+        # A cycle delivering far less charge overall than the reference ones
+        # was cut short. Its window reading is real and means something else.
+        block["partial_discharge"] = (
+            block["cycle_charge_ah"].notna()
+            & (total_reference > 0)
+            & (block["cycle_charge_ah"] < min_discharge_fraction * total_reference)
+        )
+        ratio = (
             block["window_charge_ah"] / reference if reference > 0
             else float("nan")
         )
+        block["soh_window"] = pd.Series(ratio).where(~block["partial_discharge"])
         frames.append(block)
 
     table = pd.concat(frames, ignore_index=True)
@@ -260,6 +314,10 @@ def window_soh_table(
         table["cell_implausible_fraction"] > MAX_IMPLAUSIBLE_FRACTION
     ).fillna(False)
     table["refusal"] = ""
+    table.loc[table["partial_discharge"], "refusal"] = (
+        f"cycle delivered under {MIN_DISCHARGE_FRACTION:.0%} of the reference "
+        f"discharge; a truncated cycle is not a faded cell"
+    )
     table.loc[table["implausible"], "refusal"] = (
         f"window ratio below {MIN_PLAUSIBLE_SOH}; a cell at that charge would "
         f"be scrap, so the window is not tracking capacity here"

@@ -9,7 +9,7 @@ Written in Python (FastAPI, pandas, scikit-learn), Node (Express), React (Vite)
 and C++ (Arduino firmware). ~27,500 lines, 39 test modules, 9-job CI, containerised.
 
 It ships two estimators that **fit nothing across cells** — SOH from charge in a
-fixed voltage window (2.7% median error) and RUL from a cell's own fade trend
+fixed voltage window (3.3% median error) and RUL from a cell's own fade trend
 (within ±20 cycles, 88% of the time near end of life) — because the fitted
 models measurably do not transfer across protocols. See
 [The research half](#the-research-half).
@@ -186,7 +186,7 @@ the collapse above — there is no training cohort to transfer from.
 
 | | result | scope |
 |---|---|---|
-| **SOH** from charge in a fixed voltage window | **2.7% median error**, worst 8.7% | on the 11 of 16 cells the plausibility gate accepts |
+| **SOH** from charge in a fixed voltage window | **3.3% median error**, worst 10.5% | on the 13 of 16 cells the gates accept |
 | **RUL** by extrapolating a cell's own fade trend | **within ±20 cycles, 88%** of the time | when inside 25 cycles of end of life |
 
 SOH is the ratio of charge delivered between two fixed terminal voltages now
@@ -194,12 +194,21 @@ to the same window early in that cell's life. It survives partial discharge,
 which is what a vehicle actually produces, and needs one reference measurement
 of the same cell — which production BMS firmware already stores at manufacture.
 
-**The gate is the part that makes it usable.** Ungated, the estimator's worst
-cell reported 52% error while looking confident. Those cells claim their window
-charge fell 86–97% while measured capacity fell ~20%, and a cell holding 3% of
-its original charge is scrap. So a ratio below 0.50 is refused as a broken
-measurement rather than reported as poor health — a physical test, not a
-statistical one, needing no ground truth. Worst-case error improves 6×.
+**Two gates, and the first one was a bug I had misdiagnosed.** The estimator's
+worst cell once reported 52% error while looking confident, and I attributed it
+to loss of active material breaking the uniform-scaling assumption. **That was
+wrong.** CS2_9's late cycles traverse the full 4.07–2.70 V range in ~100 samples
+delivering 0.03 Ah, against 1.13 Ah in 3,690 samples early — they are *truncated
+discharges*, not a faded cell, and my extractor was reading them as full ones. A
+window cannot tell fade from a cut-short cycle, so each cycle is now required to
+deliver at least 50% of the reference discharge. That alone took CS2_9 from 52%
+to 9% error and CS2_3 from 23% to 10%, and both are now usable rather than
+refused. Worst case across all cells: **52% → 10.5%.**
+
+The second gate remains physical: a window ratio below 0.50 means a cell holding
+under half its charge, which is scrap rather than degraded, so the reading is
+withheld — never clipped into the plausible range. It refuses 3 of 16 cells.
+Both checks need no ground truth, which is what lets them run in deployment.
 
 Two literature-backed hypotheses were tested first and **both failed**:
 constant-current *charge* curves (worse on four of five cells here, because

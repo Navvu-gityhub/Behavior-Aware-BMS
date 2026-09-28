@@ -15,10 +15,10 @@ cohort and therefore no cross-cohort generalisation step to fail.
 
 ```
    arm metric  n_folds  median   worst  ci_low  ci_high
- ratio    mae        9  0.0367  0.0965  0.0271   0.0940
- ratio     r2        9  0.0917 -8.6932 -2.2245   0.8624
-affine    mae        9  0.0492  0.1041  0.0211   0.0855
-affine     r2        9  0.3081 -2.6530 -0.0615   0.4456
+ ratio    mae       10  0.0452  0.0988  0.0291   0.0940
+ ratio     r2       10 -0.2711 -8.6932 -2.2245   0.6740
+affine    mae       10  0.0568  0.1026  0.0236   0.0757
+affine     r2       10  0.3509 -2.1160  0.0726   0.5592
 ```
 
 `ratio` fits nothing at all. `affine` applies one global slope and
@@ -32,15 +32,16 @@ global mean SOH - so these numbers sit beside it directly.
 
 ```
    cohort window_chosen  window_coverage  n_rows  n_cells  ratio_mae  ratio_r2  affine_mae  affine_r2  fit_slope  fit_bias
-CS2_Type1   4.00-3.50 V            0.967     967        2   0.027072  0.707641    0.037197   0.295617   0.160526  0.768316
-CS2_Type2   3.95-3.50 V            0.979    2253        4   0.032707  0.205458    0.016745   0.733214   0.672832  0.321649
-CS2_Type4   4.00-3.50 V            0.967      51        1   0.020788  0.862412    0.049229   0.445563   0.174456  0.757720
-CS2_Type5   4.00-3.50 V            0.967       3        2   0.053777  0.091676    0.072865   0.308103   0.175923  0.756720
-CS2_Type6   4.00-3.50 V            0.967       3        2   0.096544 -0.633955    0.085455   0.216389   0.175952  0.756701
-CX2_Type1   4.00-3.50 V            0.967    2781        3   0.029118 -8.693201    0.021139  -2.653041   0.603677  0.383423
-CX2_Type2   4.00-3.50 V            0.967     726        1   0.087271 -2.224465    0.035225   0.412919   0.156829  0.774076
-CX2_Type3   4.00-3.50 V            0.967       1        1   0.036713  0.921019    0.104075   0.365271   0.175910  0.756728
-CX2_Type4   4.00-3.50 V            0.967      12        1   0.094042 -1.180570    0.065011  -0.061475   0.176194  0.756529
+CS2_Type1   3.95-3.50 V            0.979     978        2   0.028326  0.674023    0.020473   0.761330   0.617775  0.370365
+CS2_Type2   3.95-3.50 V            0.979    2253        4   0.032707  0.205458    0.017910   0.717922   0.626677  0.364456
+CS2_Type3   4.00-3.50 V            0.967     202        2   0.098767 -2.470530    0.066420   0.127681   0.176005  0.756659
+CS2_Type4   4.00-3.50 V            0.967      51        1   0.020788  0.862412    0.048346   0.469723   0.172832  0.760870
+CS2_Type5   4.00-3.50 V            0.967       3        2   0.053777  0.091676    0.072373   0.318340   0.174223  0.759917
+CS2_Type6   4.00-3.50 V            0.967       3        2   0.096544 -0.633955    0.084992   0.218863   0.174253  0.759898
+CX2_Type1   4.00-3.50 V            0.967    2781        3   0.029118 -8.693201    0.023649  -2.116010   0.550142  0.433011
+CX2_Type2   4.00-3.50 V            0.967     726        1   0.087271 -2.224465    0.035677   0.400499   0.154555  0.777983
+CX2_Type3   4.00-3.50 V            0.967       1        1   0.036713  0.921019    0.102579   0.383394   0.174207  0.759927
+CX2_Type4   4.00-3.50 V            0.967      12        1   0.094042 -1.180570    0.065268  -0.073731   0.174500  0.759721
 ```
 
 ## The window was chosen per fold, on the other cohorts
@@ -50,7 +51,7 @@ be the optimism this project exists to avoid. Each fold's window is
 chosen on the cohorts it does not test on, and `window_chosen`
 records it. A window that moves between folds is itself a result.
 
-The single best window over everything is **4.05-3.40 V**, at MAE **0.0272**. That is the optimistic figure; the
+The single best window over everything is **4.05-3.40 V**, at MAE **0.0283**. That is the optimistic figure; the
 per-fold medians above are the honest ones, and the gap between them
 is what choosing honestly costs.
 
@@ -70,6 +71,7 @@ cell_id    n  slope    bias    mae  spread_soh
   CS2_5    1    NaN     NaN    NaN         NaN
   CS2_6    2    NaN     NaN    NaN         NaN
   CS2_7   51 0.2981  0.6851 0.0203      0.1089
+  CS2_9   77 0.3877  0.5157 0.0916      0.1916
  CX2_16 1123 1.0487 -0.0693 0.0323      0.2062
   CX2_3   12 0.0665  0.9320 0.0930      0.2146
  CX2_33  798 1.1201 -0.1207 0.0148      0.2060

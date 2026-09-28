@@ -272,20 +272,67 @@ def test_a_faded_charge_curve_reads_its_fade():
 # The physical plausibility gate
 # ---------------------------------------------------------------------------
 
+def _shape_shifted_cycle(capacity_ah: float = 1.10, n: int = 400):
+    """Same TOTAL charge, but almost none of it inside the window.
+
+    Charge is delivered steeply outside 3.90-3.60 V and nearly flat across it,
+    so the window reading collapses while the discharge is full length. That
+    separates the shape failure from a truncated cycle, which the partial
+    discharge check catches instead.
+    """
+    voltage = np.linspace(4.15, 2.70, n)
+    frac = np.where(voltage > SPEC.v_high, (4.15 - voltage) / (4.15 - SPEC.v_high) * 0.49,
+           np.where(voltage > SPEC.v_low, 0.49 + (SPEC.v_high - voltage) /
+                    (SPEC.v_high - SPEC.v_low) * 0.02,
+                    0.51 + (SPEC.v_low - voltage) / (SPEC.v_low - 2.70) * 0.49))
+    return voltage, frac * capacity_ah
+
+
 def test_an_implausible_ratio_is_withheld_not_clipped():
     """A value below the floor must vanish, not be rounded into range.
 
     Clipping to MIN_PLAUSIBLE_SOH would put a wrong number inside the band a
     reader expects, which is harder to notice than a missing one.
     """
-    capacities = [1.10] * 5 + [0.20]          # ratio ~0.18, physically absurd
-    curves = _frame({"A": capacities})
-    table = window_soh_table(curves, spec=SPEC, reference_cycles=5)
+    blocks = []
+    for cycle, cap in enumerate([1.10] * 5, start=1):
+        v, q = _curve(cap)
+        blocks.append(pd.DataFrame({"cell_id": "A", "cycle": cycle,
+                                    "voltage_v": v, "capacity_ah_curve": q}))
+    v, q = _shape_shifted_cycle(1.10)          # full discharge, dead window
+    blocks.append(pd.DataFrame({"cell_id": "A", "cycle": 6,
+                                "voltage_v": v, "capacity_ah_curve": q}))
+    table = window_soh_table(pd.concat(blocks, ignore_index=True),
+                             spec=SPEC, reference_cycles=5)
     last = table[table["cycle"] == 6].iloc[0]
+    assert not last["partial_discharge"], "this cycle is full length"
     assert last["implausible"]
     assert np.isnan(last["soh_window_accepted"])
     assert last["soh_window"] < MIN_PLAUSIBLE_SOH   # raw value still inspectable
     assert "scrap" in last["refusal"]
+
+
+def test_a_truncated_cycle_is_refused_as_partial_not_as_fade():
+    """The failure CS2_9 exposed: a cut-short cycle reading as a dead cell."""
+    capacities = [1.10] * 5 + [0.05]
+    curves = _frame({"A": capacities})
+    table = window_soh_table(curves, spec=SPEC, reference_cycles=5)
+    last = table[table["cycle"] == 6].iloc[0]
+    assert last["partial_discharge"]
+    assert np.isnan(last["soh_window"]), (
+        "a truncated cycle must yield no state of health at all"
+    )
+    assert "truncated cycle is not a faded cell" in last["refusal"]
+
+
+def test_real_fade_above_the_floor_is_still_measured():
+    """The partial-discharge check must not swallow genuine degradation."""
+    capacities = [1.10] * 5 + [0.88]           # 80% SOH, the retirement point
+    curves = _frame({"A": capacities})
+    table = window_soh_table(curves, spec=SPEC, reference_cycles=5)
+    last = table[table["cycle"] == 6].iloc[0]
+    assert not last["partial_discharge"]
+    assert last["soh_window_accepted"] == pytest.approx(0.80, rel=0.02)
 
 
 def test_a_healthy_cell_passes_the_gate_untouched():
@@ -303,9 +350,17 @@ def test_a_cell_mostly_implausible_is_refused_entirely():
     The surviving rows would be the early ones, which is exactly where the
     estimator had not yet failed.
     """
-    capacities = [1.10] * 5 + [0.2] * 10
-    curves = _frame({"A": capacities})
-    table = window_soh_table(curves, spec=SPEC, reference_cycles=5)
+    blocks = []
+    for cycle, cap in enumerate([1.10] * 5, start=1):
+        v, q = _curve(cap)
+        blocks.append(pd.DataFrame({"cell_id": "A", "cycle": cycle,
+                                    "voltage_v": v, "capacity_ah_curve": q}))
+    for cycle in range(6, 16):
+        v, q = _shape_shifted_cycle(1.10)
+        blocks.append(pd.DataFrame({"cell_id": "A", "cycle": cycle,
+                                    "voltage_v": v, "capacity_ah_curve": q}))
+    table = window_soh_table(pd.concat(blocks, ignore_index=True),
+                             spec=SPEC, reference_cycles=5)
     assert table["cell_refused"].all()
     assert table["soh_window_accepted"].isna().all()
     assert "whole cell is refused" in table.iloc[-1]["refusal"]
@@ -313,9 +368,21 @@ def test_a_cell_mostly_implausible_is_refused_entirely():
 
 def test_one_bad_cell_does_not_refuse_its_neighbour():
     """The cell-level verdict must be per cell, not pooled across the frame."""
-    curves = _frame({"good": [1.10] * 5 + [1.0] * 5,
-                     "bad": [1.10] * 5 + [0.2] * 10})
-    table = window_soh_table(curves, spec=SPEC, reference_cycles=5)
+    blocks = []
+    for cycle, cap in enumerate([1.10] * 5 + [1.0] * 5, start=1):
+        v, q = _curve(cap)
+        blocks.append(pd.DataFrame({"cell_id": "good", "cycle": cycle,
+                                    "voltage_v": v, "capacity_ah_curve": q}))
+    for cycle, cap in enumerate([1.10] * 5, start=1):
+        v, q = _curve(cap)
+        blocks.append(pd.DataFrame({"cell_id": "bad", "cycle": cycle,
+                                    "voltage_v": v, "capacity_ah_curve": q}))
+    for cycle in range(6, 16):
+        v, q = _shape_shifted_cycle(1.10)
+        blocks.append(pd.DataFrame({"cell_id": "bad", "cycle": cycle,
+                                    "voltage_v": v, "capacity_ah_curve": q}))
+    table = window_soh_table(pd.concat(blocks, ignore_index=True),
+                             spec=SPEC, reference_cycles=5)
     assert not table[table["cell_id"] == "good"]["cell_refused"].any()
     assert table[table["cell_id"] == "bad"]["cell_refused"].all()
 
