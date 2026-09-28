@@ -103,6 +103,28 @@ _ICA_COLUMNS: tuple[str, ...] = (
 # across protocols.
 DISCHARGE_RATE_FRACTION = 0.5
 
+# Two samples belong to the same constant-current run when their currents
+# differ by less than this fraction of the cycle's peak rate.
+#
+# WHY RUNS ARE SPLIT ON RATE, NOT JUST ON SIGN
+# ---------------------------------------------
+# A Q(V) curve means something only at constant current: the terminal voltage
+# under load carries an I*R offset, so stitching two different rates into one
+# curve produces a trace with a step in it that is an artifact of the
+# schedule, not the cell.
+#
+# CALCE CS2 Type 3 is the case that forces this. `io/calce_full_discharge.py`
+# records it: "Type 3 switches discharge rate six times within a cycle." An
+# extractor that takes the longest run above a rate threshold straddles those
+# segments, and the resulting curve is not a discharge curve of anything. That
+# is what made CS2_3 and CS2_9 the project's worst SOH cells and what made
+# their cycle numbering disagree with the full-discharge frame's.
+#
+# Splitting on rate change also makes the run's own current available, which
+# is what `health/voltage_window.py` needs for ohmic compensation - so the
+# offset no longer has to be joined in from a separate frame.
+RATE_CHANGE_TOLERANCE = 0.15
+
 # Below this many points a segment is refused rather than interpolated. The
 # floor matches `delta_q_variance_feature`, which returns NaN under 50 usable
 # grid points; accepting a 12-point segment here would push a curve that
@@ -214,6 +236,46 @@ def _longest_discharge_run(mask: np.ndarray) -> slice | None:
     return slice(best_start, best_start + best_len)
 
 
+def _longest_constant_current_run(
+    magnitude: np.ndarray,
+    eligible: np.ndarray,
+    tolerance: float,
+) -> slice | None:
+    """Longest contiguous run that is eligible AND at one steady rate.
+
+    `magnitude` is the current with the phase's sign removed, so it is
+    positive while the cell is doing the thing we are measuring. A run ends
+    where the rate steps by more than `tolerance` of the cycle's peak, which
+    is what separates CALCE Type 3's six rates inside one cycle.
+
+    Taking the longest such run is a choice: a cycle holding two comparable
+    constant-rate discharges contributes only its longer one.
+    """
+    if not eligible.any():
+        return None
+    peak = float(np.nanmax(np.abs(magnitude[eligible])))
+    if not np.isfinite(peak) or peak <= 0:
+        return None
+    step = tolerance * peak
+
+    best_start = best_len = 0
+    start = -1
+    for i, ok in enumerate(eligible):
+        if not ok:
+            start = -1
+            continue
+        if start < 0:
+            start = i
+        elif abs(magnitude[i] - magnitude[i - 1]) > step:
+            # Rate stepped: close the previous run and open a new one here.
+            if i - start > best_len:
+                best_start, best_len = start, i - start
+            start = i
+        if i - start + 1 > best_len:
+            best_start, best_len = start, i - start + 1
+    return slice(best_start, best_start + best_len) if best_len else None
+
+
 def extract_discharge_curves(
     telemetry: pd.DataFrame,
     rate_fraction: float = DISCHARGE_RATE_FRACTION,
@@ -295,9 +357,11 @@ def extract_discharge_curves(
                 continue
             at_rate = (current * sign) >= (rate_fraction * median_rate)
 
-            span = _longest_discharge_run(at_rate)
+            span = _longest_constant_current_run(
+                current * sign, at_rate, RATE_CHANGE_TOLERANCE
+            )
             if span is None:
-                refusals[f"no contiguous {phase} segment at rate"] += 1
+                refusals[f"no contiguous constant-current {phase} run"] += 1
                 continue
 
             segment = rows.iloc[span]
@@ -324,9 +388,13 @@ def extract_discharge_curves(
                 refusals[f"voltage span under {MIN_VOLTAGE_SPAN_V} V"] += 1
                 continue
 
+            run_current = float(np.median(
+                pd.to_numeric(segment["current_a"], errors="coerce")
+            ))
             piece = pd.DataFrame({
                 "cell_id": cell_id,
                 "cycle": int(cycle),
+                "run_current_a": run_current,
                 "voltage_v": voltage,
                 # Re-zero the accumulating counter. See the module docstring.
                 "capacity_ah_curve": capacity - capacity.min(),
