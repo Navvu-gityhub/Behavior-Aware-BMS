@@ -210,12 +210,24 @@ Ordered by evidential value per unit of work, not by appeal.
    resting voltage" into a measured discharge, coulomb-counted, with a real
    C-rate and a segmented phase. It is an afternoon and it is the cheapest
    evidence available.
-2. **Wire the two estimators into the scoring path.** They are library modules
-   with study scripts today; `compute_rul` still ships a hand-picked weighting
-   times an unvalidated `base_cycle_life = 1000`.
-3. **A second chemistry.** Every transfer statement here is within one LCO
-   family. LFP would test whether the window method's construction is as
-   chemistry-agnostic as claimed, since the plateau sits differently.
+2. **Wire the two estimators into the scoring path.** Partly done. `compute_rul`
+   still ships the hand-picked weighting times `base_cycle_life = 1000`, because
+   the telemetry pipeline hands it a per-battery SUMMARY and fade extrapolation
+   needs a per-cycle state-of-health history that a summary does not carry.
+   What is closed is the silence: every RUL row now carries `rul_method` and
+   `rul_validated`, and the Guardian report says "an UNVALIDATED remaining-life
+   estimate of N cycles" unless the provenance says otherwise. A frame with no
+   provenance is treated as unvalidated, because the safe default for an unknown
+   estimator is not to vouch for it. Replacing the estimator properly means
+   carrying a SOH trajectory through the pipeline, which is a schema change.
+3. **A second chemistry — currently blocked, not merely undone.** Every transfer
+   statement here is within one LCO family. `data/raw/nasa` and
+   `data/raw/stanford` are empty: only CALCE is downloaded, and the NASA source
+   is gitignored and not redistributable. So the cross-chemistry test cannot be
+   run from this checkout at all, which is a data-availability limit rather than
+   an effort one. LFP (Stanford/Severson) is the test worth running, because its
+   plateau sits differently and the window method's construction claims to be
+   chemistry-agnostic.
 4. **Pack-level data, or an explicit scope statement.** Currently the honest
    move is the scope statement.
 5. **Not: another model.** The measurement above says it would not be

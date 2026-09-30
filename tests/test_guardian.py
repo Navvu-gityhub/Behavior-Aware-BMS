@@ -79,20 +79,48 @@ def test_health_index_driven_cause_is_heuristic_not_validated():
     assert out.iloc[0]["evidence_confidence"] == "HEURISTIC"
 
 
-def test_existing_fields_unchanged_by_this_addition():
-    """The evidence fields are additive -- existing consumers of
-    guardian_report/primary_causes/guardian_status/recommendation should
-    see byte-identical output to before this change."""
+def test_an_unvalidated_rul_is_qualified_in_the_report():
+    """A remaining-life figure must not read as measured when it is not.
+
+    `rul_estimation.compute_rul` is a hand-picked weighting times
+    `base_cycle_life = 1000`, a constant no measurement supports. A frame
+    carrying no provenance is treated as unvalidated, because the safe default
+    for an unknown estimator is not to vouch for it.
+    """
     df = pd.DataFrame([_row(avg_temp=40, battery_state="DEGRADED", rul_cycles=250)])
     out = generate_guardian_reports(df)
     row = out.iloc[0]
     assert row["guardian_report"] == (
+        "Battery B1 is in DEGRADED state with an UNVALIDATED remaining-life "
+        "estimate of 250 cycles. Primary degradation factors include high "
+        "temperature exposure. Recommended action: Reduce fast charging and "
+        "monitor temperature"
+    )
+    assert row["guardian_status"] == "Battery performance degradation detected"
+    assert row["recommendation"] == "Reduce fast charging and monitor temperature"
+
+
+def test_a_validated_rul_reads_plainly():
+    """The qualifier must lift when the estimate has been scored."""
+    df = pd.DataFrame([_row(avg_temp=40, battery_state="DEGRADED", rul_cycles=250)])
+    df["rul_validated"] = True
+    out = generate_guardian_reports(df)
+    assert out.iloc[0]["guardian_report"] == (
         "Battery B1 is in DEGRADED state with estimated remaining life of 250 "
         "cycles. Primary degradation factors include high temperature exposure"
         ". Recommended action: Reduce fast charging and monitor temperature"
     )
-    assert row["guardian_status"] == "Battery performance degradation detected"
-    assert row["recommendation"] == "Reduce fast charging and monitor temperature"
+
+
+def test_the_other_evidence_fields_are_untouched_by_the_qualifier():
+    """Only the report sentence changes; consumers of the rest see no shift."""
+    df = pd.DataFrame([_row(avg_temp=40, battery_state="DEGRADED", rul_cycles=250)])
+    plain = generate_guardian_reports(df).iloc[0]
+    df["rul_validated"] = True
+    marked = generate_guardian_reports(df).iloc[0]
+    for field in ("guardian_status", "recommendation", "primary_causes",
+                  "evidence_confidence"):
+        assert plain[field] == marked[field], field
 
 
 def test_missing_required_columns_still_raises():
@@ -107,5 +135,7 @@ if __name__ == "__main__":
     test_mixed_causes_get_mixed_confidence()
     test_no_causes_gets_na_confidence()
     test_health_index_driven_cause_is_heuristic_not_validated()
-    test_existing_fields_unchanged_by_this_addition()
+    test_an_unvalidated_rul_is_qualified_in_the_report()
+    test_a_validated_rul_reads_plainly()
+    test_the_other_evidence_fields_are_untouched_by_the_qualifier()
     print("All guardian evidence-labeling tests passed.")

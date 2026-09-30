@@ -260,10 +260,21 @@ def generate_guardian_reports(
         "No recommendation available"
     )
 
+    # A remaining-life figure from an unvalidated estimator must not read like
+    # a measured one. The qualifier is attached here rather than left to the
+    # caller, because the report is what a non-specialist actually sees.
+    if "rul_validated" in out.columns:
+        life_phrase = out["rul_validated"].map(
+            lambda ok: " state with estimated remaining life of "
+            if ok else " state with an UNVALIDATED remaining-life estimate of "
+        )
+    else:
+        life_phrase = " state with an UNVALIDATED remaining-life estimate of "
+
     out["guardian_report"] = (
         "Battery " + out["battery_id"].astype(str)
         + " is in " + out["battery_state"]
-        + " state with estimated remaining life of " + out["rul_cycles"].astype(int).astype(str)
+        + life_phrase + out["rul_cycles"].astype(int).astype(str)
         + " cycles. Primary degradation factors include " + out["primary_causes"]
         + ". Recommended action: " + out["recommendation"]
     )

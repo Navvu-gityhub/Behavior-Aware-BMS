@@ -28,6 +28,24 @@ from dataclasses import dataclass
 
 import pandas as pd
 
+# How a row's RUL was produced. It travels WITH the number, because the two
+# estimators in this codebase are not interchangeable and a reader cannot tell
+# them apart from the value alone.
+#
+# `eaf_heuristic_unvalidated` is what this module produces: a hand-picked
+# weighting times `base_cycle_life`, a constant no measurement supports. It has
+# never been scored against capacity-fade ground truth, and the docstring above
+# says why that was left standing.
+#
+# `fade_extrapolation` is `rul.fade_extrapolation`, which IS scored: within
+# +/-20 cycles on 88% of estimates made inside 25 cycles of end of life, over
+# 537 estimates across 17 CALCE cells at an end-of-life threshold of 0.90.
+# It needs a per-cycle state-of-health history, which a battery-level summary
+# does not carry - which is the whole reason this module is still wired into
+# the telemetry pipeline.
+METHOD_EAF = "eaf_heuristic_unvalidated"
+METHOD_FADE = "fade_extrapolation"
+
 REQUIRED_COLUMNS = ("health_index", "avg_temp", "deep_discharge_duration", "fast_charge_duration", "remaining_health")
 
 
@@ -77,4 +95,10 @@ def compute_rul(battery: pd.DataFrame, config: RULConfig = RULConfig()) -> pd.Da
     out["estimated_total_cycles"] = config.base_cycle_life / out["equivalent_aging_factor"]
     out["rul_cycles"] = (out["estimated_total_cycles"] * out["remaining_health"] / 100).round().astype(int)
     out["replacement_policy"] = out["rul_cycles"].apply(replacement_policy)
+
+    # Provenance, not decoration. Without it a Guardian report reads the same
+    # whether the number came from a validated estimator or from
+    # `base_cycle_life = 1000`, and the second is what is happening here.
+    out["rul_method"] = METHOD_EAF
+    out["rul_validated"] = False
     return out
