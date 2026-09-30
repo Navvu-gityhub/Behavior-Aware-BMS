@@ -215,6 +215,13 @@ constant-current *charge* curves (worse on four of five cells here, because
 CALCE logs the charge leg sparsely) and rate-induced voltage depression
 (refuted — the failing and working cells run at the same 0.50C).
 
+**→ [`docs/capability_assessment.md`](docs/capability_assessment.md)** is the
+synthesis: what a software layer over a BMS can and cannot do, argued from
+these measurements. Its central number is that the 95% interval on one method's
+LOCO score is 3.66 R² wide while the entire spread between the best and worst
+of 14 methods is 2.06 — so model choice is unresolvable here, while two
+data-conditioning fixes moved worst-case error 5×.
+
 **→ [`reports/metrics/calce_voltage_window/`](reports/metrics/calce_voltage_window/)**
 and **[`calce_rul_horizon/`](reports/metrics/calce_rul_horizon/)** carry the
 per-fold numbers.
