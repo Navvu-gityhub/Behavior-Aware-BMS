@@ -30,6 +30,7 @@ import pytest
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from src.bms.rul.fade_extrapolation import (
+    MAX_HORIZON_RATIO,
     MIN_HISTORY,
     estimate_rul,
     observed_eol,
@@ -191,3 +192,51 @@ def test_error_sign_convention_is_prediction_minus_truth():
     scored = table.dropna(subset=["error"])
     recomputed = scored["rul_pred"] - scored["rul_true"]
     assert np.allclose(scored["error"], recomputed)
+
+
+# ---------------------------------------------------------------------------
+# The horizon bound
+# ---------------------------------------------------------------------------
+
+def test_an_estimate_reaching_far_beyond_its_history_is_refused():
+    """The NASA failure: a nearly-flat early trend solves for a distant EOL.
+
+    The arithmetic is sound and the slope is finite, so MIN_SLOPE does not
+    catch it. What is wrong is that the estimate reaches further ahead than
+    the data behind it can see.
+    """
+    cycles = np.arange(1, 81, dtype=float)
+    soh = 1.00 - 0.00005 * cycles          # 0.90 is ~2000 cycles away
+    est = estimate_rul(cycles, soh, at_cycle=80, threshold=THRESHOLD)
+    assert np.isnan(est.rul_cycles)
+    assert "cannot see that far" in est.refusal
+
+
+def test_a_near_term_estimate_on_the_same_history_is_kept():
+    """The bound must not refuse an estimate the history does support."""
+    cycles = np.arange(1, 201, dtype=float)
+    soh = 1.00 - 0.0005 * cycles           # crosses 0.90 at cycle 200
+    est = estimate_rul(cycles, soh, at_cycle=150, threshold=THRESHOLD)
+    assert est.refusal == ""
+    assert est.rul_cycles == pytest.approx(50, abs=10)
+
+
+def test_the_bound_scales_with_available_history():
+    """Twice the history should permit roughly twice the reach."""
+    slope = 0.0001                          # crosses 0.90 at cycle 1000
+    short_c = np.arange(1, 101, dtype=float)
+    long_c = np.arange(1, 401, dtype=float)
+    short = estimate_rul(short_c, 1.00 - slope * short_c, 100, THRESHOLD)
+    long = estimate_rul(long_c, 1.00 - slope * long_c, 400, THRESHOLD)
+    assert np.isnan(short.rul_cycles), "99 cycles cannot see 900 ahead"
+    assert np.isfinite(long.rul_cycles), "399 cycles can see 600 ahead"
+
+
+def test_the_ratio_is_configurable_and_the_default_is_the_constant():
+    cycles = np.arange(1, 81, dtype=float)
+    soh = 1.00 - 0.00005 * cycles
+    assert MAX_HORIZON_RATIO == 2.0
+    tight = estimate_rul(cycles, soh, 80, THRESHOLD, max_horizon_ratio=0.5)
+    loose = estimate_rul(cycles, soh, 80, THRESHOLD, max_horizon_ratio=100.0)
+    assert np.isnan(tight.rul_cycles)
+    assert np.isfinite(loose.rul_cycles)

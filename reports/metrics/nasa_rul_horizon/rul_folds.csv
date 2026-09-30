@@ -1,0 +1,108 @@
+cell_id,cohort,cycle,rul_pred,rul_true,error,slope_per_cycle,refusal,threshold
+B0005,RT_2A_CC_variedcutoff,30.0,,37.0,,,fewer than 30 cycles of history,0.9
+B0005,RT_2A_CC_variedcutoff,40.0,,27.0,,-0.00048558475407271264,"extrapolation reaches 168 cycles ahead on 37 cycles of history, beyond 2x; the trend cannot see that far",0.9
+B0005,RT_2A_CC_variedcutoff,50.0,74.51401477662988,17.0,57.51401477662988,-0.0008600914966641245,,0.9
+B0005,RT_2A_CC_variedcutoff,60.0,37.62661703987236,7.0,30.626617039872357,-0.0011573668173908331,,0.9
+B0006,RT_2A_CC_variedcutoff,30.0,,11.0,,,fewer than 30 cycles of history,0.9
+B0006,RT_2A_CC_variedcutoff,40.0,7.2796963948490045,1.0,6.2796963948490045,-0.0027500570646328574,,0.9
+B0007,RT_2A_CC_variedcutoff,30.0,,37.0,,,fewer than 30 cycles of history,0.9
+B0007,RT_2A_CC_variedcutoff,40.0,,27.0,,-0.0006009144716740706,"extrapolation reaches 131 cycles ahead on 37 cycles of history, beyond 2x; the trend cannot see that far",0.9
+B0007,RT_2A_CC_variedcutoff,50.0,65.99820708572224,17.0,48.99820708572224,-0.0009297206149046531,,0.9
+B0007,RT_2A_CC_variedcutoff,60.0,32.04839159240109,7.0,25.04839159240109,-0.001237870467307563,,0.9
+B0018,RT_2A_CC_variedcutoff,30.0,,9.0,,,fewer than 30 cycles of history,0.9
+B0029,ELEV43C_4A_CC_variedcutoff,,,,,,never crosses SOH 0.9,0.9
+B0030,ELEV43C_4A_CC_variedcutoff,,,,,,never crosses SOH 0.9,0.9
+B0031,ELEV43C_4A_CC_variedcutoff,,,,,,never crosses SOH 0.9,0.9
+B0032,ELEV43C_4A_CC_variedcutoff,30.0,,6.0,,,fewer than 30 cycles of history,0.9
+B0034,RT_CC_mixed_current,30.0,,45.0,,,fewer than 30 cycles of history,0.9
+B0034,RT_CC_mixed_current,40.0,,35.0,,-0.0003254725579896941,"extrapolation reaches 113 cycles ahead on 36 cycles of history, beyond 2x; the trend cannot see that far",0.9
+B0034,RT_CC_mixed_current,50.0,,25.0,,0.000513211076051551,no measurable fade in the recent window; a flat trend extrapolates to an arbitrary end of life,0.9
+B0034,RT_CC_mixed_current,60.0,,15.0,,0.00023374494504357685,no measurable fade in the recent window; a flat trend extrapolates to an arbitrary end of life,0.9
+B0034,RT_CC_mixed_current,70.0,,5.0,,-1.9768534410710246e-06,"extrapolation reaches 23559 cycles ahead on 66 cycles of history, beyond 2x; the trend cannot see that far",0.9
+B0036,RT_CC_mixed_current,30.0,,151.0,,,fewer than 30 cycles of history,0.9
+B0036,RT_CC_mixed_current,40.0,,141.0,,-0.0005543249542054864,"extrapolation reaches 150 cycles ahead on 37 cycles of history, beyond 2x; the trend cannot see that far",0.9
+B0036,RT_CC_mixed_current,50.0,,131.0,,-0.000491020092435183,"extrapolation reaches 162 cycles ahead on 47 cycles of history, beyond 2x; the trend cannot see that far",0.9
+B0036,RT_CC_mixed_current,60.0,,121.0,,-0.0004468713432087223,"extrapolation reaches 171 cycles ahead on 57 cycles of history, beyond 2x; the trend cannot see that far",0.9
+B0036,RT_CC_mixed_current,70.0,,111.0,,-0.00044374935753157987,"extrapolation reaches 162 cycles ahead on 67 cycles of history, beyond 2x; the trend cannot see that far",0.9
+B0036,RT_CC_mixed_current,80.0,143.21305120880484,101.0,42.21305120880484,-0.00046355935803953714,,0.9
+B0036,RT_CC_mixed_current,90.0,110.96568512587064,91.0,19.965685125870635,-0.0005236647414878109,,0.9
+B0036,RT_CC_mixed_current,100.0,92.19568797672233,81.0,11.195687976722326,-0.0005525986957507986,,0.9
+B0036,RT_CC_mixed_current,110.0,77.31017279250432,71.0,6.310172792504318,-0.0005704460069246966,,0.9
+B0036,RT_CC_mixed_current,120.0,62.22019948138387,61.0,1.2201994813838724,-0.0005907631730342715,,0.9
+B0036,RT_CC_mixed_current,130.0,47.216188911494584,51.0,-3.7838110885054164,-0.0006127430249910999,,0.9
+B0036,RT_CC_mixed_current,140.0,40.08612288632574,41.0,-0.9138771136742605,-0.0005995509400629656,,0.9
+B0036,RT_CC_mixed_current,150.0,28.995180746665397,31.0,-2.0048192533346025,-0.0006045894307546916,,0.9
+B0036,RT_CC_mixed_current,160.0,21.114542741422127,21.0,0.11454274142212739,-0.0005942813852162459,,0.9
+B0036,RT_CC_mixed_current,170.0,18.48823732634918,11.0,7.488237326349179,-0.0005611557518984354,,0.9
+B0036,RT_CC_mixed_current,180.0,9.985173245533304,1.0,8.985173245533304,-0.0005546725727458534,,0.9
+B0042,COLD4C_multiload,30.0,,12.0,,,fewer than 30 cycles of history,0.9
+B0042,COLD4C_multiload,40.0,18.99284025299489,2.0,16.99284025299489,-0.0020154995737826304,,0.9
+B0043,COLD4C_multiload,30.0,,11.0,,,fewer than 30 cycles of history,0.9
+B0043,COLD4C_multiload,40.0,2.0102543490422775,1.0,1.0102543490422775,-0.003033979175676269,,0.9
+B0044,COLD4C_multiload,30.0,,6.0,,,fewer than 30 cycles of history,0.9
+B0053,COLD4C_2A,,,,,,never crosses SOH 0.9,0.9
+B0054,COLD4C_2A,30.0,,13.0,,,fewer than 30 cycles of history,0.9
+B0054,COLD4C_2A,40.0,1.0093174681292325,3.0,-1.9906825318707675,-0.002458225205865793,,0.9
+B0055,COLD4C_2A,30.0,,5.0,,,fewer than 30 cycles of history,0.9
+B0056,COLD4C_2A,30.0,,36.0,,,fewer than 30 cycles of history,0.9
+B0056,COLD4C_2A,40.0,6.21819509352202,26.0,-19.78180490647798,-0.0020255962752623426,,0.9
+B0056,COLD4C_2A,50.0,21.759803984245977,16.0,5.759803984245977,-0.001077944300032991,,0.9
+B0056,COLD4C_2A,60.0,25.981142120841398,6.0,19.981142120841398,-0.0008491548106889928,,0.9
+B0005,RT_2A_CC_variedcutoff,30.0,,53.0,,,fewer than 30 cycles of history,0.85
+B0005,RT_2A_CC_variedcutoff,40.0,,43.0,,-0.00048558475407271264,"extrapolation reaches 271 cycles ahead on 37 cycles of history, beyond 2x; the trend cannot see that far",0.85
+B0005,RT_2A_CC_variedcutoff,50.0,,33.0,,-0.0008600914966641245,"extrapolation reaches 133 cycles ahead on 47 cycles of history, beyond 2x; the trend cannot see that far",0.85
+B0005,RT_2A_CC_variedcutoff,60.0,80.8281321072561,23.0,57.828132107256096,-0.0011573668173908331,,0.85
+B0005,RT_2A_CC_variedcutoff,70.0,41.87246155259811,13.0,28.87246155259811,-0.0015351453327721839,,0.85
+B0005,RT_2A_CC_variedcutoff,80.0,17.360075092546467,3.0,14.360075092546467,-0.0018492418354628401,,0.85
+B0006,RT_2A_CC_variedcutoff,30.0,,27.0,,,fewer than 30 cycles of history,0.85
+B0006,RT_2A_CC_variedcutoff,40.0,25.46113729766722,17.0,8.461137297667221,-0.0027500570646328574,,0.85
+B0006,RT_2A_CC_variedcutoff,50.0,12.092068516845146,7.0,5.092068516845146,-0.0029391825805275026,,0.85
+B0007,RT_2A_CC_variedcutoff,30.0,,60.0,,,fewer than 30 cycles of history,0.85
+B0007,RT_2A_CC_variedcutoff,40.0,,50.0,,-0.0006009144716740706,"extrapolation reaches 214 cycles ahead on 37 cycles of history, beyond 2x; the trend cannot see that far",0.85
+B0007,RT_2A_CC_variedcutoff,50.0,,40.0,,-0.0009297206149046531,"extrapolation reaches 120 cycles ahead on 47 cycles of history, beyond 2x; the trend cannot see that far",0.85
+B0007,RT_2A_CC_variedcutoff,60.0,72.44033995898005,30.0,42.44033995898005,-0.001237870467307563,,0.85
+B0007,RT_2A_CC_variedcutoff,70.0,39.58051391893912,20.0,19.58051391893912,-0.0015652008831505125,,0.85
+B0007,RT_2A_CC_variedcutoff,80.0,18.405088147686982,10.0,8.405088147686982,-0.001808122680182892,,0.85
+B0018,RT_2A_CC_variedcutoff,30.0,,34.0,,,fewer than 30 cycles of history,0.85
+B0018,RT_2A_CC_variedcutoff,40.0,15.618343135335437,24.0,-8.381656864664563,-0.0031698624465285818,,0.85
+B0018,RT_2A_CC_variedcutoff,50.0,15.846501417895126,14.0,1.8465014178951265,-0.0024999699712165823,,0.85
+B0018,RT_2A_CC_variedcutoff,60.0,12.29449341872342,4.0,8.29449341872342,-0.0021921232710719863,,0.85
+B0029,ELEV43C_4A_CC_variedcutoff,,,,,,never crosses SOH 0.85,0.85
+B0030,ELEV43C_4A_CC_variedcutoff,,,,,,never crosses SOH 0.85,0.85
+B0031,ELEV43C_4A_CC_variedcutoff,,,,,,never crosses SOH 0.85,0.85
+B0032,ELEV43C_4A_CC_variedcutoff,,,,,,never crosses SOH 0.85,0.85
+B0034,RT_CC_mixed_current,30.0,,118.0,,,fewer than 30 cycles of history,0.85
+B0034,RT_CC_mixed_current,40.0,,108.0,,-0.0003254725579896941,"extrapolation reaches 267 cycles ahead on 36 cycles of history, beyond 2x; the trend cannot see that far",0.85
+B0034,RT_CC_mixed_current,50.0,,98.0,,0.000513211076051551,no measurable fade in the recent window; a flat trend extrapolates to an arbitrary end of life,0.85
+B0034,RT_CC_mixed_current,60.0,,88.0,,0.00023374494504357685,no measurable fade in the recent window; a flat trend extrapolates to an arbitrary end of life,0.85
+B0034,RT_CC_mixed_current,70.0,,78.0,,-1.9768534410710246e-06,"extrapolation reaches 48852 cycles ahead on 66 cycles of history, beyond 2x; the trend cannot see that far",0.85
+B0034,RT_CC_mixed_current,80.0,,68.0,,-0.0004219035138800403,"extrapolation reaches 177 cycles ahead on 76 cycles of history, beyond 2x; the trend cannot see that far",0.85
+B0034,RT_CC_mixed_current,90.0,55.718885986687184,58.0,-2.2811140133128163,-0.0008277303364556773,,0.85
+B0034,RT_CC_mixed_current,100.0,28.07632253068627,48.0,-19.92367746931373,-0.000983004789908142,,0.85
+B0034,RT_CC_mixed_current,110.0,18.530709012660424,38.0,-19.469290987339576,-0.0009776242316739188,,0.85
+B0034,RT_CC_mixed_current,120.0,8.44348886454813,28.0,-19.55651113545187,-0.0009778719096141134,,0.85
+B0034,RT_CC_mixed_current,130.0,0.0,18.0,-18.0,-0.0009658482928234757,fitted trend places end of life at or before now,0.85
+B0034,RT_CC_mixed_current,140.0,0.0,8.0,-8.0,-0.0008945448554739099,fitted trend places end of life at or before now,0.85
+B0036,RT_CC_mixed_current,,,,,,never crosses SOH 0.85,0.85
+B0042,COLD4C_multiload,30.0,,12.0,,,fewer than 30 cycles of history,0.85
+B0042,COLD4C_multiload,40.0,43.80058551396833,2.0,41.80058551396833,-0.0020154995737826304,,0.85
+B0043,COLD4C_multiload,30.0,,12.0,,,fewer than 30 cycles of history,0.85
+B0043,COLD4C_multiload,40.0,18.490261990774073,2.0,16.490261990774073,-0.003033979175676269,,0.85
+B0044,COLD4C_multiload,30.0,,12.0,,,fewer than 30 cycles of history,0.85
+B0044,COLD4C_multiload,40.0,11.109737624882833,2.0,9.109737624882833,-0.0035272446810697645,,0.85
+B0045,COLD4C_1A,30.0,,2.0,,,fewer than 30 cycles of history,0.85
+B0046,COLD4C_1A,30.0,,9.0,,,fewer than 30 cycles of history,0.85
+B0048,COLD4C_1A,30.0,,12.0,,,fewer than 30 cycles of history,0.85
+B0048,COLD4C_1A,40.0,0.0,2.0,-2.0,-0.004258617878184968,fitted trend places end of life at or before now,0.85
+B0053,COLD4C_2A,,,,,,never crosses SOH 0.85,0.85
+B0054,COLD4C_2A,30.0,,42.0,,,fewer than 30 cycles of history,0.85
+B0054,COLD4C_2A,40.0,21.349195149267047,32.0,-10.650804850732953,-0.002458225205865793,,0.85
+B0054,COLD4C_2A,50.0,20.96548846210159,22.0,-1.0345115378984104,-0.0020152340539143746,,0.85
+B0054,COLD4C_2A,60.0,10.056470948142263,12.0,-1.9435290518577375,-0.0020496151747923536,,0.85
+B0054,COLD4C_2A,70.0,0.0,2.0,-2.0,-0.0020733510243629016,fitted trend places end of life at or before now,0.85
+B0055,COLD4C_2A,30.0,,48.0,,,fewer than 30 cycles of history,0.85
+B0055,COLD4C_2A,40.0,11.396558839918988,38.0,-26.60344116008101,-0.0027520464631897875,,0.85
+B0055,COLD4C_2A,50.0,15.051704725630415,28.0,-12.948295274369585,-0.0019587390084006445,,0.85
+B0055,COLD4C_2A,60.0,11.625832856833355,18.0,-6.374167143166645,-0.0017078922695929314,,0.85
+B0055,COLD4C_2A,70.0,0.5653755661366375,8.0,-7.4346244338633625,-0.0017438299201570672,,0.85
+B0056,COLD4C_2A,,,,,,never crosses SOH 0.85,0.85

@@ -98,6 +98,29 @@ DEFAULT_SMOOTH = 11
 # noisy readings is a number, not a trend.
 MIN_HISTORY = 30
 
+# An estimate may not reach further ahead than this multiple of the history it
+# was fitted on.
+#
+# WHY A HORIZON BOUND, AND HOW IT WAS FOUND
+# ------------------------------------------
+# A trend fitted to a nearly-flat early trajectory solves for an end of life
+# arbitrarily far away: at 1e-5 SOH per cycle a cell "reaches" 0.90 some ten
+# thousand cycles out. `MIN_SLOPE` alone does not catch that, because the slope
+# is finite and the arithmetic is sound - the estimate is simply reaching
+# further than the evidence can see.
+#
+# CALCE hid this. Its cells run 500-1700 cycles, so by the time an estimate is
+# issued there is enough history for the slope to be real. Running the same
+# estimator on NASA, whose cells average about 79 cycles, produced a median
+# absolute error of 13 cycles alongside a MEAN of 1,699 - the signature of a
+# few estimates reaching into the tens of thousands.
+#
+# So: an extrapolation that reaches more than twice as far as the data behind
+# it is refused rather than reported. Two is a judgement, not a measurement;
+# what is measured is that some bound is needed, and that it is the tail rather
+# than the median that needs it.
+MAX_HORIZON_RATIO = 2.0
+
 # A fade slope flatter than this is treated as no measurable fade rather than
 # extrapolated. At 1e-6 SOH per cycle a cell would take 100,000 cycles to lose
 # 10%, so the estimate is meaningless long before it is wrong.
@@ -144,6 +167,7 @@ def estimate_rul(
     window: int | None = DEFAULT_WINDOW,
     smooth: int = DEFAULT_SMOOTH,
     min_history: int = MIN_HISTORY,
+    max_horizon_ratio: float = MAX_HORIZON_RATIO,
 ) -> RULEstimate:
     """RUL at `at_cycle`, using only this cell's history up to that cycle.
 
@@ -185,7 +209,17 @@ def estimate_rul(
         return RULEstimate(at_cycle, 0.0, float(eol), float(slope), len(x),
                            "fitted trend places end of life at or before now")
 
-    return RULEstimate(at_cycle, float(eol - at_cycle), float(eol),
+    horizon = eol - at_cycle
+    observed = float(x[-1] - x[0]) if len(x) > 1 else 0.0
+    if observed > 0 and horizon > max_horizon_ratio * observed:
+        return RULEstimate(
+            at_cycle, float("nan"), float(eol), float(slope), len(x),
+            f"extrapolation reaches {horizon:.0f} cycles ahead on "
+            f"{observed:.0f} cycles of history, beyond "
+            f"{max_horizon_ratio:g}x; the trend cannot see that far",
+        )
+
+    return RULEstimate(at_cycle, float(horizon), float(eol),
                        float(slope), len(x))
 
 
@@ -196,6 +230,7 @@ def rul_error_table(
     smooth: int = DEFAULT_SMOOTH,
     stride: int = 25,
     min_history: int = MIN_HISTORY,
+    max_horizon_ratio: float = MAX_HORIZON_RATIO,
 ) -> pd.DataFrame:
     """Score RUL estimates along every cell's life.
 
@@ -230,7 +265,7 @@ def rul_error_table(
 
         for at in range(int(min_history), int(true_eol), stride):
             est = estimate_rul(cycles, soh, at, threshold, window, smooth,
-                               min_history)
+                               min_history, max_horizon_ratio)
             rows.append({
                 "cell_id": cell_id,
                 "cohort": cohort,
