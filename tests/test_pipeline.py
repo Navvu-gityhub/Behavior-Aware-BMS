@@ -18,7 +18,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 import pandas as pd
 
 from main import run_pipeline
-from src.bms.dashboard.dashboard import build_dashboard
+from src.bms.dashboard.beacon import build_beacon_dashboard
 from src.bms.features.behavior_features import add_age_features, compute_behavior_flags
 from src.bms.health.health_index import compute_health_index
 from src.bms.risk.stress_score import RiskThresholds, compute_risk_assessment, compute_stress_score
@@ -44,7 +44,7 @@ def test_pipeline_end_to_end_runs_and_produces_valid_ranges():
         assert set(guardian["risk_level"]) <= {"LOW", "MEDIUM", "HIGH", "CRITICAL"}
         assert (out_dir / "battery_guardian_output_v1.csv").exists()
 
-        dash_path = build_dashboard(guardian, Path(tmp) / "dashboard.html")
+        dash_path = build_beacon_dashboard(guardian, Path(tmp) / "dashboard.html")
         assert dash_path.exists()
         assert dash_path.stat().st_size > 1000
 

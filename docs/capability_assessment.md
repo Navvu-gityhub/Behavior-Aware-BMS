@@ -32,6 +32,7 @@ measured on the same cells against the same ground truth:
 |---|---|
 | Rejecting truncated discharges that were being read as capacity fade | worst cell **0.523 → 0.105** (5×) |
 | Compensating terminal voltage for ohmic sag at 1.23C | **0.068 → 0.035** median on high-rate cells (2×) |
+| Estimating resistance from the load step, from field telemetry only | cells measured **12 → 17**, median **4.3% → 1.7%** |
 | Choosing a different model | indistinguishable from zero |
 
 That asymmetry is the assessment. **What you measure, and how you condition it,
@@ -165,12 +166,29 @@ distinguish from zero.
 
 | estimator | result | scope |
 |---|---|---|
-| SOH from charge in a fixed voltage window | ~3% median error | cells passing both gates; needs one reference measurement of that cell when new |
-| RUL by extrapolating that cell's own fade trend | within ±20 cycles, 88% | inside 25 cycles of end of life; validated at 0.90, **not** at the 0.80 convention |
+| SOH from charge in a fixed voltage window, from voltage, current and time only | 1.7% median error (95% CI 1.4–4.3%), worst 10.3% | 17 of 22 CALCE cells; needs a reference formed within 20 equivalent full cycles of new |
+| RUL by extrapolating that cell's own fade trend | within ±20 cycles, 73% | inside 25 cycles of end of life, against the cell's own first cycles; validated at 0.90, **not** at the 0.80 convention |
 
-Both survive partial discharge, which is what a vehicle actually produces — a
-car never runs 100% to 0%, which is the reason SOH is estimated rather than
-measured in the field at all.
+The SOH row is the **field** configuration (`calce_field_soh/`): the pipeline
+segments the discharges itself and estimates resistance from the
+rest-to-load voltage step, where the earlier study read the cycler's
+resistance column. That is data conditioning again, and it is again where the
+gain was — with no correction 12 cells measure at 4.3%; with the step
+estimate 17 cells measure at 1.7%.
+
+**Superseded figures.** The earlier ~3% SOH and 88% RUL were scored against a
+reference capacity taken from each cell's whole life, which uses the future
+and is not available to a BMS. They stay in `calce_voltage_window/` and
+`calce_rul_horizon/` as what they were; the field-realisable numbers are the
+ones above.
+
+**Partial discharge is not yet shown.** Cut to 85%→15% state of charge, the
+primary window cannot be read at ~1C once the ohmic shift is applied, and the
+gates refuse 18 of 21 cells. Before the reference-timing gate existed, the
+same arm reported 58% error on CS2_38 while looking confident — the failure
+the gate now converts into a refusal. A window inside the used range
+(4.00–3.80 V) measured 8 cells at 4.0%, labelled exploratory because it was
+chosen after seeing that result.
 
 ### 4.4 Scoping claims so they survive being checked
 
@@ -248,7 +266,15 @@ Ordered by evidential value per unit of work, not by appeal.
    cannot read as a validated cell result. Nothing stops a pack being scored -
    the stages run identically - but the answer now carries the fact that every
    coefficient behind it was established on single cells.
-5. **Not: another model.** The measurement above says it would not be
+5. **Done: measured health reaches the user.** Field SOH and RUL run inside
+   `score_telemetry_frame` before and independently of the behaviour scoring,
+   set `battery_state` when the log starts at beginning of life, and feed a
+   five-section report card (`scripts/health_report.py`) in which every line
+   is labelled measured, estimate, or unconfirmed guidance.
+6. **A window that partial discharges can read.** The exploratory 4.00–3.80 V
+   result is a hypothesis; it needs a dataset of genuine partial cycles, not
+   truncated full ones, to become a claim.
+7. **Not: another model.** The measurement above says it would not be
    detectable.
 
 ---

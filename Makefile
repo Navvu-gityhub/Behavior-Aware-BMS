@@ -1,5 +1,5 @@
 .PHONY: install install-dev pipeline api test test-fast lint format typecheck check \
-        study coverage-study audit docker docker-up smoke-day3 clean-day3 \
+        study coverage-study audit docker docker-up \
         serial-demo serial-ports serial-capture serial-fixture \
         hardware-check firmware-compile validate validate-quick \
         calce-full-discharge calce-study-full-discharge calce-study-baseline
@@ -159,8 +159,3 @@ docker:
 docker-up:
 	docker compose up
 
-smoke-day3:
-	python tests/smoke_day3.py
-
-clean-day3:
-	rm -rf data/raw data/interim data/processed logs
