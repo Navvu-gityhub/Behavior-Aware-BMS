@@ -72,9 +72,24 @@ def main() -> int:
     parser.add_argument("--data", type=Path, default=DEFAULT_DATA)
     parser.add_argument("--out", type=Path, default=DEFAULT_OUT)
     parser.add_argument("--stride", type=int, default=10)
+    parser.add_argument(
+        "--reference", choices=("lifetime", "early"), default="lifetime",
+        help="lifetime: SOH against the 95th-percentile capacity over the "
+             "cell's whole record (add_targets; uses the future, so a BMS "
+             "cannot have it). early: against the median of the cell's first "
+             "5 cycles, which is what a BMS does have and what the pipeline "
+             "uses.")
     args = parser.parse_args()
 
     frame = add_targets(pd.read_csv(args.data))
+    if args.reference == "early":
+        # Same screened cells, same rows; only the denominator changes. The
+        # estimate and the truth both use it, so the comparison stays like
+        # for like.
+        frame = frame[frame["soh"].notna()].sort_values(["cell_id", "cycle"])
+        early = frame.groupby("cell_id")["capacity_ah"].transform(
+            lambda c: c.head(5).median())
+        frame["soh"] = frame["capacity_ah"] / early
     frame = frame[frame["soh"].notna()][
         ["cell_id", "cycle", "soh", "cohort"]].copy()
     print(f"{len(frame)} rows, {frame['cell_id'].nunique()} cells, "

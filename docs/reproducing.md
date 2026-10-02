@@ -109,6 +109,27 @@ Each carries its own terms; see the dataset's own repository. Raw archives are
 gitignored. `scripts/run_validation_suite.py` detects their absence and
 **skips** the stages that need them with a stated reason, rather than failing.
 
+With CALCE in `data/raw/calce/` (one `.zip` per cell, under `CS2/TypeN/` and
+`CX2/TypeN/`), two more things run:
+
+```bash
+# A real cell's health report card, as it would have read at cycle 90,
+# followed by what the lab actually measured afterwards.
+python scripts/health_report.py --calce data/raw/calce/CS2/Type2/CS2_35.zip --upto-cycle 90
+
+# Field SOH validated on every CALCE cell: voltage, current and time only.
+# The first run reads each archive (slow - about 2.4 GB) and caches it under
+# data/interim/calce_telemetry/; later runs take minutes.
+python scripts/run_field_soh_study.py
+```
+
+Without CALCE, the report card still runs on a bench capture, and refuses
+correctly because the cell was never discharged:
+
+```bash
+python scripts/health_report.py --serial data/interim/rig_stage_b_voltage_verified.txt
+```
+
 ---
 
 ## 5. What reproduces, and what does not

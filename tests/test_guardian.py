@@ -139,3 +139,38 @@ if __name__ == "__main__":
     test_a_validated_rul_reads_plainly()
     test_the_other_evidence_fields_are_untouched_by_the_qualifier()
     print("All guardian evidence-labeling tests passed.")
+
+
+# ---------------------------------------------------------------------------
+# Measured state, heat advice, and labelled general guidance
+# ---------------------------------------------------------------------------
+
+def test_a_measured_state_gets_a_measured_recommendation():
+    df = pd.DataFrame([_row(avg_temp=25, battery_state="DEGRADED", rul_cycles=40)])
+    df["state_basis"] = "measured_soh"
+    df["soh_measured"] = 0.87
+    df["rul_validated"] = True
+    row = generate_guardian_reports(df).iloc[0]
+    assert row["recommendation"].startswith("Below 90% of original capacity")
+    assert "MEASURED state of health of 87%" in row["guardian_report"]
+    assert "UNVALIDATED" not in row["guardian_report"]
+
+
+def test_a_heuristic_state_keeps_its_labelled_recommendation():
+    df = pd.DataFrame([_row(avg_temp=25, battery_state="DEGRADED", rul_cycles=40)])
+    df["state_basis"] = "heuristic_index"
+    row = generate_guardian_reports(df).iloc[0]
+    assert row["recommendation"] == "Reduce fast charging and monitor temperature"
+
+
+def test_heat_advice_names_the_temperature_and_gives_no_invented_figure():
+    hot = generate_guardian_reports(pd.DataFrame([_row(avg_temp=41.0)])).iloc[0]
+    assert "41.0 °C" in hot["heat_advice"]
+    assert "no figure is given" in hot["heat_advice"]
+    cool = generate_guardian_reports(pd.DataFrame([_row(avg_temp=24.0)])).iloc[0]
+    assert "not flagged" in cool["heat_advice"]
+
+
+def test_general_guidance_is_labelled_unconfirmed():
+    row = generate_guardian_reports(pd.DataFrame([_row()])).iloc[0]
+    assert "NOT confirmed by this project's data" in row["general_guidance"]

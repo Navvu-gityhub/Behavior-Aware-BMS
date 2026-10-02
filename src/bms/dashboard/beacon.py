@@ -358,6 +358,11 @@ function renderGuardian(b){
           <path d="M12 3v4M8 3.5h8"/><circle cx="9.5" cy="13" r="1.5" fill="#67e8f9"/>
           <circle cx="14.5" cy="13" r="1.5" fill="#67e8f9"/></svg></div>
         <div class="bubble">${esc(b.guardian_report)}</div></div>
+      <div class="sub">${b.state_basis === "measured_soh" && b.soh_measured != null
+        ? "State from MEASURED state of health: " + b.soh_measured.toFixed(1) + "%"
+        : "State from the heuristic health index - not a measurement"}</div>
+      ${b.heat_advice ? `<div class="sub"><b>Heat:</b> ${esc(b.heat_advice)}</div>` : ""}
+      ${b.general_guidance ? `<div class="sub">${esc(b.general_guidance)}</div>` : ""}
       <div>
         <h3 style="margin-bottom:10px">Contribution to health index</h3>
         ${attributionBars(b.health_attribution)}</div>

@@ -36,6 +36,15 @@ calibrated fade prediction.
 The last one is the point of the whole exercise. Wiring a model the gate rejected
 into a live dashboard, where it would look authoritative, is precisely the
 failure this project was built to prevent.
+
+What is measured rather than scored
+-----------------------------------
+SOH from the voltage window (`health/field_soh.py`) and RUL from the fade trend
+(`rul/fade_extrapolation.py`) need voltage, current and time and nothing else.
+They run before the behaviour scoring and survive its refusals, so a log with
+no temperature channel still gets its capacity fade measured. Where measured
+SOH exists and the log starts at beginning of life, it - not the heuristic
+index - sets `battery_state`, and `state_basis` says which did.
 """
 
 from __future__ import annotations
@@ -53,7 +62,14 @@ import pandas as pd
 # imported here - and duplicating its value would put the same assumption in
 # two files that could then disagree.
 from src.bms.features.behavior_features import DEFAULT_RATED_CAPACITY_AH
+from src.bms.health.field_soh import FieldSOH, current_field_soh, state_from_soh
+from src.bms.rul.fade_extrapolation import (
+    DEFAULT_EOL_THRESHOLD,
+    RULEstimate,
+    rul_from_cycle_capacity,
+)
 from src.bms.telemetry.cycles import (
+    REST_THRESHOLD_A,
     CapacityYield,
     CycleMeasurement,
     capacity_yield,
@@ -96,6 +112,14 @@ class TelemetryResult:
     yield_summary: CapacityYield | None = None
     refusals: tuple[str, ...] = ()
     stages_completed: tuple[str, ...] = ()
+    # Measured health, computed from voltage, current and time alone. These do
+    # not depend on the behaviour scoring and survive its refusal: a log with no
+    # temperature channel cannot be scored for heat stress, but its capacity
+    # fade is still measurable, and discarding it would throw away the one
+    # validated result the log can support.
+    field_soh: FieldSOH | None = None
+    rul_estimate: RULEstimate | None = None
+    soh_reference: str = "start_of_log"
 
     @property
     def scored(self) -> bool:
@@ -117,6 +141,24 @@ class TelemetryResult:
             lines.append(f"  signal coverage: {self.coverage.status}")
             for channel in self.coverage.missing_channels:
                 lines.append(f"    missing: {channel}")
+        if self.field_soh is not None:
+            if self.field_soh.available:
+                lines.append(
+                    f"  measured SOH: {self.field_soh.soh:.1%} at discharge "
+                    f"{self.field_soh.at_cycle} ({self.field_soh.window} window, "
+                    f"{self.field_soh.n_accepted}/{self.field_soh.n_discharges} "
+                    f"discharges usable, reference: {self.soh_reference})"
+                )
+            else:
+                lines.append(f"  measured SOH: not available - {self.field_soh.refusal}")
+        if self.rul_estimate is not None:
+            if math.isfinite(self.rul_estimate.rul_cycles):
+                lines.append(
+                    f"  remaining life: {self.rul_estimate.rul_cycles:.0f} cycles "
+                    f"to SOH {DEFAULT_EOL_THRESHOLD:.2f} (fade extrapolation)"
+                )
+            else:
+                lines.append(f"  remaining life: not available - {self.rul_estimate.refusal}")
         if self.twin is not None:
             lines.append("  " + self.twin.render().replace("\n", "\n  "))
         for refusal in self.refusals:
@@ -254,6 +296,8 @@ def score_telemetry_frame(
     stages: list[str] | None = None,
     rated_capacity_ah: float | None = DEFAULT_RATED_CAPACITY_AH,
     unit: str = "cell",
+    rest_threshold_a: float = REST_THRESHOLD_A,
+    reference_is_beginning_of_life: bool = False,
 ) -> TelemetryResult:
     """Score a unified-schema telemetry frame through the existing stages.
 
@@ -283,28 +327,53 @@ def score_telemetry_frame(
     carries no equivalent declaration and giving it one is separate work. That
     asymmetry is recorded rather than papered over - see
     `DEFAULT_RATED_CAPACITY_AH`.
+
+    Measured health - SOH from the voltage window, RUL from the fade trend -
+    is computed before and independently of the behaviour scoring, from
+    voltage, current and time alone. It survives a scoring refusal.
+
+    `reference_is_beginning_of_life` says whether this log starts when the
+    cell was new. Measured SOH is always relative to the log's first
+    discharges; only when those ARE beginning of life is it state of health,
+    and only then does it set `battery_state`. Otherwise it is reported as
+    fade since logging began and the state stays on the labelled heuristic.
+    `False` is the default because a replayed bench capture is almost never
+    of a new cell, and claiming otherwise would read an old cell as healthy.
     """
     refusals = list(refusals or [])
     stages = list(stages or [])
 
-    measurements = measure_cycles(telemetry, cell_id=cell_id)
+    measurements = measure_cycles(
+        telemetry, cell_id=cell_id, rest_threshold_a=rest_threshold_a)
     summary = capacity_yield(measurements)
     stages.append("segment_cycles")
 
+    soh_reference = (
+        "beginning_of_life" if reference_is_beginning_of_life else "start_of_log")
+    field_soh = _measure_field_soh(
+        telemetry, measurements, cell_id, rest_threshold_a)
+    if field_soh.available:
+        stages.append("measure_soh")
+
     cycles = cycles_to_frame(measurements, complete_only=True)
+    rul_estimate = rul_from_cycle_capacity(cycles) if not cycles.empty else None
     if cycles.empty:
         refusals.append(
             "No complete discharge cycle found, so no capacity measurement is "
             "available and SOH cannot be computed. "
             + summary.render()
             + " Capacity is only comparable across equal depths of discharge, "
-            "so partial cycles are excluded rather than scaled."
+            "so partial cycles are excluded from the capacity trend rather than "
+            "scaled. (Measured SOH from the voltage window does use partial "
+            "discharges that cross the window; see field_soh.)"
         )
         return TelemetryResult(
             source=source_name, n_frames=n_frames, n_decoded=n_decoded,
             coverage=coverage, telemetry=telemetry,
             measurements=tuple(measurements), yield_summary=summary,
             refusals=tuple(refusals), stages_completed=tuple(stages),
+            field_soh=field_soh, rul_estimate=rul_estimate,
+            soh_reference=soh_reference,
         )
 
     # The two things the scoring stage needs and cannot substitute for: the
@@ -333,7 +402,9 @@ def score_telemetry_frame(
     else:
         try:
             guardian = _score_cycles(
-                telemetry, cycles, cell_id, rated_capacity_ah=rated_capacity_ah
+                telemetry, cycles, cell_id, rated_capacity_ah=rated_capacity_ah,
+                field_soh=field_soh, rul_estimate=rul_estimate,
+                soh_reference=soh_reference,
             )
             # Scope travels with the answer. Every coefficient and threshold in
             # the stages above was established on single cells; a pack is not a
@@ -370,7 +441,31 @@ def score_telemetry_frame(
         measurements=tuple(measurements), guardian=guardian,
         twin=twin_update, yield_summary=summary, refusals=tuple(refusals),
         stages_completed=tuple(stages),
+        field_soh=field_soh, rul_estimate=rul_estimate,
+        soh_reference=soh_reference,
     )
+
+
+def _measure_field_soh(
+    telemetry: pd.DataFrame,
+    measurements: list[CycleMeasurement],
+    cell_id: str,
+    rest_threshold_a: float,
+) -> FieldSOH:
+    """Window SOH over EVERY discharge, partial ones included.
+
+    The capacity path excludes partial discharges because their total charge
+    is not comparable. The window does not need the total: a partial that
+    crosses the window is a full measurement of the window. That difference is
+    why this estimator exists, so it is given all of them, and its own gates
+    decide which are usable.
+    """
+    discharges = cycles_to_frame(measurements, complete_only=False)
+    try:
+        return current_field_soh(telemetry, discharges, cell_id, rest_threshold_a)
+    except ValueError as exc:
+        return FieldSOH(float("nan"), None, 0, len(discharges), True, "",
+                        refusal=str(exc))
 
 
 def _score_cycles(
@@ -378,6 +473,9 @@ def _score_cycles(
     cycles: pd.DataFrame,
     cell_id: str,
     rated_capacity_ah: float = DEFAULT_RATED_CAPACITY_AH,
+    field_soh: FieldSOH | None = None,
+    rul_estimate: RULEstimate | None = None,
+    soh_reference: str = "start_of_log",
 ) -> pd.DataFrame:
     """Delegate to the existing scoring stages, in the order `main.py` uses.
 
@@ -432,10 +530,12 @@ def _score_cycles(
     # rather than blanking the field: a short bench capture legitimately
     # cannot support an extrapolation, and the caller is better served by a
     # marked estimate than by nothing.
-    from src.bms.rul.fade_extrapolation import rul_from_cycle_capacity
     from src.bms.rul.rul_estimation import METHOD_FADE
 
-    validated = rul_from_cycle_capacity(cycles)
+    validated = (
+        rul_estimate if rul_estimate is not None
+        else rul_from_cycle_capacity(cycles)
+    )
     if math.isfinite(validated.rul_cycles):
         scored["rul_cycles"] = int(round(validated.rul_cycles))
         scored["estimated_total_cycles"] = float(validated.eol_cycle)
@@ -448,7 +548,30 @@ def _score_cycles(
     else:
         scored["rul_refusal"] = validated.refusal
 
+    _attach_measured_state(scored, field_soh, soh_reference)
     return generate_guardian_reports(scored)
+
+
+def _attach_measured_state(
+    scored: pd.DataFrame, field_soh: FieldSOH | None, soh_reference: str
+) -> None:
+    """Put measured SOH beside the heuristic, and let it decide state when it can.
+
+    The heuristic health index is kept in its own column either way - it is
+    still what the attribution explains - but `battery_state` is what a
+    reader acts on, so it comes from a measurement whenever one exists and its
+    reference is the cell's beginning of life. `state_basis` records which.
+    """
+    measured = field_soh is not None and field_soh.available
+    scored["soh_measured"] = field_soh.soh if measured else float("nan")
+    scored["soh_reference"] = soh_reference
+    scored["soh_refusal"] = (
+        "" if measured else (field_soh.refusal if field_soh is not None else
+                             "measured SOH was not computed"))
+    scored["state_basis"] = "heuristic_index"
+    if measured and soh_reference == "beginning_of_life":
+        scored["battery_state"] = state_from_soh(field_soh.soh)
+        scored["state_basis"] = "measured_soh"
 
 
 def _attach_cycle_index(

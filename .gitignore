@@ -120,3 +120,4 @@ build/
 
 # Cached curve frames: regenerable from data/raw, large, per-cell
 data/interim/calce_curves/
+data/interim/calce_telemetry/

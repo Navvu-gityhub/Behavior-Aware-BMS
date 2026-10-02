@@ -1,0 +1,412 @@
+"""State of health from raw field telemetry: voltage, current, time - nothing else.
+
+WHY THIS EXISTS
+---------------
+`voltage_window.py` validated an estimator on curve frames built by the CALCE
+loader, compensated with a resistance column the Arbin cycler measured. A
+vehicle BMS has neither. It has a stream of voltage, current and time, and it
+has to find the discharges, build the curves and know its own resistance from
+that stream alone.
+
+This module closes that gap. It turns a unified-schema telemetry frame and the
+discharge phases `telemetry.cycles` already segments into exactly the inputs
+`window_soh_table` takes, so the field path and the validated path share every
+line of the estimator itself.
+
+RESISTANCE FROM THE LOAD STEP
+-----------------------------
+The ohmic correction needs the voltage sag under load. A cycler reports a
+resistance; a BMS has to infer it. It can, from the one event every discharge
+starts with: current stepping from rest to load. The voltage falls at that
+step, and
+
+    R_step = (V_rest - V_load) / |I_load - I_rest|
+
+taken between the last rest sample and the first loaded one.
+
+What this measures is the APPARENT resistance at the logger's first sample
+after the step - ohmic plus whatever polarisation builds in that interval. On
+CALCE CS2_35 it reads about 0.165 ohm against the cycler's 0.099. That is not
+an error in the estimate; it is a different quantity, and it is closer to the
+total sag the window actually sees mid-discharge than the pure ohmic term is.
+It does depend on sample rate, so it is comparable within one log and not
+across loggers.
+
+It is noisy cycle to cycle, so each cycle uses the median of the step
+estimates up to and including that cycle over a trailing window. Trailing,
+not centred: a centred median would let a cycle's correction depend on
+cycles not yet recorded.
+
+WHAT IT REFUSES
+---------------
+A cycle with no resistance estimate yet is left unmeasured rather than scored
+uncompensated. Mixing compensated and uncompensated cycles in one trajectory
+would put a step change into the SOH series that is an artefact of the
+correction switching on.
+"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass
+
+import numpy as np
+import pandas as pd
+
+from src.bms.health.voltage_window import (
+    DEFAULT_REFERENCE_CYCLES,
+    WindowSpec,
+    window_soh_table,
+)
+
+# A rest sample and the first loaded sample further apart than this are not one
+# step: the cell has relaxed or the logger dropped data in between.
+MAX_STEP_GAP_S = 60.0
+
+# The current change must be at least this large for the voltage change to be
+# read as a resistance. Below it, sensor noise divided by a small current
+# swamps the estimate.
+MIN_STEP_CURRENT_A = 0.05
+
+# Trailing cycles in the resistance median. Wide enough to suppress one bad
+# step, narrow enough to follow resistance growth over life.
+RESISTANCE_WINDOW_CYCLES = 11
+
+# Accepted cycles averaged into the reported current SOH. One discharge
+# carries the full noise of a single measurement.
+REPORT_CYCLES = 5
+
+# The reference must be formed within this many EQUIVALENT FULL CYCLES of the
+# start of the record - charge discharged so far, divided by the reference
+# discharge's own total - or the cell is refused.
+#
+# WHY THROUGHPUT AND NOT A COUNT OF DISCHARGES
+# ---------------------------------------------
+# The first version counted discharge phases. CALCE CS2_24, a storage-protocol
+# cell, logs 5,039 of them, almost all short characterisation pulses, and its
+# first full discharge through the window is phase 338: a discharge count read
+# that as "late" when the cell had barely been used. Fade follows charge
+# throughput, which is why a BMS reports age in equivalent full cycles; a
+# pulse moves almost none and correctly costs almost nothing here.
+#
+# HOW THIS WAS FOUND
+# ------------------
+# `window_soh_table` takes its reference from the first measurable cycles,
+# wherever they fall. On full laboratory discharges they fall at the start.
+# On partial discharges they need not: CS2_38 truncated to 85%->15% state of
+# charge could not read the window until discharge 805, as its growing
+# resistance shifted the curve into range - so "as new" was set from a cell
+# already well into its life, and every later reading was measured against
+# the wrong baseline (58.6% mean error). A vehicle whose driver's usual charge
+# range only reaches the window once the cell has aged would do the same.
+#
+# 20 is set from the fade rate, not tuned on the estimator's error: across 22
+# CALCE cells the median capacity lost by about cycle 20 is 2.7% (up to 12% on
+# the Type 6 cells), which is already the size of the estimator's own error.
+# A reference formed any later carries an offset as large as what the
+# estimator is trying to measure.
+MAX_REFERENCE_EFC = 20.0
+
+# A window ratio above this is withheld. Window charge can read a few percent
+# above its reference from noise and temperature, but a cell holding a tenth
+# more than when it was new is a window that did not span the same part of
+# the curve as the reference did.
+MAX_PLAUSIBLE_SOH = 1.10
+
+METHOD = "voltage_window_field"
+
+# State bands on MEASURED state of health. These are conventions, not fitted
+# values, and each is named for where it comes from:
+#
+#   0.80  automotive retirement convention. Below it, CRITICAL.
+#   0.90  the end-of-life threshold this project's RUL estimator is validated
+#         at (fade_extrapolation.DEFAULT_EOL_THRESHOLD). Below it, DEGRADED.
+#   0.95  roughly twice the field estimator's median error below new: above
+#         it, a cell is not distinguishable from new by this measurement, so
+#         calling it anything but HEALTHY would be reading noise.
+#
+# They replace health_index's 30/60/80 cut-points only where a measurement
+# exists. Those were hand-picked on a score that does not track fade.
+SOH_STATE_BANDS: tuple[tuple[float, str], ...] = (
+    (0.95, "HEALTHY"),
+    (0.90, "WARNING"),
+    (0.80, "DEGRADED"),
+)
+
+
+def state_from_soh(soh: float) -> str:
+    """HEALTHY / WARNING / DEGRADED / CRITICAL from measured state of health."""
+    if not np.isfinite(soh):
+        raise ValueError("state_from_soh: no measured SOH to classify")
+    for floor, state in SOH_STATE_BANDS:
+        if soh >= floor:
+            return state
+    return "CRITICAL"
+
+
+@dataclass(frozen=True)
+class FieldSOH:
+    """The current state of health of one cell, or the reason there is none."""
+
+    soh: float
+    at_cycle: int | None
+    n_accepted: int
+    n_discharges: int
+    compensated: bool
+    window: str
+    refusal: str = ""
+
+    @property
+    def available(self) -> bool:
+        return bool(np.isfinite(self.soh))
+
+
+def monotonic_time(time_s: pd.Series | np.ndarray) -> np.ndarray:
+    """Make a time base that restarts (file splits, logger resets) monotonic.
+
+    Each backwards jump is treated as a restart: everything after it is
+    offset so it continues from where the previous segment ended, plus one
+    typical sample interval. Sorting by timestamp instead would interleave two
+    segments whose clocks overlap, which is worse than a small offset error.
+    """
+    t = np.asarray(pd.to_numeric(pd.Series(time_s), errors="coerce"), dtype=float)
+    if len(t) < 2:
+        return t.copy()
+    steps = np.diff(t)
+    positive = steps[np.isfinite(steps) & (steps > 0)]
+    typical = float(np.median(positive)) if len(positive) else 1.0
+    out = t.copy()
+    offset = 0.0
+    for k in np.flatnonzero(steps < 0):
+        offset_needed = (t[k] + offset) + typical - (t[k + 1] + offset)
+        offset += offset_needed
+        out[k + 1:] = t[k + 1:] + offset
+    return out
+
+
+def _phase_bounds(time_s: np.ndarray, discharges: pd.DataFrame) -> list[tuple[int, int]]:
+    starts = np.searchsorted(time_s, discharges["start_time_s"].to_numpy(float), "left")
+    ends = np.searchsorted(time_s, discharges["end_time_s"].to_numpy(float), "right")
+    return list(zip(starts.tolist(), ends.tolist(), strict=True))
+
+
+def curves_from_telemetry(
+    telemetry: pd.DataFrame,
+    discharges: pd.DataFrame,
+    cell_id: str,
+    rest_threshold_a: float,
+) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Discharge curves and per-cycle step resistance, from raw telemetry.
+
+    Returns (curves, steps). `curves` has the columns `window_soh_table`
+    reads. `steps` has one row per discharge with `r_step_ohm` (NaN where no
+    clean step preceded it) and `mean_current_a`.
+
+    `discharges` is the frame `cycles_to_frame(..., complete_only=False)`
+    produces: every discharge phase, complete or not, because a partial
+    discharge that crosses the window is exactly what this estimator exists
+    to use.
+    """
+    for column in ("test_time_s", "current_a", "voltage_v"):
+        if column not in telemetry.columns:
+            raise ValueError(
+                f"curves_from_telemetry: telemetry has no '{column}'. Field SOH "
+                f"needs voltage, current and time; none can be inferred."
+            )
+    t = telemetry["test_time_s"].to_numpy(dtype=float)
+    current = pd.to_numeric(telemetry["current_a"], errors="coerce").to_numpy(float)
+    voltage = pd.to_numeric(telemetry["voltage_v"], errors="coerce").to_numpy(float)
+
+    blocks: list[pd.DataFrame] = []
+    steps: list[dict] = []
+    for row, (a, b) in zip(discharges.itertuples(), _phase_bounds(t, discharges), strict=True):
+        cycle = int(row.cycle)
+        if b - a < 2:
+            continue
+        seg_t, seg_i = t[a:b], current[a:b]
+        charge = np.concatenate([[0.0], np.cumsum(
+            np.abs(0.5 * (seg_i[1:] + seg_i[:-1])) * np.diff(seg_t)) / 3600.0])
+        blocks.append(pd.DataFrame({
+            "cell_id": cell_id, "cycle": cycle,
+            "voltage_v": voltage[a:b], "capacity_ah_curve": charge,
+        }))
+
+        r_step = float("nan")
+        j = a - 1
+        if j >= 0 and abs(current[j]) < rest_threshold_a and (t[a] - t[j]) <= MAX_STEP_GAP_S:
+            d_i = abs(current[a] - current[j])
+            d_v = voltage[j] - voltage[a]
+            if d_i >= MIN_STEP_CURRENT_A and np.isfinite(d_v) and d_v > 0:
+                r_step = d_v / d_i
+        steps.append({
+            "cell_id": cell_id, "cycle": cycle, "r_step_ohm": r_step,
+            "mean_current_a": float(row.mean_current_a),
+        })
+
+    curves = pd.concat(blocks, ignore_index=True) if blocks else pd.DataFrame(
+        columns=["cell_id", "cycle", "voltage_v", "capacity_ah_curve"])
+    return curves, pd.DataFrame(steps)
+
+
+def step_overpotential(steps: pd.DataFrame) -> pd.DataFrame:
+    """Per-cycle ohmic offset from a trailing median of step resistances."""
+    steps = steps.sort_values("cycle").copy()
+    steps["r_trailing_ohm"] = (
+        steps["r_step_ohm"]
+        .rolling(RESISTANCE_WINDOW_CYCLES, min_periods=1).median()
+        .ffill()
+    )
+    steps["ir_drop_v"] = steps["mean_current_a"].abs() * steps["r_trailing_ohm"]
+    return steps[["cell_id", "cycle", "ir_drop_v", "r_trailing_ohm"]]
+
+
+def field_soh_table(
+    telemetry: pd.DataFrame,
+    discharges: pd.DataFrame,
+    cell_id: str,
+    rest_threshold_a: float,
+    spec: WindowSpec = WindowSpec(),
+    compensate: bool = True,
+    reference_cycles: int = DEFAULT_REFERENCE_CYCLES,
+) -> pd.DataFrame:
+    """Per-discharge window SOH from raw telemetry, with every gate applied."""
+    curves, steps = curves_from_telemetry(
+        telemetry, discharges, cell_id, rest_threshold_a)
+    if curves.empty:
+        return pd.DataFrame()
+    overpotential = None
+    if compensate:
+        if steps.empty or steps["r_step_ohm"].notna().sum() == 0:
+            return pd.DataFrame()
+        overpotential = step_overpotential(steps)
+        # Cycles before the first resistance estimate are dropped rather than
+        # scored uncompensated - see WHAT IT REFUSES above.
+        known = overpotential.dropna(subset=["ir_drop_v"])["cycle"]
+        curves = curves[curves["cycle"].isin(set(known))]
+        overpotential = overpotential.dropna(subset=["ir_drop_v"])
+    if curves.empty:
+        return pd.DataFrame()
+    table = window_soh_table(
+        curves, spec=spec, reference_cycles=reference_cycles,
+        overpotential=overpotential,
+    )
+    return apply_field_gates(table, discharges, reference_cycles)
+
+
+def apply_field_gates(
+    table: pd.DataFrame,
+    discharges: pd.DataFrame,
+    reference_cycles: int = DEFAULT_REFERENCE_CYCLES,
+    max_reference_efc: float = MAX_REFERENCE_EFC,
+) -> pd.DataFrame:
+    """The two gates field data needs and laboratory full discharges did not.
+
+    Adds `reference_efc` - equivalent full cycles of charge the cell had
+    delivered when its reference was completed - and withholds, through
+    `soh_window_accepted`, every row of a cell whose reference came too late
+    and every reading above `MAX_PLAUSIBLE_SOH`. Needs no ground truth.
+    """
+    if table.empty:
+        return table
+    table = table.copy()
+    measurable = table.dropna(subset=["window_charge_ah"]).sort_values("cycle")
+    position = float("nan")
+    if len(measurable) >= reference_cycles:
+        last_ref = int(measurable["cycle"].iloc[reference_cycles - 1])
+        delivered = float(discharges.loc[
+            discharges["cycle"].astype(int) <= last_ref, "capacity_ah"].sum())
+        full = float(measurable["cycle_charge_ah"].head(reference_cycles).median())
+        if full > 0:
+            position = delivered / full
+    table["reference_efc"] = position
+
+    too_high = table["soh_window"] > MAX_PLAUSIBLE_SOH
+    table.loc[too_high, "refusal"] = (
+        f"window ratio above {MAX_PLAUSIBLE_SOH}; this discharge did not span "
+        f"the same part of the curve as the reference")
+    table["soh_window_accepted"] = table["soh_window_accepted"].where(~too_high)
+
+    late = not (np.isfinite(position) and position <= max_reference_efc)
+    table["reference_late"] = late
+    if late:
+        where = (f"after {position:.0f} equivalent full cycles"
+                 if np.isfinite(position) else "never")
+        table["refusal"] = (
+            f"the reference was formed {where}, not within the first "
+            f"{max_reference_efc:.0f}, so it is not this cell as new and "
+            f"every reading against it would be offset")
+        table["cell_refused"] = True
+        table["soh_window_accepted"] = float("nan")
+    return table
+
+
+def current_field_soh(
+    telemetry: pd.DataFrame,
+    discharges: pd.DataFrame,
+    cell_id: str,
+    rest_threshold_a: float,
+    spec: WindowSpec = WindowSpec(),
+    compensate: bool = True,
+    reference_cycles: int = DEFAULT_REFERENCE_CYCLES,
+) -> FieldSOH:
+    """The cell's state of health now, relative to the first cycles of the log.
+
+    "Relative to the first cycles of the log" is the scope, and it is stated
+    in every refusal-free result too: if the log did not start when the cell
+    was new, this is fade since logging began, not state of health. A
+    production BMS stores the beginning-of-life reference at manufacture; a
+    log replayed here has only its own start.
+    """
+    n_discharges = int(len(discharges))
+    empty = FieldSOH(float("nan"), None, 0, n_discharges, compensate, str(spec))
+    if n_discharges == 0:
+        return _with(empty, "no discharge phases were found in the telemetry")
+    if "voltage_v" not in telemetry.columns:
+        return _with(empty, "telemetry has no voltage channel; the window needs it")
+
+    table = field_soh_table(
+        telemetry, discharges, cell_id, rest_threshold_a, spec, compensate,
+        reference_cycles)
+    if table.empty:
+        reason = (
+            "no discharge was preceded by a clean rest-to-load step, so the "
+            "cell's resistance - and with it the ohmic correction - is unknown"
+            if compensate else "no discharge produced a usable curve")
+        return _with(empty, reason)
+    n_measurable = int(table["window_charge_ah"].notna().sum())
+    if n_measurable <= reference_cycles:
+        # Said before any gate verdict: "too few" is the actionable reason,
+        # and a late-reference refusal on four discharges would obscure it.
+        return _with(
+            FieldSOH(float("nan"), None, n_measurable, n_discharges,
+                     compensate, str(spec)),
+            f"only {n_measurable} discharge(s) crossed the {spec} window; "
+            f"{reference_cycles} are needed to form the reference and at least "
+            f"one more to measure against it")
+    if bool(table["cell_refused"].any()):
+        return _with(empty, str(table.loc[table["cell_refused"], "refusal"].iloc[0]))
+
+    accepted = table.dropna(subset=["soh_window_accepted"]).sort_values("cycle")
+    beyond_reference = accepted.iloc[reference_cycles:]
+    if beyond_reference.empty:
+        return _with(
+            FieldSOH(float("nan"), None, len(accepted), n_discharges,
+                     compensate, str(spec)),
+            f"only {len(accepted)} discharge(s) crossed the {spec} window; "
+            f"{reference_cycles} are needed to form the reference and at least "
+            f"one more to measure against it")
+
+    latest = beyond_reference.tail(REPORT_CYCLES)
+    return FieldSOH(
+        soh=float(latest["soh_window_accepted"].median()),
+        at_cycle=int(latest["cycle"].iloc[-1]),
+        n_accepted=int(len(accepted)),
+        n_discharges=n_discharges,
+        compensated=compensate,
+        window=str(spec),
+    )
+
+
+def _with(result: FieldSOH, refusal: str) -> FieldSOH:
+    return FieldSOH(result.soh, result.at_cycle, result.n_accepted,
+                    result.n_discharges, result.compensated, result.window,
+                    refusal)

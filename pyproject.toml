@@ -218,6 +218,9 @@ files = [
     "src/bms/telemetry/serial_schema.py",
     "src/bms/telemetry/serial_source.py",
     "src/bms/telemetry/serial_pipeline.py",
+    # Field SOH and the report card, likewise written against the gate.
+    "src/bms/health/field_soh.py",
+    "src/bms/guardian/health_card.py",
 ]
 
 [[tool.mypy.overrides]]

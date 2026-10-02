@@ -328,6 +328,16 @@ def build_beacon_data(
                 "targeted_action": str(row.get("targeted_action", "")),
                 "guardian_caveat": str(row.get("guardian_caveat", "")),
                 "recommendation": str(row.get("recommendation", "")),
+                # Which number the state came from. A dashboard that showed a
+                # heuristic index and a measurement in the same style would
+                # make them look equally trustworthy.
+                "state_basis": str(row.get("state_basis", "heuristic_index")),
+                "soh_measured": round(float(row["soh_measured"]) * 100, 1)
+                if "soh_measured" in row.index and pd.notna(row["soh_measured"])
+                else None,
+                "rul_validated": bool(row.get("rul_validated", False)),
+                "heat_advice": str(row.get("heat_advice", "")),
+                "general_guidance": str(row.get("general_guidance", "")),
                 "parameters": params,
             }
         )

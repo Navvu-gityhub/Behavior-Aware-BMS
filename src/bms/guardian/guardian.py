@@ -89,7 +89,11 @@ _CAUSE_EVIDENCE = {
         f"significant signal (coefficient {TEMPERATURE_COEFFICIENT_AH_PER_C} Ah/°C, "
         f"95% CI {TEMPERATURE_COEFFICIENT_CI[0]}-{TEMPERATURE_COEFFICIENT_CI[1]}, p<0.0001; "
         f"R²={TEMPERATURE_COEFFICIENT_R2} in-sample -- a real but modest effect, "
-        f"see docs/final_report.md Section 4.3).",
+        f"see docs/final_report.md Section 4.3). What is supported is the "
+        f"DIRECTION, within a test protocol: hotter use, faster fade. The size "
+        f"did not transfer to an unseen protocol (ADR 0002), and an activation "
+        f"energy was not identifiable from the data (physics/arrhenius.py), so "
+        f"no figure is given for how much life this battery lost to heat.",
     ),
     "frequent fast charging": (
         "HEURISTIC",
@@ -260,6 +264,20 @@ def generate_guardian_reports(
         "No recommendation available"
     )
 
+    # Where state came from a measurement, the action follows from the
+    # measurement. The heuristic texts above mention fast charging and SOC
+    # limits, which this project's data did not confirm, so they are not
+    # presented as following from a measured state.
+    measured = (
+        out["state_basis"] == "measured_soh"
+        if "state_basis" in out.columns
+        else pd.Series(False, index=out.index)
+    )
+    out.loc[measured, "recommendation"] = out.loc[measured, "battery_state"].map(
+        _MEASURED_STATE_RECOMMENDATION)
+    out["heat_advice"] = out["avg_temp"].apply(_heat_advice)
+    out["general_guidance"] = GENERAL_GUIDANCE
+
     # A remaining-life figure from an unvalidated estimator must not read like
     # a measured one. The qualifier is attached here rather than left to the
     # caller, because the report is what a non-specialist actually sees.
@@ -269,7 +287,8 @@ def generate_guardian_reports(
             if ok else " state with an UNVALIDATED remaining-life estimate of "
         )
     else:
-        life_phrase = " state with an UNVALIDATED remaining-life estimate of "
+        life_phrase = pd.Series(
+            " state with an UNVALIDATED remaining-life estimate of ", index=out.index)
 
     out["guardian_report"] = (
         "Battery " + out["battery_id"].astype(str)
@@ -278,4 +297,58 @@ def generate_guardian_reports(
         + " cycles. Primary degradation factors include " + out["primary_causes"]
         + ". Recommended action: " + out["recommendation"]
     )
+    if measured.any():
+        soh_text = out.loc[measured, "soh_measured"].map(lambda s: f"{s:.0%}")
+        out.loc[measured, "guardian_report"] = (
+            "Battery " + out.loc[measured, "battery_id"].astype(str)
+            + " is in " + out.loc[measured, "battery_state"]
+            + " state on a MEASURED state of health of " + soh_text
+            + " (charge in a fixed voltage window, against this cell's own first "
+            "discharges)," + life_phrase[measured].str.replace(" state with", "", regex=False)
+            + out.loc[measured, "rul_cycles"].astype(int).astype(str)
+            + " cycles. Recommended action: " + out.loc[measured, "recommendation"]
+        )
     return out
+
+
+# Actions that follow from a MEASURED state of health. Each names the number it
+# rests on, so the reader can see why.
+_MEASURED_STATE_RECOMMENDATION = {
+    "HEALTHY": "No action. Measured capacity is within 5% of new.",
+    "WARNING": "Capacity fade is measurable. Keep monitoring; replacement is "
+               "not yet indicated.",
+    "DEGRADED": "Below 90% of original capacity. Plan replacement; the "
+                "remaining-life figure is most accurate from here on.",
+    "CRITICAL": "Below 80% of original capacity, the usual automotive "
+                "retirement point. Replace.",
+}
+
+# Advice that is commonly given and that this project could NOT confirm. It is
+# shown, because it is what a user will hear elsewhere, but it is labelled so it
+# cannot be mistaken for something the data here supports.
+GENERAL_GUIDANCE = (
+    "General industry guidance, NOT confirmed by this project's data: limit DC "
+    "fast charging, and avoid leaving the battery for long periods at a very "
+    "high or very low charge. The fast-charge and deep-discharge signals tested "
+    "here did not transfer across test conditions (docs/final_report.md "
+    "Section 4.2)."
+)
+
+# The cut point the attribution fallback already uses for "high temperature
+# exposure"; reused rather than inventing another.
+_HEAT_ADVICE_ABOVE_C = 35.0
+
+
+def _heat_advice(avg_temp: float) -> str:
+    """The one behaviour recommendation this project's data supports."""
+    if pd.isna(avg_temp):
+        return ("No temperature was measured, so heat exposure - the one usage "
+                "factor this project found linked to faster fade - cannot be "
+                "assessed.")
+    if avg_temp > _HEAT_ADVICE_ABOVE_C:
+        return (f"Reduce heat exposure: this battery averaged {avg_temp:.1f} °C. "
+                f"Higher temperature went with faster fade in every cell tested "
+                f"(7 of 7, NASA). How much life it costs could not be measured "
+                f"reliably, so no figure is given.")
+    return (f"Heat exposure is not flagged: this battery averaged "
+            f"{avg_temp:.1f} °C, at or below {_HEAT_ADVICE_ABOVE_C:.0f} °C.")

@@ -295,13 +295,17 @@ function renderGuardian(b){
     : `<div><span class="sd neutral"></span><span>No attribution terms were produced for this battery.</span></div>`;
 
   const actions = [b.targeted_action, b.recommendation].filter(Boolean);
+  // Say which number the state rests on: a measurement, or the heuristic index.
+  const basis = b.state_basis === "measured_soh" && b.soh_measured != null
+    ? `Measured state of health ${b.soh_measured.toFixed(1)}% &middot; ${esc(b.id)}`
+    : `Health index ${b.health_index.toFixed(0)} / 100 (heuristic, not a measurement) &middot; ${esc(b.id)}`;
 
   return `<div class="gdx">
       <div class="ic" style="background:${col}1f;border:1px solid ${col}44">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="${col}" stroke-width="2"
           stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 4v6c0 4.5-3.4 7.7-8 8-4.6-.3-8-3.5-8-8V7z"/></svg></div>
       <div><div class="tl ${tone}">Battery ${esc(b.state.toLowerCase())}</div>
-        <div class="cf">Health index ${b.health_index.toFixed(0)} / 100 &middot; ${esc(b.id)}</div></div>
+        <div class="cf">${basis}</div></div>
     </div>
     <div class="gbar"><i style="width:${Math.min(100,b.health_index).toFixed(0)}%;background:${col}"></i></div>
 
@@ -319,6 +323,11 @@ function renderGuardian(b){
          <div class="step" style="padding:9px 0;font-size:12.5px"><span class="i">${String(actions.length+1).padStart(2,"0")}</span>
            <span>Replacement policy ${esc(b.replacement_policy||"n/a")} &middot; ${num(b.rul_cycles)} cycles remaining.</span></div></div>`
       : `<div class="na-inline">No recommendation was produced.</div>`}</div>
+
+    ${b.heat_advice ? `<div class="gsec">HEAT EXPOSURE</div>
+    <div class="gnote">${esc(b.heat_advice)}</div>` : ""}
+    ${b.general_guidance ? `<div class="gsec">GENERAL GUIDANCE (UNCONFIRMED)</div>
+    <div class="gnote">${esc(b.general_guidance)}</div>` : ""}
 
     <div class="gcav">${esc(b.guardian_caveat) ||
       "Attribution is exact with respect to the score it decomposes; the score is not a validated predictor of capacity fade."}</div>

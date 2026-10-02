@@ -9,9 +9,11 @@ Written in Python (FastAPI, pandas, scikit-learn), Node (Express), React (Vite)
 and C++ (Arduino firmware). ~27,500 lines, 39 test modules, 9-job CI, containerised.
 
 It ships two estimators that **fit nothing across cells** — SOH from charge in a
-fixed voltage window (3.3% median error) and RUL from a cell's own fade trend
-(within ±20 cycles, 88% of the time near end of life) — because the fitted
-models measurably do not transfer across protocols. See
+fixed voltage window, measured from **voltage, current and time alone** (1.7%
+median error on 17 of 22 CALCE cells), and RUL from a cell's own fade trend
+(within ±20 cycles 73% of the time near end of life) — because the fitted
+models measurably do not transfer across protocols. Both run inside the main
+pipeline and feed a plain-language **health report card**. See
 [The research half](#the-research-half).
 
 ## Demo
@@ -53,8 +55,14 @@ pip install -r requirements-dev.txt
 
 python main.py                        # end-to-end run → dashboard.html
 python scripts/run_serial_demo.py     # rig → parser → gate → Guardian
+python scripts/health_report.py --serial data/interim/rig_stage_b_voltage_verified.txt
 python -m pytest tests/ -q            # the suite
 ```
+
+With CALCE downloaded, `python scripts/health_report.py --calce
+data/raw/calce/CS2/Type2/CS2_35.zip --upto-cycle 90` prints a real cell's report
+card as it read at cycle 90, then what the lab measured afterwards — see
+[A real report card](#a-real-report-card).
 
 No hardware, no database, no API keys, no dataset download. Every command above
 runs on a fresh clone. On Linux/macOS `make pipeline`, `make serial-demo`,
@@ -154,6 +162,44 @@ exposed, and what remains untested.
 
 ---
 
+## A real report card
+
+What the project set out to give a user — how healthy the battery is, how long
+it has left, what usage is doing to it, what to do — for CALCE cell CS2_35 as it
+would have read at cycle 90. The pipeline saw voltage, current and time only.
+Abridged from `scripts/health_report.py`:
+
+```
+1. HOW HEALTHY IT IS
+   91.0% state of health  [MEASURED]
+   State: WARNING
+2. HOW LONG IT HAS LEFT
+   About 5 cycles until it falls to 90% of its early capacity.  [ESTIMATE]
+3. WHAT YOUR USAGE IS DOING TO IT
+   No temperature was measured, so heat exposure ... cannot be assessed.
+4. WHAT TO DO
+   Capacity fade is measurable. Keep monitoring; replacement is not yet indicated.
+   General industry guidance, NOT confirmed by this project's data: ...
+5. WHAT THIS REPORT CANNOT TELL YOU
+   - Scoring skipped: the feature layer requires channels this source does not supply ...
+
+CHECK AGAINST THE LAB  (the card above was not shown any of this)
+   Cycler-measured capacity at cycle 90: 90.6% of initial; the card said 91.0% (+0.5 points)
+   The cell actually crossed 90% at cycle 146: 56 cycles after cycle 90; the card said 5
+```
+
+The health figure is within half a point. The remaining-life figure is 51
+cycles early — the conservative bias the RUL study measured at that distance
+(median −32 cycles at 50–100 out), which is why the card prints its own
+accuracy beside the number rather than the number alone.
+
+Only temperature is offered as a usage finding, because it is the one
+behaviour→ageing link that survived testing (7 of 7 NASA cells, direction
+only). Fast-charge and state-of-charge advice is printed, and labelled as not
+confirmed by this project's data.
+
+---
+
 ## The research half
 
 BEACON started as a battery-degradation study. The fitted models did not
@@ -186,8 +232,45 @@ the collapse above — there is no training cohort to transfer from.
 
 | | result | scope |
 |---|---|---|
-| **SOH** from charge in a fixed voltage window | **3.3% median error**, worst 10.5% | on the 13 of 16 cells the gates accept |
-| **RUL** by extrapolating a cell's own fade trend | **within ±20 cycles, 88%** of the time | when inside 25 cycles of end of life |
+| **SOH**, field method: voltage, current, time only | **1.7% median error** (95% CI 1.4–4.3%), worst 10.3% | 17 of 22 CALCE cells; 5 refused with a stated reason |
+| **RUL** by extrapolating a cell's own fade trend | **within ±20 cycles, 73%** of the time | inside 25 cycles of end of life, against the reference a BMS can hold |
+
+**The field method** ([`calce_field_soh/`](reports/metrics/calce_field_soh/field_soh_report.md))
+gives the estimator only what a vehicle BMS has. It segments the discharges
+itself, and it estimates the cell's resistance from the voltage drop when load
+switches on, instead of reading the cycler's resistance column. On the same
+cells:
+
+| ohmic correction | cells measured | median error |
+|---|---|---|
+| none | 12 of 22 | 4.3% |
+| cycler's resistance column (lab only) | 12 of 20 | 1.4% |
+| **resistance from the load step (field)** | **17 of 21** | **1.7%** |
+
+The step estimate reads higher than the cycler's (~0.165 vs ~0.099 Ω on CS2_35)
+because it captures polarisation as well as pure ohmic drop — which is closer
+to the sag the window actually sees, and why it measures more cells.
+
+The five refusals are each explained by the code: four dynamic-profile cells
+(CALCE Types 5/6) did 80–155 equivalent full cycles before any constant-current
+discharge crossed the window, so no "as new" reference exists; one (CS2_7)
+never rests before a discharge, so its resistance cannot be estimated. The
+three worst measured cells (6.4–10.3%) are all Type 3, which switches rate six
+times per cycle.
+
+**Two figures were corrected downward by this work.** The earlier 3.3% SOH and
+88% RUL were scored against a reference capacity taken from each cell's whole
+life — the future, which no BMS has. Against the cell's own first cycles, RUL
+near end of life is 73% within ±20; the earlier figures stay in their
+artifacts as what they were.
+
+**What it does not do yet:** partial discharges. Cut to 85%→15% state of
+charge, the primary window can no longer be read at ~1C once the ohmic shift
+is applied, and the gates refuse 18 of 21 cells rather than report. Before a
+reference-timing gate was added, the same arm reported a confident 58% error
+on CS2_38. A window placed inside the used range (4.00–3.80 V) measured 8
+cells at 4.0% — labelled exploratory, because it was chosen after seeing the
+first result.
 
 SOH is the ratio of charge delivered between two fixed terminal voltages now
 to the same window early in that cell's life. It survives partial discharge,
@@ -254,13 +337,13 @@ on cycled research cells and cannot be confirmed or refuted by a cell that was
 never cycled. [`docs/hardware_integration.md`](docs/hardware_integration.md)
 carries the full bring-up record and the remaining gaps.
 
-**Estimators.** The voltage-window SOH estimator and the fade-extrapolation
-RUL estimator are validated against CALCE capacity ground truth and carry
-their scope with them: SOH is reported only for cells the plausibility gate
-accepts (11 of 16), and RUL only holds to ±20 cycles near end of life. Neither
-is wired into the scoring pipeline's default path yet — they are library
-modules with study scripts, not the shipped `compute_rul`, which still uses an
-unvalidated hand-picked weighting its own docstring flags.
+**Estimators.** Field SOH and fade-extrapolation RUL run inside
+`score_telemetry_frame` on every transport, before and independently of the
+behaviour scoring, so a log with no temperature channel still gets its fade
+measured. Where measured SOH exists and the log starts at beginning of life it
+sets `battery_state`, with `state_basis` recording that it did; otherwise the
+heuristic index is used and labelled as such. `compute_rul`'s hand-picked
+weighting remains only as a labelled fallback for logs too short to extrapolate.
 
 The conventional 80% end-of-life threshold is **not** validated: CALCE's
 full-discharge trajectories end near 0.81 and one cell of 22 crosses it, so
