@@ -62,6 +62,12 @@ import pandas as pd
 from src.bms.adaptive.validation import FitFn
 from src.bms.benchmarks.registry import BenchmarkMethod, BuildFn, Family, register
 
+# NumPy 2.0 renamed `trapz` to `trapezoid` and 2.5 removed the old name. The
+# requirements floor NumPy at 1.24 with no ceiling, so both must work; looked up
+# by name so neither spelling is referenced on a version that lacks it. Same
+# pattern as telemetry/cycles.py.
+_trapezoid = getattr(np, "trapezoid", None) or getattr(np, "trapz")  # noqa: B009
+
 CURVE_COLUMNS: tuple[str, ...] = ("voltage_v", "capacity_ah_curve")
 
 # Discharge voltage window for the interpolation grid. Chosen wide enough to
@@ -198,7 +204,7 @@ def ica_peak_features(
     return {
         "ica_peak_height": float(values[peak]),
         "ica_peak_voltage": float(positions[peak]),
-        "ica_area": float(np.trapz(np.abs(values), positions)),
+        "ica_area": float(_trapezoid(np.abs(values), positions)),
     }
 
 

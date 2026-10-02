@@ -75,7 +75,7 @@ COMPLETE_CYCLE_FRACTION = 0.80
 # 1.24 without ceiling it: a fresh install resolves to 2.x while an existing
 # environment may still be on 1.26, and coulomb counting must not depend on
 # which one a given machine happens to have.
-_trapezoid = getattr(np, "trapezoid", None) or np.trapz
+_trapezoid = getattr(np, "trapezoid", None) or getattr(np, "trapz")  # noqa: B009
 
 
 @dataclass(frozen=True)

@@ -59,6 +59,11 @@ class Stage:
     needs_raw: bool = False
     raw_hint: str = ""
     artifacts: tuple[str, ...] = field(default=())
+    # Untracked inputs, relative to the repository root. A stage whose input is
+    # a gitignored derived dataset is skipped with a reason when the file is
+    # absent - as on every fresh clone, CI included - rather than crashing
+    # with a FileNotFoundError that reads like a code defect.
+    needs_files: tuple[str, ...] = field(default=())
 
 
 #: Ordered by dependency. Everything here is already documented in Appendix A;
@@ -144,6 +149,12 @@ STAGES: tuple[Stage, ...] = (
         name="manuscript-figures",
         section="ress_draft.md figures 1-3",
         command=(PYTHON, "scripts/generate_manuscript_figures.py"),
+        needs_files=("reports/metrics/calce_cycle_level.csv",),
+        raw_hint=(
+            "needs reports/metrics/calce_cycle_level.csv, a 31 MB derived "
+            "dataset built by scripts/build_calce_frame.py from raw CALCE and "
+            "gitignored; the committed figures are its output"
+        ),
     ),
     Stage(
         name="survey-gate",
@@ -219,8 +230,11 @@ def _restore(paths: list[Path]) -> None:
 
 
 def _raw_available() -> bool:
+    # `.gitkeep` placeholders are tracked, so counting any file would report
+    # raw data present on every fresh clone and run stages that then crash.
     raw = REPO / "data" / "raw"
-    return raw.exists() and any(raw.rglob("*"))
+    return raw.exists() and any(
+        p.is_file() and p.name != ".gitkeep" for p in raw.rglob("*"))
 
 
 def _run(stage: Stage, raw_ok: bool) -> dict[str, object]:
@@ -234,6 +248,15 @@ def _run(stage: Stage, raw_ok: bool) -> dict[str, object]:
         record.update(
             status="SKIPPED",
             reason=stage.raw_hint or "requires raw data not present in this checkout",
+            duration_s=0.0,
+        )
+        return record
+
+    missing = [f for f in stage.needs_files if not (REPO / f).exists()]
+    if missing:
+        record.update(
+            status="SKIPPED",
+            reason=stage.raw_hint or f"input not present in this checkout: {missing}",
             duration_s=0.0,
         )
         return record
