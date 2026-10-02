@@ -1114,3 +1114,51 @@ def test_the_reference_firmware_declares_its_rated_capacity():
         "host refuses to compute C-rate without it, so this sketch would flash "
         "successfully and then be refused on every capture."
     )
+
+
+# ---------------------------------------------------------------------------
+# The declared measurement unit
+# ---------------------------------------------------------------------------
+
+def _hello(extra: str = "") -> str:
+    from src.bms.telemetry.serial_schema import xor_checksum
+    body = (
+        '{"schema":"beacon.telemetry.v1","fields":["t","v","i","tc","soc"],'
+        '"cell_id":"RIG_01","capacity_ah":2.2' + extra + "}"
+    )
+    # The checksum covers the record BODY, not the whole line.
+    return f"BEACON1 HELLO {body}*{xor_checksum(body)}"
+
+
+def test_unit_defaults_to_cell_when_a_rig_does_not_declare_one():
+    """Every dataset behind this project's validated figures is single cells,
+    so the safe default is the one whose evidence exists."""
+    from src.bms.telemetry.serial_schema import parse_line
+    kind, header = parse_line(_hello())
+    assert kind == "hello"
+    assert header.unit == "cell"
+    assert header.validated_for_unit
+
+
+def test_a_pack_declares_itself_and_is_marked_unvalidated():
+    """A pack is not a big cell: it adds imbalance, thermal gradients and
+    balancing, none of which appear in the evidence behind these stages."""
+    from src.bms.telemetry.serial_schema import parse_line
+    _, header = parse_line(_hello(',"unit":"pack"'))
+    assert header.unit == "pack"
+    assert not header.validated_for_unit
+
+
+def test_an_unrecognised_unit_is_refused_rather_than_defaulted():
+    """Scoping a pack result as a cell result is the error this field exists
+    to prevent, so a value that cannot be meant is rejected."""
+    from src.bms.telemetry.serial_schema import LineDecodeError, parse_line
+    with pytest.raises(LineDecodeError) as excinfo:
+        parse_line(_hello(',"unit":"battery"'))
+    assert "unit=" in str(excinfo.value)
+
+
+def test_the_unit_is_rendered_so_a_reader_sees_it():
+    from src.bms.telemetry.serial_schema import parse_line
+    _, header = parse_line(_hello(',"unit":"module"'))
+    assert "unit=module" in header.render()

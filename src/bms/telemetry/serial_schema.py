@@ -101,6 +101,27 @@ SENTINEL = "BEACON1"
 
 #: Record type markers.
 RECORD_HELLO = "HELLO"   # schema announcement, sent once at rig start-up
+
+# What the measurement is OF. Declared on the wire because nothing downstream
+# can infer it: a pack's terminal voltage and a cell's look identical in the
+# schema, and every scoring stage runs the same either way.
+#
+# WHY THIS MATTERS ENOUGH TO PUT ON THE WIRE
+# ------------------------------------------
+# Every dataset this project validates against - NASA, CALCE, Stanford - is
+# SINGLE CELLS. A pack is not a big cell: it adds cell-to-cell imbalance,
+# module thermal gradients and balancing interventions, none of which appear
+# anywhere in the evidence behind the health, risk or RUL figures.
+#
+# So a health number computed from pack telemetry is being produced by a
+# pipeline whose every coefficient and threshold was established on cells. That
+# may still be useful, but it is a different claim, and the system should not
+# be able to make it silently. Declaring the unit lets the claim carry its own
+# scope instead of a reader having to know the provenance.
+UNIT_CELL = "cell"
+UNIT_MODULE = "module"
+UNIT_PACK = "pack"
+MEASUREMENT_UNITS: tuple[str, ...] = (UNIT_CELL, UNIT_MODULE, UNIT_PACK)
 RECORD_DATA = "D"        # one telemetry sample
 RECORD_STATUS = "S"      # device-side status or fault text, never scored
 
@@ -273,6 +294,23 @@ class SchemaHeader:
     #: property of the cell, not of the sample, and a rig that changes cells
     #: mid-capture is already re-announcing itself.
     capacity_ah: float | None = None
+    #: What the measurement is of: a cell, a module or a whole pack.
+    #:
+    #: Defaults to `cell` when a rig does not say, because that is what every
+    #: dataset behind this project's validated figures actually is, and because
+    #: the safe default is the one whose evidence exists. A rig measuring a
+    #: pack must say so; see MEASUREMENT_UNITS for why it is not inferable.
+    unit: str = UNIT_CELL
+
+    @property
+    def validated_for_unit(self) -> bool:
+        """Whether this project's evidence covers the declared unit.
+
+        False for module and pack. Nothing here stops a pack being scored - the
+        stages run identically - but the answer should travel knowing that
+        every figure behind it was established on single cells.
+        """
+        return self.unit == UNIT_CELL
 
     @property
     def channels(self) -> tuple[str, ...]:
@@ -304,6 +342,7 @@ class SchemaHeader:
             parts.append(f"period_ms={self.period_ms:g}")
         if self.capacity_ah is not None:
             parts.append(f"capacity_ah={self.capacity_ah:g}")
+        parts.append(f"unit={self.unit}")
         return "  ".join(parts)
 
 
@@ -518,7 +557,29 @@ def _parse_hello(body: str) -> SchemaHeader:
         device=(str(payload["device"]) if payload.get("device") else None),
         firmware=(str(payload["firmware"]) if payload.get("firmware") else None),
         capacity_ah=_parse_capacity(payload.get("capacity_ah")),
+        unit=_parse_unit(payload.get("unit")),
     )
+
+
+def _parse_unit(raw: Any) -> str:
+    """Validate the declared measurement unit, defaulting to `cell`.
+
+    Rejects an unrecognised value rather than falling back, by the same
+    argument `_parse_capacity` uses: a rig that declares something it cannot
+    mean is a rig whose output would be scoped wrongly, and scoping a pack
+    result as a cell result is the error this field exists to prevent.
+    """
+    if raw is None or (isinstance(raw, str) and not raw.strip()):
+        return UNIT_CELL
+    unit = str(raw).strip().lower()
+    if unit not in MEASUREMENT_UNITS:
+        raise LineDecodeError(
+            f"HELLO declares unit={raw!r}, which is not one of "
+            f"{list(MEASUREMENT_UNITS)}. The unit decides whether this "
+            f"project's cell-derived coefficients apply, so an unrecognised "
+            f"one is refused rather than defaulted."
+        )
+    return unit
 
 
 def _parse_capacity(raw: Any) -> float | None:

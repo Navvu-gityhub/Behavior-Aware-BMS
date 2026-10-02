@@ -238,8 +238,16 @@ Ordered by evidential value per unit of work, not by appeal.
    an effort one. LFP (Stanford/Severson) is the test worth running, because its
    plateau sits differently and the window method's construction claims to be
    chemistry-agnostic.
-4. **Pack-level data, or an explicit scope statement.** Currently the honest
-   move is the scope statement.
+4. **Pack-level data, or an explicit scope statement.** No pack data exists
+   here and none can be synthesised, so the scope statement is the honest move
+   - and it is now **enforced rather than written down**. The wire protocol
+   carries a declared `unit` (`cell`, `module` or `pack`), defaulting to `cell`
+   because that is what every dataset behind these figures actually is, and
+   refusing an unrecognised value rather than defaulting. It travels to the
+   scored output as `measurement_unit` and `unit_validated`, so a pack result
+   cannot read as a validated cell result. Nothing stops a pack being scored -
+   the stages run identically - but the answer now carries the fact that every
+   coefficient behind it was established on single cells.
 5. **Not: another model.** The measurement above says it would not be
    detectable.
 

@@ -488,6 +488,9 @@ def run_serial_pipeline(
         refusals=refusals,
         stages=stages,
         rated_capacity_ah=resolved_capacity,
+        # Defaults to `cell` when a rig does not declare, which is what every
+        # dataset behind this project's validated figures actually is.
+        unit=(header.unit if header is not None else "cell"),
     )
     return _as_serial_result(
         base,

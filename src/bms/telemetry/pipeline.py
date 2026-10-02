@@ -253,6 +253,7 @@ def score_telemetry_frame(
     refusals: list[str] | None = None,
     stages: list[str] | None = None,
     rated_capacity_ah: float | None = DEFAULT_RATED_CAPACITY_AH,
+    unit: str = "cell",
 ) -> TelemetryResult:
     """Score a unified-schema telemetry frame through the existing stages.
 
@@ -334,6 +335,12 @@ def score_telemetry_frame(
             guardian = _score_cycles(
                 telemetry, cycles, cell_id, rated_capacity_ah=rated_capacity_ah
             )
+            # Scope travels with the answer. Every coefficient and threshold in
+            # the stages above was established on single cells; a pack is not a
+            # big cell. See MEASUREMENT_UNITS in telemetry/serial_schema.py.
+            if guardian is not None and not guardian.empty:
+                guardian["measurement_unit"] = unit
+                guardian["unit_validated"] = unit == "cell"
             stages.append("score")
         except ValueError as exc:
             # The feature and scoring layers raise ValueError deliberately when
