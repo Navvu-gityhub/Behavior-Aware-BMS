@@ -80,7 +80,6 @@ packages = ["src", "src.bms"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-# `smoke_day3.py` is a standalone script, not a pytest module.
 python_files = ["test_*.py"]
 addopts = "-q --strict-markers"
 filterwarnings = [

@@ -25,7 +25,6 @@ should in fact be the same quantity.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -265,40 +264,3 @@ def compute_risk_assessment(battery_summary: pd.DataFrame, thresholds: RiskThres
     out["risk_reason"] = out.apply(_risk_reason, axis=1)
     out["recommended_action"] = out["risk_level"].apply(_risk_recommendation)
     return out
-
-
-# ---------------------------------------------------------------------------
-# Optional ML scorer
-# ---------------------------------------------------------------------------
-
-def try_ml_stress_score(df: pd.DataFrame, model_path: str, feature_columns: Optional[list[str]] = None) -> Optional[pd.Series]:
-    """Attempt to score rows with the pre-trained model in `models/`.
-
-    Returns None (with no exception) if the model can't be loaded or its
-    expected feature set doesn't match `feature_columns`/`df`. This is
-    intentionally conservative: `models/stress_score_rf_sample_v1.joblib`
-    has no recorded training data, feature list, or evaluation metrics in
-    this repository, so silently trusting its output would be scientifically
-    indefensible. Wire this up for real once the model's provenance
-    (training set, features, validation metrics) is documented.
-    """
-    try:
-        import joblib
-    except ImportError:
-        return None
-
-    try:
-        model = joblib.load(model_path)
-    except (FileNotFoundError, OSError, ValueError):
-        return None
-
-    expected = feature_columns or list(getattr(model, "feature_names_in_", []))
-    if not expected or any(c not in df.columns for c in expected):
-        return None
-
-    try:
-        preds = model.predict(df[expected])
-    except Exception:
-        return None
-
-    return pd.Series(np.clip(preds, 0, 100), index=df.index)
