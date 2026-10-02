@@ -278,3 +278,57 @@ def rul_error_table(
             })
 
     return pd.DataFrame(rows)
+
+
+def rul_from_cycle_capacity(
+    cycles: pd.DataFrame,
+    threshold: float = DEFAULT_EOL_THRESHOLD,
+    reference_cycles: int = 5,
+    **kwargs,
+) -> RULEstimate:
+    """RUL at the newest cycle, from a cycle frame carrying `capacity_ah`.
+
+    This is the adapter that lets the telemetry pipeline reach the validated
+    estimator. The pipeline segments a log into cycles and each carries its
+    delivered charge, so a state-of-health trajectory is available there even
+    though the per-battery summary it scores on has thrown it away.
+
+    State of health is each cycle's capacity over the median of the first
+    `reference_cycles` measurable ones - the cell's own early life, not a
+    nameplate. A pack whose first cycles are already degraded will therefore
+    read healthy, which is the same limitation `health/voltage_window.py`
+    carries and for the same reason: without a beginning-of-life reference
+    there is nothing to be relative to.
+
+    Returns a refusal rather than a number when the log is too short, the
+    trend is flat, or the extrapolation reaches past what the history supports.
+    A short bench capture will refuse, and that is correct.
+    """
+    required = {"cycle", "capacity_ah"}
+    missing = required - set(cycles.columns)
+    if missing:
+        raise ValueError(
+            f"rul_from_cycle_capacity: missing {sorted(missing)}"
+        )
+
+    frame = cycles.dropna(subset=["cycle", "capacity_ah"]).sort_values("cycle")
+    if frame.empty:
+        return RULEstimate(0, float("nan"), float("nan"), float("nan"), 0,
+                           "no cycle carried a capacity measurement")
+
+    capacity = pd.to_numeric(frame["capacity_ah"], errors="coerce")
+    reference = float(capacity.head(reference_cycles).median())
+    if not np.isfinite(reference) or reference <= 0:
+        return RULEstimate(0, float("nan"), float("nan"), float("nan"),
+                           len(frame),
+                           "no usable beginning-of-life capacity reference")
+
+    cycle_numbers = frame["cycle"].to_numpy(dtype=float)
+    return estimate_rul(
+        cycle_numbers,
+        (capacity / reference).to_numpy(dtype=float),
+        at_cycle=int(cycle_numbers[-1]),
+        threshold=threshold,
+        **kwargs,
+    )
+

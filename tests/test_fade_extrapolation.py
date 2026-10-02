@@ -35,6 +35,7 @@ from src.bms.rul.fade_extrapolation import (
     estimate_rul,
     observed_eol,
     rul_error_table,
+    rul_from_cycle_capacity,
 )
 
 THRESHOLD = 0.90
@@ -240,3 +241,56 @@ def test_the_ratio_is_configurable_and_the_default_is_the_constant():
     loose = estimate_rul(cycles, soh, 80, THRESHOLD, max_horizon_ratio=100.0)
     assert np.isnan(tight.rul_cycles)
     assert np.isfinite(loose.rul_cycles)
+
+
+# ---------------------------------------------------------------------------
+# The pipeline adapter
+# ---------------------------------------------------------------------------
+
+def _cycle_frame(capacities: list[float]) -> pd.DataFrame:
+    return pd.DataFrame({
+        "cell_id": "A",
+        "cycle": range(1, len(capacities) + 1),
+        "capacity_ah": capacities,
+    })
+
+
+def test_adapter_derives_soh_from_the_cells_own_early_cycles():
+    """No nameplate: health is relative to this cell's first cycles."""
+    # Ends at SOH 0.927 - still above the 0.90 threshold, so end of life is
+    # genuinely ahead and a positive remaining life is the right answer.
+    caps = [1.10] * 5 + list(np.linspace(1.10, 1.02, 195))
+    est = rul_from_cycle_capacity(_cycle_frame(caps))
+    assert est.refusal == ""
+    assert est.rul_cycles > 0
+
+
+def test_adapter_refuses_a_short_bench_capture():
+    """A 3-cycle rig log cannot support an extrapolation, and must say so.
+
+    This is the real serial path: `rig_stage_a.txt` segments into far fewer
+    cycles than MIN_HISTORY, so the pipeline keeps the labelled heuristic
+    rather than publishing a number the log cannot carry.
+    """
+    est = rul_from_cycle_capacity(_cycle_frame([1.10, 1.09, 1.08]))
+    assert np.isnan(est.rul_cycles)
+    assert est.refusal
+
+
+def test_adapter_reports_zero_once_the_threshold_is_passed():
+    """A cell already below the threshold has no remaining life to it."""
+    caps = [1.10] * 5 + list(np.linspace(1.10, 0.80, 195))
+    est = rul_from_cycle_capacity(_cycle_frame(caps))
+    assert est.rul_cycles == 0.0
+
+
+def test_adapter_refuses_without_a_usable_reference():
+    est = rul_from_cycle_capacity(_cycle_frame([0.0] * 60))
+    assert np.isnan(est.rul_cycles)
+    assert "reference" in est.refusal
+
+
+def test_adapter_names_a_missing_column():
+    with pytest.raises(ValueError) as excinfo:
+        rul_from_cycle_capacity(pd.DataFrame({"cycle": [1, 2, 3]}))
+    assert "capacity_ah" in str(excinfo.value)

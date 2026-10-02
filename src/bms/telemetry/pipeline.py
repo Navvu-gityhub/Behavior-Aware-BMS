@@ -40,6 +40,7 @@ failure this project was built to prevent.
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Iterator, Mapping
@@ -390,7 +391,7 @@ def _score_cycles(
     from src.bms.guardian.guardian import generate_guardian_reports
     from src.bms.health.health_index import compute_health_index
     from src.bms.risk.stress_score import compute_risk_assessment, compute_stress_score
-    from src.bms.rul.rul_estimation import compute_rul
+    from src.bms.rul.rul_estimation import compute_rul, replacement_policy
 
     # Attach the cycle each telemetry row belongs to, so age and rolling
     # features see a real cycle index rather than a constant.
@@ -413,7 +414,34 @@ def _score_cycles(
         ]),
         on="battery_id",
     )
-    return generate_guardian_reports(compute_rul(merged))
+    scored = compute_rul(merged)
+
+    # Prefer the validated estimator where the log supports it. `compute_rul`
+    # is a hand-picked weighting times an unvalidated constant; the trajectory
+    # needed to do better is right here in `cycles`, and the per-battery
+    # summary it scores on is the only reason it was ever unreachable.
+    #
+    # A refusal leaves the heuristic in place, still labelled unvalidated,
+    # rather than blanking the field: a short bench capture legitimately
+    # cannot support an extrapolation, and the caller is better served by a
+    # marked estimate than by nothing.
+    from src.bms.rul.fade_extrapolation import rul_from_cycle_capacity
+    from src.bms.rul.rul_estimation import METHOD_FADE
+
+    validated = rul_from_cycle_capacity(cycles)
+    if math.isfinite(validated.rul_cycles):
+        scored["rul_cycles"] = int(round(validated.rul_cycles))
+        scored["estimated_total_cycles"] = float(validated.eol_cycle)
+        scored["replacement_policy"] = scored["rul_cycles"].apply(
+            replacement_policy
+        )
+        scored["rul_method"] = METHOD_FADE
+        scored["rul_validated"] = True
+        scored["rul_refusal"] = ""
+    else:
+        scored["rul_refusal"] = validated.refusal
+
+    return generate_guardian_reports(scored)
 
 
 def _attach_cycle_index(

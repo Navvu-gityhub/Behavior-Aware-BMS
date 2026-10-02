@@ -218,8 +218,18 @@ Ordered by evidential value per unit of work, not by appeal.
    `rul_validated`, and the Guardian report says "an UNVALIDATED remaining-life
    estimate of N cycles" unless the provenance says otherwise. A frame with no
    provenance is treated as unvalidated, because the safe default for an unknown
-   estimator is not to vouch for it. Replacing the estimator properly means
-   carrying a SOH trajectory through the pipeline, which is a schema change.
+   estimator is not to vouch for it.
+
+   **Now done.** `rul_from_cycle_capacity` reads the state-of-health trajectory
+   straight off the `cycles` frame the pipeline already segments - no schema
+   change was needed, the trajectory was simply being discarded by
+   `summarize_batteries` before `compute_rul` saw it. The pipeline prefers the
+   validated estimator and falls back to the labelled heuristic when the log
+   cannot support an extrapolation. Verified on both paths: a 3-cycle bench
+   capture refuses ("fewer than 30 cycles of history") and keeps the heuristic
+   marked UNVALIDATED, while a 500-cycle CALCE trajectory produces a validated
+   figure whose error shrinks toward end of life (-54 cycles at 128 out, -15 at
+   78), exactly as the horizon study predicts.
 3. **A second chemistry — currently blocked, not merely undone.** Every transfer
    statement here is within one LCO family. `data/raw/nasa` and
    `data/raw/stanford` are empty: only CALCE is downloaded, and the NASA source
