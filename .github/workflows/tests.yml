@@ -26,7 +26,9 @@ jobs:
           python-version: "3.12"
           cache: pip
       - name: Install tooling
-        run: pip install ruff mypy pandas-stubs types-PyYAML
+        # Same ceilings as requirements-dev.txt; keep the two in step. An
+        # unpinned linter turns CI red the day it ships a new rule.
+        run: pip install "ruff>=0.6.0,<0.17" "mypy>=1.11.0,<2.5" "pandas-stubs>=2.0.0,<3.1" "types-PyYAML>=6.0.0,<7"
       - name: Ruff
         run: ruff check src tests scripts main.py
       # No `ruff format --check` job. This codebase predates the tooling and
