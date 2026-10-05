@@ -78,6 +78,7 @@ def _calce(path: Path, upto: int | None) -> int:
         cell = report.cell_id
     if upto is not None:
         telemetry = telemetry[pd.to_numeric(telemetry["cycle"], errors="coerce") <= upto]
+    lab_resistance = _cycler_resistance(telemetry)
     # The cycler's own capacity and resistance columns are dropped, so nothing
     # a vehicle BMS would not have can reach the estimate.
     telemetry = telemetry[[c for c in ("cell_id", "test_time_s", "current_a",
@@ -95,11 +96,30 @@ def _calce(path: Path, upto: int | None) -> int:
     )
     print()
     print(render_health_card(result, battery_label=f"{cell} (CALCE)"))
-    _check_against_lab(cell, upto, result)
+    _check_against_lab(cell, upto, result, lab_resistance)
     return 0
 
 
-def _check_against_lab(cell: str, upto: int | None, result) -> None:
+def _cycler_resistance(telemetry: pd.DataFrame) -> tuple[float, float]:
+    """The cycler's Internal_Resistance, early cycles and latest cycles.
+
+    Read before those columns are dropped, so it can be compared with the
+    card's step resistance afterwards - never fed to the estimate.
+    """
+    if "resistance_ohm" not in telemetry.columns:
+        return float("nan"), float("nan")
+    r = pd.to_numeric(telemetry["resistance_ohm"], errors="coerce")
+    cyc = pd.to_numeric(telemetry["cycle"], errors="coerce")
+    ok = r > 0
+    last = cyc[ok].max()
+    early = r[ok & (cyc <= cyc[ok].min() + 25)]
+    late = r[ok & (cyc > last - 25)]
+    return (float(early.median()) if len(early) else float("nan"),
+            float(late.median()) if len(late) else float("nan"))
+
+
+def _check_against_lab(cell: str, upto: int | None, result,
+                       lab_resistance: tuple[float, float] = (float("nan"), float("nan"))) -> None:
     if not TRUTH.exists():
         return
     from src.bms.benchmarks import add_targets
@@ -129,6 +149,12 @@ def _check_against_lab(cell: str, upto: int | None, result) -> None:
         if soh is not None and soh.available:
             line += f"; the card said {soh.soh:.1%} ({(soh.soh - lab) * 100:+.1f} points)"
         print(line)
+    soh_r = result.field_soh
+    if soh_r is not None and np.isfinite(soh_r.resistance_growth) and np.isfinite(lab_resistance[1]):
+        lab_growth = lab_resistance[1] / lab_resistance[0]
+        print(f"   Cycler-measured resistance: {lab_resistance[0] * 1000:.0f} -> "
+              f"{lab_resistance[1] * 1000:.0f} mOhm ({(lab_growth - 1) * 100:+.0f}%); "
+              f"the card said {(soh_r.resistance_growth - 1) * 100:+.0f}%")
     eol = observed_eol(truth["arbin_cycle_index"].to_numpy(float),
                        truth["soh"].to_numpy(float), DEFAULT_EOL_THRESHOLD)
     rul = result.rul_estimate

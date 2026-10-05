@@ -66,6 +66,34 @@ class BeaconData:
     batteries: list[dict[str, Any]] = field(default_factory=list)
 
 
+def _number_kinds(row: pd.Series, is_measured: bool) -> dict[str, str]:
+    """Label every headline number: raw, calculated (validated), or heuristic.
+
+    The answer a reviewer wants when they point at a number. Simulated runs
+    are labelled as such first, because every figure in them is a function
+    of a simulator, whatever method produced it.
+    """
+    prefix = "" if is_measured else "SIMULATED DATA - "
+    rul_ok = bool(row.get("rul_validated", False))
+    soh = row.get("soh_measured", float("nan"))
+    return {
+        "temperature / current / voltage": prefix + "raw sensor or dataset value",
+        "state of health": prefix + (
+            "calculated: charge in a voltage window vs this cell's first "
+            "discharges (validated on CALCE, 1.7% median error)"
+            if pd.notna(soh) else "not measured on this run"),
+        "remaining life": prefix + (
+            "calculated: this cell's own fade trend extrapolated to 90% "
+            "(validated near end of life)" if rul_ok
+            else "heuristic estimate, UNVALIDATED"),
+        "health index": prefix + "heuristic: hand-weighted score, not validated against fade",
+        "risk score": prefix + "heuristic: hand-set thresholds, not validated against fade",
+        "battery state": prefix + (
+            "from measured state of health" if row.get("state_basis") == "measured_soh"
+            else "from the heuristic health index"),
+    }
+
+
 def _tone_for_state(state: str) -> str:
     return {
         "HEALTHY": "good",
@@ -336,6 +364,9 @@ def build_beacon_data(
                 if "soh_measured" in row.index and pd.notna(row["soh_measured"])
                 else None,
                 "rul_validated": bool(row.get("rul_validated", False)),
+                # What kind of number each figure is, so no heuristic can be
+                # read as a measurement. Shown beside the numbers on the page.
+                "number_kinds": _number_kinds(row, is_measured),
                 "heat_advice": str(row.get("heat_advice", "")),
                 "general_guidance": str(row.get("general_guidance", "")),
                 "parameters": params,

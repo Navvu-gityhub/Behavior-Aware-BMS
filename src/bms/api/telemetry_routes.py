@@ -729,8 +729,14 @@ def twin_history(battery_id: str) -> TwinHistoryOut:
             ),
         )
     frame = snapshots_to_frame(snapshots)
+    from src.bms.digital_twin.twin import STALE_AFTER_S, is_stale, snapshot_age_s
+    latest = snapshots[-1]
     return TwinHistoryOut(
         battery_id=battery_id, n_snapshots=len(snapshots),
+        last_update=latest.evaluated_at,
+        age_seconds=round(snapshot_age_s(latest), 1),
+        stale=is_stale(latest),
+        stale_after_seconds=STALE_AFTER_S,
         snapshots=frame.to_dict(orient="records"),
         transitions=[
             TwinTransitionOut(

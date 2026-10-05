@@ -1162,3 +1162,27 @@ def test_the_unit_is_rendered_so_a_reader_sees_it():
     from src.bms.telemetry.serial_schema import parse_line
     _, header = parse_line(_hello(',"unit":"module"'))
     assert "unit=module" in header.render()
+
+
+def test_a_voltage_impossible_for_a_declared_cell_is_rejected():
+    """999 V passes the field range, which is wide so packs are legal - but a
+    rig that declared a single cell cannot read it, so the record is rejected
+    and counted. Found by injecting it in scripts/panel_demo.py."""
+    lines = [encode_hello(cell_id="CELL")]
+    for step in range(20):
+        values = _sample(t=float(step * 60))
+        if step == 5:
+            values["v"] = 999.0
+        lines.append(encode_record(values))
+    result = run_serial_pipeline(MemoryLineSource("cell_rig", lines))
+    assert result.stats.n_rejected == 1
+    assert any("impossible for a single lithium-ion cell" in r for r in result.stats.reasons)
+    assert float(result.telemetry["voltage_v"].max()) < 5.0
+
+
+def test_a_pack_may_report_pack_voltage():
+    lines = [encode_hello(cell_id="PACK", unit="pack")]
+    for step in range(20):
+        lines.append(encode_record(_sample(t=float(step * 60), v=48.0)))
+    result = run_serial_pipeline(MemoryLineSource("pack_rig", lines))
+    assert result.stats.n_rejected == 0

@@ -725,6 +725,7 @@ def encode_hello(
     firmware: str | None = None,
     capacity_ah: float | None = None,
     checksum: bool = True,
+    unit: str | None = None,
 ) -> str:
     """Build a HELLO line. The reference firmware emits exactly this shape."""
     payload: dict[str, Any] = {"schema": SCHEMA_ID, "fields": list(fields)}
@@ -738,6 +739,8 @@ def encode_hello(
         payload["firmware"] = firmware
     if capacity_ah is not None:
         payload["capacity_ah"] = capacity_ah
+    if unit is not None:
+        payload["unit"] = unit
     body = json.dumps(payload, separators=(",", ":"), sort_keys=True)
     return _frame(RECORD_HELLO, body, checksum)
 

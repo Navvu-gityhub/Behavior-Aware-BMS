@@ -159,6 +159,21 @@ class FieldSOH:
     # inside the voltage band this cell's own early discharges cover, used
     # when the fixed one cannot be read (see LEARNED WINDOWS below).
     window_mode: str = "fixed"
+    # Apparent resistance from the rest-to-load step: the median over the
+    # reference discharges and over the latest REPORT_CYCLES, in ohms. Rising
+    # resistance is power fade - the half of health capacity does not show.
+    # APPARENT: it includes polarisation built up by the first loaded sample,
+    # so it depends on the logger's sample rate and is comparable within one
+    # log, not across loggers. NaN when no clean step was seen.
+    resistance_reference_ohm: float = float("nan")
+    resistance_now_ohm: float = float("nan")
+
+    @property
+    def resistance_growth(self) -> float:
+        """Resistance now over at the reference, e.g. 1.15 = 15% higher."""
+        if np.isfinite(self.resistance_reference_ohm) and self.resistance_reference_ohm > 0:
+            return self.resistance_now_ohm / self.resistance_reference_ohm
+        return float("nan")
 
     @property
     def available(self) -> bool:
@@ -294,6 +309,8 @@ def field_soh_table(
         curves, spec=spec, reference_cycles=reference_cycles,
         overpotential=overpotential,
     )
+    if overpotential is not None and "r_trailing_ohm" in overpotential.columns:
+        table = table.merge(overpotential[["cycle", "r_trailing_ohm"]], on="cycle", how="left")
     return apply_field_gates(table, discharges, reference_cycles)
 
 
@@ -401,6 +418,7 @@ def current_field_soh(
             f"one more to measure against it")
 
     latest = beyond_reference.tail(REPORT_CYCLES)
+    r_ref, r_now = _resistance(accepted, latest, reference_cycles)
     return FieldSOH(
         soh=float(latest["soh_window_accepted"].median()),
         at_cycle=int(latest["cycle"].iloc[-1]),
@@ -408,6 +426,8 @@ def current_field_soh(
         n_discharges=n_discharges,
         compensated=compensate,
         window=str(spec),
+        resistance_reference_ohm=r_ref,
+        resistance_now_ohm=r_now,
     )
 
 
@@ -580,6 +600,7 @@ def learned_field_soh(
     spec = WindowSpec(learned.spec.v_high + ir_ref, learned.spec.v_low + ir_ref)
     table = window_soh_table(curves, spec=spec, reference_cycles=reference_cycles,
                              overpotential=overpotential)
+    table = table.merge(overpotential[["cycle", "r_trailing_ohm"]], on="cycle", how="left")
     table = apply_field_gates(table, discharges, reference_cycles)
     table["learned_window"] = str(learned.spec)
     table["window_steepness"] = learned.steepness
@@ -595,9 +616,22 @@ def learned_field_soh(
                      f"only {len(accepted)} discharge(s) read the learned "
                      f"window; more are needed"), table
     latest = beyond.tail(REPORT_CYCLES)
+    r_ref, r_now = _resistance(accepted, latest, reference_cycles)
     return FieldSOH(
         soh=float(latest["soh_window_accepted"].median()),
         at_cycle=int(latest["cycle"].iloc[-1]),
         n_accepted=int(len(accepted)), n_discharges=n, compensated=True,
         window=label, window_mode="learned",
+        resistance_reference_ohm=r_ref, resistance_now_ohm=r_now,
     ), table
+
+
+def _resistance(accepted: pd.DataFrame, latest: pd.DataFrame,
+                reference_cycles: int) -> tuple[float, float]:
+    """Median trailing step resistance over the reference and latest discharges."""
+    if "r_trailing_ohm" not in accepted.columns:
+        return float("nan"), float("nan")
+    ref = accepted["r_trailing_ohm"].head(reference_cycles).dropna()
+    now = latest["r_trailing_ohm"].dropna()
+    return (float(ref.median()) if len(ref) else float("nan"),
+            float(now.median()) if len(now) else float("nan"))

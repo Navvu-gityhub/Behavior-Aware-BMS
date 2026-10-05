@@ -1,0 +1,8 @@
+estimator,bin,n,cells,median_abs,p90_abs,true_minus_pred_q05,true_minus_pred_q50,true_minus_pred_q95,share_lasted_at_least_predicted
+soh_fixed_window,all,17,17,0.0168,0.0343,,,,
+soh_learned_window,all,79,2,0.0207,0.0493,,,,
+rul_fade_extrapolation,0-25,78,15,,,1.0,23.0,82.0,0.95
+rul_fade_extrapolation,25-50,52,14,,,-14.0,40.0,129.0,0.88
+rul_fade_extrapolation,50-100,85,12,,,-40.0,60.0,141.0,0.85
+rul_fade_extrapolation,100-200,71,7,,,-86.0,4.0,167.0,0.51
+rul_fade_extrapolation,200-100000,30,2,,,-109.0,162.0,179.0,0.63

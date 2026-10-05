@@ -69,6 +69,28 @@ class TwinSnapshot:
     evaluated_at: str  # ISO-8601 UTC
 
 
+# A snapshot older than this is reported STALE: the twin still shows the last
+# state it saw, but says it is no longer current. Ten minutes is generous
+# against the rig's 1 s cadence and a pipeline run per capture; it exists so
+# that "telemetry stopped" can never look like "nothing changed".
+STALE_AFTER_S = 600.0
+
+
+def snapshot_age_s(snapshot: "TwinSnapshot", now: Optional[datetime] = None) -> float:
+    """Seconds since the snapshot was evaluated."""
+    now = now or datetime.now(timezone.utc)
+    then = datetime.fromisoformat(snapshot.evaluated_at)
+    if then.tzinfo is None:
+        then = then.replace(tzinfo=timezone.utc)
+    return max((now - then).total_seconds(), 0.0)
+
+
+def is_stale(snapshot: "TwinSnapshot", now: Optional[datetime] = None,
+             max_age_s: float = STALE_AFTER_S) -> bool:
+    """True when the battery has not been updated within `max_age_s`."""
+    return snapshot_age_s(snapshot, now) > max_age_s
+
+
 @dataclass(frozen=True)
 class TwinTransition:
     battery_id: str

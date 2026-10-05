@@ -1,7 +1,7 @@
 # BEACON — panel defence: honest answers
 
-Every answer below is checked against what the repository actually contains as
-of commit `9674e93` (October 2026). Where something was not done, the answer
+Every answer below is checked against what the repository actually contains
+(October 2026; updated after the gap-filling work that followed this review). Where something was not done, the answer
 says so. Numbers trace to files under `reports/metrics/`.
 
 Answers are written to be said out loud. Short where the honest answer is
@@ -19,7 +19,7 @@ them. Change them first.
 | Engineered features → XGBoost / LSTM / GPR → SOH/RUL | The 12 benchmark models were evaluated for **SOH only** (target `soh`, NASA). None estimates RUL. **None of them is used by the running system.** | "We benchmarked 12 published methods for SOH. None transferred across test protocols, so the shipped system uses two estimators that fit nothing across cells." |
 | XGBoost is the best model | Its LOCO 95% interval is [−2.80, 0.86]; it overlaps every other method's. No ranking is supportable. | "XGBoost has the highest point estimate; the intervals overlap, so we do not claim it is best." |
 | Table shows LOBO MAE but not LOBO R² | Both were computed (`docs/final_report.md`, benchmark table). | Show the full table: LOBO MAE, LOCO MAE, LOBO R², LOCO R². |
-| RUL ±20 cycles, 88% | 88% used a reference capacity taken from the cell's whole life (the future). With the reference a BMS can hold, it is **73%**. | "73% within ±20 cycles in the last 25 cycles before 90% capacity." |
+| RUL ±20 cycles, 88% | 88% used a reference capacity taken from the cell's whole life (the future). With the reference a BMS can hold, it is **73%**, and that is conditioned on the *true* remaining life. By the *prediction*: when it says under 25 cycles, the cell lasted at least that long 95% of the time. | "Near end of life it is a safe lower bound: when it predicts under 25 cycles, the cell lasted at least that long 95% of the time." |
 | SOH 3.3% median error | Superseded. The field method (voltage, current, time only) gives **1.7% median on 17 of 22 cells**. | Use 1.7% / 17 of 22. |
 | Digital twin | It is a state tracker: four states relabelled from the health state, transition detection, and per-battery history. No physics model, no forward simulation, no what-if. | Call it a "battery state tracker" or "digital shadow", or be ready to defend exactly what it is (section P). |
 | Hardware validates the system | It validates the **telemetry path only**. The cell was never discharged; no capacity or ageing was measured. | "The rig proves acquisition, the wire protocol and the refusal logic on real silicon. It does not validate health estimation." |
@@ -218,7 +218,7 @@ The report card maps measured SOH to a state and an action. Under 80%: replace. 
 Near end of life, it says roughly how many cycles remain, to schedule a replacement. Far from end of life it isn't accurate, and the card says so beside the number.
 
 **55. How is uncertainty communicated?**
-As measured accuracy printed with the figure (e.g. "73% within ±20 cycles in the last 25 cycles"), and as refusals. There are no per-estimate confidence intervals on SOH or RUL; that's a gap.
+As validation-derived error bands printed with every figure on the report card (`health/error_bands.py`, pinned to `reports/metrics/error_bands.csv`). SOH: 90% of readings were within ±3.4 points (±4.9 with a learned window). RUL: the band is indexed by the *predicted* value, the only one a user sees. Example: when the card predicts under 25 cycles, the true life fell 1–82 cycles later in 90% of cases. These are empirical bands from lab cells, not model confidence intervals.
 
 **56. What if it's wrong?**
 It's advisory, so a wrong number leads to a wrong recommendation, not an unsafe action. The gates are designed to refuse rather than give a confidently wrong number. For example, on near-empty partials it refuses instead of reporting 7–13% error.
@@ -534,7 +534,7 @@ Rig captures are text files (`data/interim/rig_*.txt`). Dataset files are on dis
 Same: CSV files from scripts, in memory in the API.
 
 **153. Do results persist after a server restart?**
-No. The API store is in memory by design (`api/store.py`). Restarting clears it.
+Yes, if enabled. Set `BEACON_STATE_FILE` and the fleet (Guardian rows, twin snapshots, transition history) is written after every run and reloaded at start-up; this is tested. The default stays in-memory. The behaviour-feature timeline is not persisted.
 
 **154. Can you reproduce a dashboard result from raw telemetry?**
 Yes. The pipeline is a pure function of its input, so replaying the same capture gives the same output. That's tested.
@@ -543,7 +543,7 @@ Yes. The pipeline is a pure function of its input, so replaying the same capture
 SOH = window charge now ÷ window charge of the first 5 accepted discharges. The window charges come from integrating current between two voltages on specific discharges. The table behind it lists each discharge's cycle, window charge and gate decisions. There's no per-number audit link in the UI; it's traced through the pipeline output.
 
 **156. How do you know the dashboard isn't showing stale data?**
-Each run is timestamped and carries provenance. A battery not in the latest run keeps its previous state, which is a deliberate choice, and it is *not* flagged as stale in the UI. That's a gap.
+The twin API now reports `last_update`, `age_seconds` and `stale` (older than 10 minutes) for every battery, so stopped telemetry can't look like "nothing changed". The dashboard also labels simulated runs.
 
 ---
 
@@ -695,7 +695,7 @@ After a "knee", the line under-predicts the fade, so the estimate runs late. Tha
 The estimate drifts later; the median smoothing damps short-term changes.
 
 **199. Why is ±20 cycles only valid near end of life?**
-Errors grow with the distance extrapolated. Within ±20 cycles: 73% when under 25 cycles away, 44% at 25–50, 15% at 50–100, 0% at 200–400.
+Errors grow with distance to end of life. There are two honest ways to state accuracy. By the *true* distance: within ±20 cycles 73% of the time when truly under 25 cycles away; 44% at 25–50; 0% at 200–400. By the *prediction*, which is what a user sees: when the estimate says under 25 cycles, the cell lasted at least that long 95% of the time, typically 23 cycles longer. So near end of life it works as a safe lower bound: it warns early.
 
 **200. Can you claim 88% (now 73%) for the whole lifetime?**
 No.
@@ -981,7 +981,7 @@ Metallic lithium depositing on the anode instead of entering it, during cold or 
 The solid-electrolyte interphase is a film on the anode that consumes lithium as it grows. It's the main slow ageing mechanism.
 
 **288. Which mechanisms can your telemetry observe?**
-Only their effects: capacity loss (window charge) and resistance growth (step resistance). The step resistance is extracted but not yet reported as a health output.
+Capacity fade (window charge) and resistance growth (the voltage drop at each load step). Resistance is now reported on the report card. It tracks the lab cycler's own resistance on 19 of 20 cells (median life-long correlation 0.86; growth 1.26× vs 1.29×), per `reports/metrics/calce_resistance/`.
 
 **289. Which can't you distinguish?**
 SEI vs plating vs active-material loss. Separating them needs incremental capacity analysis on low-rate data, or post-mortem analysis. We tried ICA features; they didn't help prediction.
@@ -1070,7 +1070,7 @@ No. There's no what-if or simulation capability.
 Only as often as runs happen. There's no heartbeat.
 
 **315. What if communication is interrupted?**
-The twin keeps its last state. It isn't flagged stale. That's a gap.
+It keeps the last state and is now flagged stale (`stale: true`, with its age) once no update has arrived for 10 minutes.
 
 **316. What protocol?**
 None of its own: serial or CAN into the pipeline, then HTTP/JSON to the dashboard.
@@ -1085,7 +1085,7 @@ The code, its tests (`tests/test_digital_twin.py`), and the API route `/telemetr
 With a replayed capture, yes. With the live rig the pipeline runs, but a resting cell never changes state.
 
 **320. Disconnect the battery and show the twin going stale?**
-It would keep the last state without marking it stale. We'd be showing a limitation.
+Yes. After 10 minutes without telemetry, `/telemetry/twin/{id}` returns `stale: true` and the age in seconds.
 
 **321. Reconnect and resync?**
 The next run updates it.
@@ -1612,7 +1612,7 @@ Health index, risk score and level, stress score, the heuristic RUL fallback, th
 SOH and RUL methods, through the CALCE studies. Not on the rig or the simulated fleet.
 
 **473. Which have uncertainty?**
-None per estimate. The report card prints the methods' measured accuracy instead.
+None are model confidence intervals. SOH and RUL carry validation-derived error bands on the report card; the heuristic scores carry none, and are labelled heuristic on the dashboard ("What each number is").
 
 **474. Experimental?**
 The learned-window (partial-discharge) SOH: validated on 2 cells per band.
@@ -1666,7 +1666,7 @@ The checksum fails, so the line is rejected and counted. Enough rejections and t
 The field is omitted or fails to parse, so the record is rejected. NaN never enters scoring.
 
 **492–493. Impossible temperature?**
-Outside −40 to 150 °C it fails the range check and is rejected, not clamped. Inside the range but wrong (e.g. 120 °C) is accepted: the range check can't know.
+Outside −40 to 150 °C it fails the field range check and is rejected, not clamped. Voltage is now also checked against what the rig *declared*: for `unit=cell`, anything outside 0–5 V is rejected per record. A live injection of 999 V found this gap; the 0–1000 V field range alone had let it through, because packs are a legal unit. `python scripts/panel_demo.py` step c) shows it.
 
 ---
 
@@ -1694,7 +1694,7 @@ In memory.
 A snapshot dataclass (state, health index, RUL, policy, likelihood, time) and a bounded deque per battery.
 
 **501. What happens when telemetry stops?**
-It keeps the last state, not marked stale.
+It keeps the last state and reports itself stale after 10 minutes.
 
 **502. How does it recover?**
 The next run updates it. After a restart it's empty until runs happen.
@@ -1960,7 +1960,7 @@ Mechanisms change over life: fast early SEI formation, then slower growth, then 
 Fade: less charge stored. Resistance growth: more voltage lost under load (power fade). They're related but not the same.
 
 **574. Which does your model predict?**
-It measures capacity fade (SOH). It estimates resistance for compensation but doesn't report resistance health.
+It measures capacity fade (SOH) and reports resistance growth (power fade) measured from the load step. That resistance tracked the cycler's own on 19 of 20 CALCE cells.
 
 **575. Can you identify the electrochemical mechanism?**
 No.
@@ -2029,16 +2029,16 @@ No.
 No, except ElasticNet's penalty, chosen by CV inside each training fold.
 
 **595. What if you shuffled the time series?**
-Not tested. For the LSTM, shuffling within windows should destroy any sequence advantage. Given that it had none, it might change little. Don't guess numbers.
+Run (`scripts/run_ablation_study.py`): with each cell's capacity shuffled in time, every LOCO interval lies at or below zero (XGBoost −1.44 to −0.01; age-linear −0.35 to −0.00). The harness does not create skill where there is none. XGBoost keeps LOBO R² 0.146 on the shuffled data: each cell's average capacity survives the shuffle (per-cell memorisation).
 
 **596. What if you removed the engineered features?**
-The age-only baseline is effectively that test: 0.406 LOCO R² vs 0.459 with features.
+Run: XGBoost on behaviour features without cycle number scores LOBO 0.576, LOCO −0.293. On cycle number alone: LOBO 0.047, LOCO −0.266. Only the combination reaches 0.459. Both halves alone fall below zero under LOCO (point estimate).
 
 **597. XGBoost on raw voltage, current and temperature only?**
-Not run.
+Not possible at cycle level: the NASA benchmark table holds per-cycle aggregates, not raw samples. The nearest test is in 596: behaviour aggregates without age, LOCO −0.293.
 
 **598. How much does feature engineering add?**
-About 0.05 LOCO R² over age alone, within the confidence intervals. Adding curve features (ΔQ(V), ICA peaks) improved 1 of 4 methods, none beyond fold noise.
+About 0.05 LOCO R² over a linear age baseline (0.459 vs 0.406), within the intervals. Ablations in 596 show neither features nor age alone transfer. Curve features (ΔQ(V), ICA) improved 1 of 4 methods, none beyond fold noise.
 
 **599. Which feature matters most?**
 Cycle number (age). Among behaviour features, temperature was the only one with a consistent, significant within-cohort relationship to fade.

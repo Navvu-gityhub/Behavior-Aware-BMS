@@ -124,3 +124,26 @@ def test_dashboard_route_serves_html(client):
         # Every endpoint the dashboard's JS calls must actually exist as a route.
         for endpoint in ("/batteries", "/pipeline/simulate", "/timeline"):
             assert endpoint in r.text
+
+
+def test_fleet_state_survives_a_restart(tmp_path):
+    """With BEACON_STATE_FILE set, a new store reads back the previous run."""
+    from main import run_pipeline
+    from src.bms.api.store import FleetStore
+    from src.bms.simulation.simulate_telemetry import SimulationConfig, simulate_fleet
+
+    raw = simulate_fleet(SimulationConfig(n_batteries=3, rows_per_battery=60, seed=2))
+    run = run_pipeline(raw, output_dir=tmp_path / "f", reports_dir=tmp_path / "r")
+    state = tmp_path / "state" / "fleet.json"
+
+    first = FleetStore()
+    first.attach_state_file(state)
+    first.ingest_run(run.guardian, run.telemetry)
+    assert state.exists()
+
+    restarted = FleetStore()
+    restarted.attach_state_file(state)
+    assert restarted.n_batteries == first.n_batteries
+    assert restarted.n_runs == 1
+    bid = first.list_batteries()[0].snapshot.battery_id
+    assert restarted.get_battery(bid).snapshot == first.get_battery(bid).snapshot

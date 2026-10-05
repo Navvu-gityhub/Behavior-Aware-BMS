@@ -363,6 +363,8 @@ function renderGuardian(b){
         : "State from the heuristic health index - not a measurement"}</div>
       ${b.heat_advice ? `<div class="sub"><b>Heat:</b> ${esc(b.heat_advice)}</div>` : ""}
       ${b.general_guidance ? `<div class="sub">${esc(b.general_guidance)}</div>` : ""}
+      ${b.number_kinds ? `<details class="sub"><summary>What each number is</summary>${
+        Object.entries(b.number_kinds).map(([k,v]) => `<div><b>${esc(k)}:</b> ${esc(v)}</div>`).join("")}</details>` : ""}
       <div>
         <h3 style="margin-bottom:10px">Contribution to health index</h3>
         ${attributionBars(b.health_attribution)}</div>

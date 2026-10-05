@@ -372,6 +372,7 @@ def run_serial_pipeline(
     # absent channel is not the same as a safe one - so it is dropped and
     # counted rather than admitted with a hole in it.
     records = _enforce_record_homogeneity(records, declared_channels, stats)
+    records = _enforce_cell_voltage(records, header, stats)
     if not records:
         refusals.append(
             f"No record carried the full channel set {list(declared_channels)} "
@@ -555,6 +556,39 @@ def records_to_frame(
         elapsed = pd.to_timedelta(pd.to_numeric(frame["test_time_s"], errors="coerce"), unit="s")
         frame["timestamp"] = pd.Timestamp(captured_at) + elapsed
     return frame
+
+
+#: Terminal voltage a single lithium-ion cell can physically show, in volts.
+#: The schema's field range (0-1000 V) is wide on purpose, because a module or
+#: pack is a legal unit. Once a rig declares `unit=cell`, a reading outside
+#: this band is not a cell voltage - a miswired divider, a pack declared as a
+#: cell, or a corrupted value that still checksums - and is rejected per
+#: record, like a bad checksum, rather than refusing the capture.
+#: 5.0 V sits above every lithium-ion charge limit (4.2-4.45 V) with margin.
+CELL_VOLTAGE_RANGE_V = (0.0, 5.0)
+
+
+def _enforce_cell_voltage(
+    records: list[TelemetryRecord],
+    header: SchemaHeader | None,
+    stats: SerialDecodeStats,
+) -> list[TelemetryRecord]:
+    """Drop records whose voltage is impossible for the declared unit."""
+    unit = header.unit if header is not None else "cell"
+    if unit != "cell":
+        return records
+    low, high = CELL_VOLTAGE_RANGE_V
+    kept: list[TelemetryRecord] = []
+    for record in records:
+        v = record.values.get("voltage_v")
+        if v is not None and not (low <= v <= high):
+            stats.n_accepted -= 1
+            stats.record_rejection(
+                f"voltage {v:g} V is impossible for a single lithium-ion cell "
+                f"(declared unit=cell; plausible {low:g}-{high:g} V)")
+            continue
+        kept.append(record)
+    return kept
 
 
 def _enforce_record_homogeneity(

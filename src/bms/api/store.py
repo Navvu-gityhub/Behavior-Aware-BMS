@@ -17,8 +17,12 @@ isn't quietly assumed away.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from typing import Optional
+import json
+import math
+import os
+from dataclasses import asdict, dataclass, field
+from pathlib import Path
+from typing import Any, Optional
 
 import pandas as pd
 
@@ -37,6 +41,48 @@ class FleetStore:
         self._batteries: dict[str, BatteryRecord] = {}
         self._last_behavior_features: Optional[pd.DataFrame] = None
         self._n_runs: int = 0
+        self._state_file: Optional[Path] = None
+
+    # -- persistence ------------------------------------------------------
+    # Opt-in, so the default stays a stateless demo service. Set
+    # BEACON_STATE_FILE to a path and the fleet (Guardian rows, twin snapshots,
+    # transition history) is written there after every run and read back at
+    # start-up, so a restart no longer loses it. The behaviour-feature
+    # timeline is NOT persisted: it is large, and is rebuilt by the next run.
+    def attach_state_file(self, path: str | Path) -> None:
+        self._state_file = Path(path)
+        if self._state_file.exists():
+            self.load(self._state_file)
+
+    def save(self, path: str | Path) -> None:
+        payload = {
+            "n_runs": self._n_runs,
+            "batteries": {
+                bid: {
+                    "guardian_row": {k: _jsonable(v) for k, v in rec.guardian_row.items()},
+                    "snapshot": asdict(rec.snapshot),
+                    "transitions": [asdict(t) for t in rec.transitions],
+                }
+                for bid, rec in self._batteries.items()
+            },
+        }
+        path = Path(path)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        tmp = path.with_suffix(path.suffix + ".tmp")
+        tmp.write_text(json.dumps(payload), encoding="utf-8")
+        os.replace(tmp, path)   # atomic: a crash mid-write never leaves half a file
+
+    def load(self, path: str | Path) -> None:
+        data = json.loads(Path(path).read_text(encoding="utf-8"))
+        self._n_runs = int(data.get("n_runs", 0))
+        self._batteries = {
+            bid: BatteryRecord(
+                guardian_row=rec["guardian_row"],
+                snapshot=TwinSnapshot(**rec["snapshot"]),
+                transitions=[TwinTransition(**t) for t in rec["transitions"]],
+            )
+            for bid, rec in data.get("batteries", {}).items()
+        }
 
     def ingest_run(self, guardian_df: pd.DataFrame, behavior_features_df: pd.DataFrame) -> list[TwinTransition]:
         """Fold one pipeline run's Guardian output into the store.
@@ -68,6 +114,8 @@ class FleetStore:
                 guardian_row=guardian_row, snapshot=snapshot, transitions=history
             )
 
+        if self._state_file is not None:
+            self.save(self._state_file)
         return transitions
 
     def list_batteries(self) -> list[BatteryRecord]:
@@ -92,3 +140,16 @@ class FleetStore:
 # for a per-request/test instance later; a module-level singleton is the
 # right amount of ceremony for a single-worker demo service.
 fleet_store = FleetStore()
+if os.environ.get("BEACON_STATE_FILE"):
+    fleet_store.attach_state_file(os.environ["BEACON_STATE_FILE"])
+
+
+def _jsonable(value: Any) -> Any:
+    """Plain JSON for a Guardian cell: numpy scalars to Python, NaN to null."""
+    if hasattr(value, "item"):
+        value = value.item()
+    if isinstance(value, float) and not math.isfinite(value):
+        return None
+    if isinstance(value, (str, int, float, bool)) or value is None:
+        return value
+    return str(value)

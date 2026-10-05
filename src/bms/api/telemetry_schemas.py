@@ -103,6 +103,12 @@ class TwinHistoryOut(BaseModel):
     n_snapshots: int
     snapshots: list[dict]
     transitions: list[TwinTransitionOut]
+    last_update: str = Field(description="When the latest snapshot was evaluated, ISO-8601 UTC.")
+    age_seconds: float = Field(description="Seconds since that snapshot.")
+    stale: bool = Field(description="True when no telemetry has updated this battery "
+                                    "within stale_after_seconds: the state shown is the "
+                                    "last one seen, not a current one.")
+    stale_after_seconds: float
 
 
 # ---------------------------------------------------------------------------

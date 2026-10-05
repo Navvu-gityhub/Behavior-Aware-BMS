@@ -20,9 +20,11 @@ from __future__ import annotations
 
 import math
 
+import numpy as np
 import pandas as pd
 
 from src.bms.guardian.guardian import GENERAL_GUIDANCE, _heat_advice
+from src.bms.health.error_bands import describe_rul_band, soh_band
 from src.bms.health.field_soh import state_from_soh
 from src.bms.rul.fade_extrapolation import DEFAULT_EOL_THRESHOLD
 
@@ -30,19 +32,9 @@ from src.bms.rul.fade_extrapolation import DEFAULT_EOL_THRESHOLD
 # (`time_above_40C`); kept so the card reports what was originally planned.
 HOT_C = 40.0
 
-# The RUL estimator's measured accuracy by distance to end of life, CALCE at
-# threshold 0.90, with SOH referenced to each cell's FIRST cycles - the
-# reference this pipeline uses and a BMS can actually hold. Quoted from
-# reports/metrics/calce_rul_horizon_early_ref/, not recomputed.
-#
-# The often-quoted 88% is the same estimator against a lifetime-percentile
-# reference that uses the cell's future; it is not what a deployed card gets.
-_RUL_SCOPE = (
-    "Accuracy depends on how close end of life is: within 25 cycles of it the "
-    "estimate was within +/-20 cycles 73% of the time. Further out it runs "
-    "early - by about 144 cycles when end of life is 200-400 cycles away - "
-    "so a small number here is a prompt to keep measuring, not a verdict."
-)
+# Accuracy statements on the card come from health/error_bands.py, which is
+# pinned to reports/metrics/error_bands.csv. RUL accuracy there is indexed by
+# the PREDICTED value - the only one a user sees.
 
 
 def render_health_card(result, battery_label: str | None = None) -> str:
@@ -58,11 +50,22 @@ def render_health_card(result, battery_label: str | None = None) -> str:
     lines.append("1. HOW HEALTHY IT IS")
     if soh is not None and soh.available:
         what = "state of health" if bol else "capacity relative to the start of this log"
+        band = soh_band(soh.window_mode)
         lines.append(f"   {soh.soh:.1%} {what}  [MEASURED]")
+        lines.append(
+            f"   Validation error: 90% of readings within +/-{band * 100:.1f} "
+            f"points of the lab's capacity test.")
         lines.append(
             f"   From charge delivered across the {soh.window} window, "
             f"{soh.n_accepted} of {soh.n_discharges} discharges usable, "
             f"latest at discharge {soh.at_cycle}.")
+        if np.isfinite(soh.resistance_growth):
+            lines.append(
+                f"   Internal resistance: {soh.resistance_reference_ohm * 1000:.0f} -> "
+                f"{soh.resistance_now_ohm * 1000:.0f} mOhm "
+                f"({(soh.resistance_growth - 1) * 100:+.0f}%)  [MEASURED, from the "
+                f"voltage drop at each load step]. Rising resistance is power fade; "
+                f"this tracked the lab cycler's own resistance on 19 of 20 cells.")
         if soh.window_mode == "learned":
             lines.append(
                 "   This battery never discharges across the standard window, so "
@@ -90,7 +93,7 @@ def render_health_card(result, battery_label: str | None = None) -> str:
             lines.append(
                 f"   About {rul.rul_cycles:.0f} cycles until it falls to "
                 f"{DEFAULT_EOL_THRESHOLD:.0%} of its early capacity.  [ESTIMATE]")
-            lines.append(f"   {_RUL_SCOPE}")
+            lines.append(f"   {describe_rul_band(rul.rul_cycles)}")
     else:
         reason = rul.refusal if rul is not None else "no complete discharge to build a trend from"
         lines.append(f"   Not available: {reason}")

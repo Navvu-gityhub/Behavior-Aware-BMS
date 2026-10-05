@@ -328,6 +328,8 @@ function renderGuardian(b){
     <div class="gnote">${esc(b.heat_advice)}</div>` : ""}
     ${b.general_guidance ? `<div class="gsec">GENERAL GUIDANCE (UNCONFIRMED)</div>
     <div class="gnote">${esc(b.general_guidance)}</div>` : ""}
+    ${b.number_kinds ? `<div class="gsec">WHAT EACH NUMBER IS</div>
+    <div class="gnote">${Object.entries(b.number_kinds).map(([k,v]) => `<div><b>${esc(k)}:</b> ${esc(v)}</div>`).join("")}</div>` : ""}
 
     <div class="gcav">${esc(b.guardian_caveat) ||
       "Attribution is exact with respect to the score it decomposes; the score is not a validated predictor of capacity fade."}</div>

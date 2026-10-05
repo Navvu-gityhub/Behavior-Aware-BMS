@@ -135,3 +135,18 @@ if __name__ == "__main__":
     test_detect_transition_same_state_is_not_a_transition()
     test_build_health_timeline_ordered_by_cycle()
     print("All digital twin tests passed.")
+
+
+def test_a_snapshot_is_reported_stale_once_telemetry_stops():
+    """Telemetry stopping must never look like nothing changing."""
+    from datetime import datetime, timedelta, timezone
+
+    from src.bms.digital_twin.twin import STALE_AFTER_S, TwinSnapshot, is_stale, snapshot_age_s
+
+    then = datetime(2026, 10, 5, 12, 0, tzinfo=timezone.utc)
+    snap = TwinSnapshot("B1", "NORMAL", 10.0, 0.1, 500, "keep", then.isoformat())
+    fresh = then + timedelta(seconds=STALE_AFTER_S - 1)
+    old = then + timedelta(seconds=STALE_AFTER_S + 1)
+    assert not is_stale(snap, now=fresh)
+    assert is_stale(snap, now=old)
+    assert snapshot_age_s(snap, now=old) == pytest.approx(STALE_AFTER_S + 1)
