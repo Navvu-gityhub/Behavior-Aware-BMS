@@ -23,6 +23,7 @@ them. Change them first.
 | SOH 3.3% median error | Superseded. The field method (voltage, current, time only) gives **1.7% median on 17 of 22 cells**. | Use 1.7% / 17 of 22. |
 | Digital twin | It is a state tracker: four states relabelled from the health state, transition detection, and per-battery history. No physics model, no forward simulation, no what-if. | Call it a "battery state tracker" or "digital shadow", or be ready to defend exactly what it is (section P). |
 | Hardware validates the system | It validates the **telemetry path only**. The cell was never discharged; no capacity or ageing was measured. | "The rig proves acquisition, the wire protocol and the refusal logic on real silicon. It does not validate health estimation." |
+| Behaviour predicts degradation (anywhere, spoken or written) | Ablation: XGBoost on usage features alone scores LOCO R² −0.29; on age alone −0.27; only the combination reaches 0.459, inside overlapping intervals. A straight line on age alone reaches 0.406, so usage adds about 0.05, within the noise. Only temperature showed a consistent link, and only in direction. | "Usage features added no skill we could separate from age. Temperature was the one usage factor linked to faster fade, and we could not measure how much." |
 | ~21k lines | Repository is about 48k lines including tests, scripts, frontend and firmware. | Quote whichever you can show; don't guess. |
 
 **Your three strongest answers**, in one line each:
