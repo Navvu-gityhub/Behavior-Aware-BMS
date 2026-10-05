@@ -46,6 +46,14 @@ TRUTH = Path("reports/metrics/calce_full_discharge.csv")
 # read CALCE's 0.2C discharges as rest. See run_field_soh_study.py.
 CALCE_REST_THRESHOLD_A = 0.02
 
+# Nominal capacities from the CALCE cell specifications. Passed as the rated
+# capacity, which is what lets the pipeline fall back to a learned window on
+# a cell that never discharges across the standard one.
+CALCE_RATED_AH = {"CS2": 1.1, "CX2": 1.35}
+
+# Written by scripts/run_field_soh_study.py; reading an archive takes minutes.
+CALCE_CACHE = Path("data/interim/calce_telemetry")
+
 
 def _coverage(telemetry: pd.DataFrame, label: str) -> SignalCoverage:
     present = tuple(c for c in REQUIRED_CHANNELS if c in telemetry.columns)
@@ -58,11 +66,16 @@ def _coverage(telemetry: pd.DataFrame, label: str) -> SignalCoverage:
 def _calce(path: Path, upto: int | None) -> int:
     from src.bms.io.load_calce_cycling import load_calce_archive
 
-    print(f"Loading {path.name} (a full CALCE archive takes a minute or two)...",
-          flush=True)
-    telemetry, report = load_calce_archive(path)
-    telemetry["test_time_s"] = monotonic_time(telemetry["test_time_s"])
-    cell = report.cell_id
+    cached = CALCE_CACHE / f"{path.stem}.parquet"
+    if cached.exists():
+        telemetry = pd.read_parquet(cached)
+        cell = path.stem
+    else:
+        print(f"Loading {path.name} (a full CALCE archive takes a minute or two)...",
+              flush=True)
+        telemetry, report = load_calce_archive(path)
+        telemetry["test_time_s"] = monotonic_time(telemetry["test_time_s"])
+        cell = report.cell_id
     if upto is not None:
         telemetry = telemetry[pd.to_numeric(telemetry["cycle"], errors="coerce") <= upto]
     # The cycler's own capacity and resistance columns are dropped, so nothing
@@ -73,7 +86,8 @@ def _calce(path: Path, upto: int | None) -> int:
     result = score_telemetry_frame(
         source_name=f"calce:{cell}", telemetry=telemetry,
         coverage=_coverage(telemetry, path.name), n_frames=len(telemetry),
-        n_decoded=len(telemetry), cell_id=cell, rated_capacity_ah=None,
+        n_decoded=len(telemetry), cell_id=cell,
+        rated_capacity_ah=CALCE_RATED_AH.get(cell[:3]),
         rest_threshold_a=CALCE_REST_THRESHOLD_A,
         # CALCE cycled these cells from new, so the log's first discharges
         # are beginning of life. A replayed vehicle log would not say this.
@@ -94,10 +108,14 @@ def _check_against_lab(cell: str, upto: int | None, result) -> None:
     truth = truth[(truth["cell_id"] == cell) & truth["soh"].notna()].sort_values("arbin_cycle_index")
     if truth.empty:
         return
-    # Same reference as the card: the cell's first five cycles. add_targets'
-    # own `soh` divides by a lifetime percentile, which uses the future and
-    # would move "90%" to a different amp-hour level than the card means.
-    truth["soh"] = truth["capacity_ah"] / truth["capacity_ah"].head(5).median()
+    # "As new" is the capacity checks within the cell's first 10 cycles - the
+    # first five on a normally cycled cell, only the first on a
+    # partial-cycling cell whose checks are ~100 cycles apart (its first five
+    # would already include several percent of fade). add_targets' own `soh`
+    # divides by a lifetime percentile, which uses the future.
+    early = truth[truth["arbin_cycle_index"] <= 10]
+    reference = early if not early.empty else truth.head(1)
+    truth["soh"] = truth["capacity_ah"] / reference["capacity_ah"].median()
     print()
     print("CHECK AGAINST THE LAB  (the card above was not shown any of this)")
     print("-" * 60)
@@ -105,7 +123,8 @@ def _check_against_lab(cell: str, upto: int | None, result) -> None:
     seen = truth[truth["arbin_cycle_index"] <= upto_c]
     soh = result.field_soh
     if not seen.empty:
-        lab = float(seen["soh"].tail(5).median())
+        recent = seen[seen["arbin_cycle_index"] > upto_c - 10]
+        lab = float((recent if not recent.empty else seen.tail(1))["soh"].median())
         line = f"   Cycler-measured capacity at cycle {upto_c}: {lab:.1%} of initial"
         if soh is not None and soh.available:
             line += f"; the card said {soh.soh:.1%} ({(soh.soh - lab) * 100:+.1f} points)"

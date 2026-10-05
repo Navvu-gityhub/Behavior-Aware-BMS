@@ -63,6 +63,12 @@ def render_health_card(result, battery_label: str | None = None) -> str:
             f"   From charge delivered across the {soh.window} window, "
             f"{soh.n_accepted} of {soh.n_discharges} discharges usable, "
             f"latest at discharge {soh.at_cycle}.")
+        if soh.window_mode == "learned":
+            lines.append(
+                "   This battery never discharges across the standard window, so "
+                "the window was learned from its own early discharges. That "
+                "mode measured 3.2-3.4% error on real top-of-charge partial "
+                "cycling (2 CALCE cells) - fewer cells than the standard window.")
         if bol:
             lines.append(f"   State: {state_from_soh(soh.soh)}")
         else:

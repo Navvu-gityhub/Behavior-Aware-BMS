@@ -184,11 +184,11 @@ Abridged from `scripts/health_report.py`:
    - Scoring skipped: the feature layer requires channels this source does not supply ...
 
 CHECK AGAINST THE LAB  (the card above was not shown any of this)
-   Cycler-measured capacity at cycle 90: 90.6% of initial; the card said 91.0% (+0.5 points)
+   Cycler-measured capacity at cycle 90: 91.4% of initial; the card said 91.0% (-0.3 points)
    The cell actually crossed 90% at cycle 146: 56 cycles after cycle 90; the card said 5
 ```
 
-The health figure is within half a point. The remaining-life figure is 51
+The health figure is within a third of a point. The remaining-life figure is 51
 cycles early — the conservative bias the RUL study measured at that distance
 (median −32 cycles at 50–100 out), which is why the card prints its own
 accuracy beside the number rather than the number alone.
@@ -233,6 +233,7 @@ the collapse above — there is no training cohort to transfer from.
 | | result | scope |
 |---|---|---|
 | **SOH**, field method: voltage, current, time only | **1.7% median error** (95% CI 1.4–4.3%), worst 10.3% | 17 of 22 CALCE cells; 5 refused with a stated reason |
+| **SOH from partial discharges only**, window learned from the cell's own usage | **3.2–3.4% error** | real top-of-charge partial cycling, 2 CALCE cells; near-empty partials refused (2 cells) |
 | **RUL** by extrapolating a cell's own fade trend | **within ±20 cycles, 73%** of the time | inside 25 cycles of end of life, against the reference a BMS can hold |
 
 **The field method** ([`calce_field_soh/`](reports/metrics/calce_field_soh/field_soh_report.md))
@@ -258,19 +259,38 @@ never rests before a discharge, so its resistance cannot be estimated. The
 three worst measured cells (6.4–10.3%) are all Type 3, which switches rate six
 times per cycle.
 
-**Two figures were corrected downward by this work.** The earlier 3.3% SOH and
+**Two figures were corrected downward by the field work.** The earlier 3.3% SOH and
 88% RUL were scored against a reference capacity taken from each cell's whole
 life — the future, which no BMS has. Against the cell's own first cycles, RUL
 near end of life is 73% within ±20; the earlier figures stay in their
 artifacts as what they were.
 
-**What it does not do yet:** partial discharges. Cut to 85%→15% state of
-charge, the primary window can no longer be read at ~1C once the ohmic shift
-is applied, and the gates refuse 18 of 21 cells rather than report. Before a
-reference-timing gate was added, the same arm reported a confident 58% error
-on CS2_38. A window placed inside the used range (4.00–3.80 V) measured 8
-cells at 4.0% — labelled exploratory, because it was chosen after seeing the
-first result.
+**Partial discharges** ([`calce_partial_soh/`](reports/metrics/calce_partial_soh/partial_soh_report.md)).
+A car rarely discharges across a fixed 3.90–3.60 V window. CALCE's Type 5 and 6
+cells are real partial cycling — thousands of ~25% discharges in one band, with
+a full capacity check every ~100 cycles — and neither band crosses that window.
+So when the fixed window cannot be read, the pipeline learns one from the
+cell's own first ten discharges: the band they all cover, then the flattest
+sub-window inside it. Nothing later in life, and no capacity check, informs it.
+
+| cells | band the driver uses | result |
+|---|---|---|
+| CS2_24, CS2_25 | top of charge, 4.07→3.78 V | **3.4%, 3.2%** error at every capacity check, from partials alone |
+| CS2_5, CS2_6 | bottom of charge, 3.69→2.70 V | **refused** — the window would sit on the end-of-discharge knee |
+
+The refusal is physics, not a tuned cut. On the plateau, window charge tracks
+capacity; on the knee, voltage is set by resistance and diffusion, so it
+measures how hard the cell is working instead. The windows separate by about 9×
+in steepness (0.4–0.9 vs 8–10 V per unit state of charge on the flattest
+available window), and any threshold between about 0.9 and 8 gives the same
+verdict on every cell. Before this gate,
+the same estimator reported those two cells at 6.8% and 12.8% error while
+looking confident.
+
+As a control, the learned mode on the 18 full-discharge cells measured 16 at
+1.95% median — beside 1.7% for the fixed window — so it is a fallback, not a
+replacement. **Scope:** two cells per band. That is enough to show the
+mechanism and too few to quote a population error.
 
 SOH is the ratio of charge delivered between two fixed terminal voltages now
 to the same window early in that cell's life. It survives partial discharge,

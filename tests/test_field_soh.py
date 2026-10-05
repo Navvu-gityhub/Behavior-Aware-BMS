@@ -267,3 +267,83 @@ def test_an_implausibly_high_reading_is_withheld():
     table.loc[table.index[-1], "soh_window"] = MAX_PLAUSIBLE_SOH + 0.2
     gated = apply_field_gates(table, d)
     assert np.isnan(gated["soh_window_accepted"].iloc[-1])
+
+
+# ---------------------------------------------------------------------------
+# Learned windows: partial discharges
+# ---------------------------------------------------------------------------
+
+def _ocv_knee(x: np.ndarray) -> np.ndarray:
+    """The plateau curve plus an exponential end-of-discharge knee."""
+    return _ocv(x) - 0.8 * np.exp((x - 1.0) / 0.04)
+
+
+def _partial_cell(n_cycles: int, x_start: float, depth_ah: float,
+                  ocv=_ocv, q0: float = 1.0, fade: float = 0.003,
+                  r: float = 0.10) -> tuple[pd.DataFrame, np.ndarray]:
+    """Repeated partial discharges of `depth_ah` from state `x_start`."""
+    current: list[float] = []
+    voltage: list[float] = []
+    caps = q0 * (1 - fade * np.arange(n_cycles))
+    for q in caps:
+        steps = int(round(depth_ah * 3600 / (I_LOAD * DT)))
+        x = x_start + np.arange(1, steps + 1) * I_LOAD * DT / 3600 / q
+        rest_v = float(ocv(np.array([x_start]))[0])
+        current += [0.0] * 6
+        voltage += [rest_v] * 6
+        current += [-I_LOAD] * steps
+        voltage += list(ocv(x) - I_LOAD * r)
+        current += [0.0] * 6
+        voltage += [float(ocv(np.array([x[-1]]))[0])] * 6
+        current += [I_LOAD] * steps
+        voltage += [4.0] * steps
+    frame = pd.DataFrame({"test_time_s": np.arange(len(current)) * DT,
+                          "current_a": current, "voltage_v": voltage})
+    frame["cell_id"] = "SYN"
+    return frame, caps
+
+
+def test_top_of_charge_partials_are_measured_on_a_learned_window():
+    from src.bms.health.field_soh import learned_field_soh
+
+    tel, caps = _partial_cell(60, x_start=0.02, depth_ah=0.30)
+    d = _discharges(tel)
+    fixed = current_field_soh(tel, d, "SYN", REST)
+    assert not fixed.available                      # never reaches 3.60 V
+    learned, table = learned_field_soh(tel, d, "SYN", REST, rated_capacity_ah=1.0)
+    assert learned.refusal == ""
+    assert learned.window_mode == "learned"
+    expected = np.median(caps[-5:]) / np.median(caps[:5])
+    assert learned.soh == pytest.approx(expected, abs=0.02)
+
+
+def test_partials_on_the_knee_are_refused_with_the_reason():
+    from src.bms.health.field_soh import learned_field_soh
+
+    tel, _ = _partial_cell(30, x_start=0.72, depth_ah=0.27, ocv=_ocv_knee)
+    learned, _ = learned_field_soh(tel, _discharges(tel), "SYN", REST,
+                                   rated_capacity_ah=1.0)
+    assert not learned.available
+    assert "knee" in learned.refusal
+
+
+def test_the_window_is_learned_from_early_discharges_only():
+    """Rewriting late life must not move the learned window."""
+    from src.bms.health.field_soh import curves_from_telemetry, learn_usage_window
+
+    tel, _ = _partial_cell(40, x_start=0.02, depth_ah=0.30)
+    curves, _ = curves_from_telemetry(tel, _discharges(tel), "SYN", REST)
+    base = learn_usage_window(curves, 1.0)
+    tampered = curves.copy()
+    late = tampered["cycle"] > 20
+    tampered.loc[late, "voltage_v"] = tampered.loc[late, "voltage_v"] - 0.3
+    assert learn_usage_window(tampered, 1.0).spec == base.spec
+
+
+def test_pipeline_falls_back_to_a_learned_window_only_with_a_rated_capacity():
+    tel, _ = _partial_cell(60, x_start=0.02, depth_ah=0.30)
+    without = _score(tel, rated_capacity_ah=None)
+    assert not without.field_soh.available
+    with_cap = _score(tel, rated_capacity_ah=1.0)
+    assert with_cap.field_soh.available
+    assert with_cap.field_soh.window_mode == "learned"

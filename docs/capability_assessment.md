@@ -33,6 +33,7 @@ measured on the same cells against the same ground truth:
 | Rejecting truncated discharges that were being read as capacity fade | worst cell **0.523 → 0.105** (5×) |
 | Compensating terminal voltage for ohmic sag at 1.23C | **0.068 → 0.035** median on high-rate cells (2×) |
 | Estimating resistance from the load step, from field telemetry only | cells measured **12 → 17**, median **4.3% → 1.7%** |
+| Refusing windows on the discharge knee (partial cycling) | 2 cells **6.8%, 12.8% → refused**; plateau partials **3.2–3.4%** |
 | Choosing a different model | indistinguishable from zero |
 
 That asymmetry is the assessment. **What you measure, and how you condition it,
@@ -182,13 +183,20 @@ and is not available to a BMS. They stay in `calce_voltage_window/` and
 `calce_rul_horizon/` as what they were; the field-realisable numbers are the
 ones above.
 
-**Partial discharge is not yet shown.** Cut to 85%→15% state of charge, the
-primary window cannot be read at ~1C once the ohmic shift is applied, and the
-gates refuse 18 of 21 cells. Before the reference-timing gate existed, the
-same arm reported 58% error on CS2_38 while looking confident — the failure
-the gate now converts into a refusal. A window inside the used range
-(4.00–3.80 V) measured 8 cells at 4.0%, labelled exploratory because it was
-chosen after seeing that result.
+**Partial discharge: works on the plateau, refused on the knee.** CALCE Types
+5 and 6 are real partial cycling with periodic capacity checks
+(`calce_partial_soh/`). With a window learned from each cell's own first ten
+discharges, top-of-charge partials (4.07→3.78 V) track capacity at 3.2–3.4%
+from partials alone; bottom-of-charge partials (3.69→2.70 V) are refused,
+because even the flattest window there lies on the end-of-discharge knee
+(8–10 V per unit state of charge against 0.4–0.9 on the plateau), where
+voltage measures resistance and diffusion rather than capacity. Before that
+gate, they read 6.8% and 12.8% wrong. Two cells per band: the mechanism, not
+a population error.
+
+This is the third instance of the section 1 pattern. The gain came from
+deciding WHICH measurement is informative — a plateau window, not a knee
+window — not from a better fit.
 
 ### 4.4 Scoping claims so they survive being checked
 
@@ -271,9 +279,10 @@ Ordered by evidential value per unit of work, not by appeal.
    set `battery_state` when the log starts at beginning of life, and feed a
    five-section report card (`scripts/health_report.py`) in which every line
    is labelled measured, estimate, or unconfirmed guidance.
-6. **A window that partial discharges can read.** The exploratory 4.00–3.80 V
-   result is a hypothesis; it needs a dataset of genuine partial cycles, not
-   truncated full ones, to become a claim.
+6. **Done: partial discharges.** A window learned from the cell's usage band
+   is the pipeline's fallback when the fixed one cannot be read. Next is more
+   than two cells per band, and RUL for partial-only logs: it currently needs
+   complete discharges, and says so.
 7. **Not: another model.** The measurement above says it would not be
    detectable.
 

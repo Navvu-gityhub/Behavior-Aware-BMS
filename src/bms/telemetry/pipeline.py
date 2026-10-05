@@ -50,7 +50,7 @@ index - sets `battery_state`, and `state_basis` says which did.
 from __future__ import annotations
 
 import math
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from pathlib import Path
 from typing import Iterator, Mapping
 
@@ -62,7 +62,12 @@ import pandas as pd
 # imported here - and duplicating its value would put the same assumption in
 # two files that could then disagree.
 from src.bms.features.behavior_features import DEFAULT_RATED_CAPACITY_AH
-from src.bms.health.field_soh import FieldSOH, current_field_soh, state_from_soh
+from src.bms.health.field_soh import (
+    FieldSOH,
+    current_field_soh,
+    learned_field_soh,
+    state_from_soh,
+)
 from src.bms.rul.fade_extrapolation import (
     DEFAULT_EOL_THRESHOLD,
     RULEstimate,
@@ -351,12 +356,20 @@ def score_telemetry_frame(
     soh_reference = (
         "beginning_of_life" if reference_is_beginning_of_life else "start_of_log")
     field_soh = _measure_field_soh(
-        telemetry, measurements, cell_id, rest_threshold_a)
+        telemetry, measurements, cell_id, rest_threshold_a, rated_capacity_ah)
     if field_soh.available:
         stages.append("measure_soh")
 
     cycles = cycles_to_frame(measurements, complete_only=True)
     rul_estimate = rul_from_cycle_capacity(cycles) if not cycles.empty else None
+    if rul_estimate is not None and rul_estimate.refusal and len(cycles) < len(measurements) // 2:
+        # Say why history is short: the trend is extrapolated from COMPLETE
+        # discharges, and a log of mostly partial ones has few, however long
+        # it is. "Fewer than 30 cycles" alone reads as a log that is too new.
+        rul_estimate = replace(rul_estimate, refusal=(
+            f"{rul_estimate.refusal}. Remaining life is extrapolated from "
+            f"complete discharges, and only {len(cycles)} of this log's "
+            f"{len(measurements)} discharges were complete"))
     if cycles.empty:
         refusals.append(
             "No complete discharge cycle found, so no capacity measurement is "
@@ -451,6 +464,7 @@ def _measure_field_soh(
     measurements: list[CycleMeasurement],
     cell_id: str,
     rest_threshold_a: float,
+    rated_capacity_ah: float | None = None,
 ) -> FieldSOH:
     """Window SOH over EVERY discharge, partial ones included.
 
@@ -459,13 +473,31 @@ def _measure_field_soh(
     crosses the window is a full measurement of the window. That difference is
     why this estimator exists, so it is given all of them, and its own gates
     decide which are usable.
+
+    The fixed window is tried first, because it is the validated one. When it
+    cannot be read - the driver never discharges across it - and the rated
+    capacity is known, a window learned from the cell's own usage band is
+    tried instead (`field_soh.learned_field_soh`). If both refuse, both
+    reasons are reported, since either may be the one worth acting on.
     """
     discharges = cycles_to_frame(measurements, complete_only=False)
     try:
-        return current_field_soh(telemetry, discharges, cell_id, rest_threshold_a)
+        fixed = current_field_soh(telemetry, discharges, cell_id, rest_threshold_a)
     except ValueError as exc:
         return FieldSOH(float("nan"), None, 0, len(discharges), True, "",
                         refusal=str(exc))
+    if fixed.available or rated_capacity_ah is None or discharges.empty:
+        return fixed
+    try:
+        learned, _ = learned_field_soh(
+            telemetry, discharges, cell_id, rest_threshold_a, rated_capacity_ah)
+    except ValueError:
+        return fixed
+    if learned.available:
+        return learned
+    return replace(fixed, refusal=(
+        f"{fixed.refusal}. A window learned from this cell's own usage band "
+        f"was also tried: {learned.refusal}"))
 
 
 def _score_cycles(

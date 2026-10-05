@@ -47,7 +47,7 @@ correction switching on.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 import numpy as np
 import pandas as pd
@@ -55,6 +55,7 @@ import pandas as pd
 from src.bms.health.voltage_window import (
     DEFAULT_REFERENCE_CYCLES,
     WindowSpec,
+    window_charge,
     window_soh_table,
 )
 
@@ -154,6 +155,10 @@ class FieldSOH:
     compensated: bool
     window: str
     refusal: str = ""
+    # "fixed": the validated default window. "learned": a window placed
+    # inside the voltage band this cell's own early discharges cover, used
+    # when the fixed one cannot be read (see LEARNED WINDOWS below).
+    window_mode: str = "fixed"
 
     @property
     def available(self) -> bool:
@@ -407,6 +412,192 @@ def current_field_soh(
 
 
 def _with(result: FieldSOH, refusal: str) -> FieldSOH:
-    return FieldSOH(result.soh, result.at_cycle, result.n_accepted,
-                    result.n_discharges, result.compensated, result.window,
-                    refusal)
+    return replace(result, refusal=refusal)
+
+
+# ---------------------------------------------------------------------------
+# LEARNED WINDOWS: partial discharges
+# ---------------------------------------------------------------------------
+#
+# The fixed 3.90-3.60 V window was validated on full laboratory discharges. A
+# vehicle rarely produces one: a driver who keeps the battery between 90% and
+# 70% never crosses 3.60 V, and one who runs it low never sees 3.90 V. CALCE
+# has both, as real partial cycling with periodic full capacity checks: CS2
+# Type 6 cycles 4.07 -> 3.78 V (top of charge), Type 5 cycles 3.69 -> 2.70 V
+# (bottom of charge), thousands of partials each.
+#
+# A BMS can learn where its own driver operates. The band every one of the
+# cell's first discharges covers is measurable with no ground truth, and a
+# window placed inside it can be read on every later discharge in the same
+# band. Learned from the first `LEARN_DISCHARGES` only, so nothing later in
+# life - and nothing from a capacity test - informs it.
+#
+# WHERE IN THE BAND, AND WHEN TO REFUSE
+# ---------------------------------------
+# Window charge tracks capacity on the voltage PLATEAU, where the curve is
+# set by thermodynamics. Near empty it falls into the knee, where voltage is
+# set by kinetics - resistance and solid-state diffusion - so charge in a
+# knee window measures how hard the cell is working, not how much it holds.
+# Measured on CALCE, as window steepness in volts per unit state of charge:
+#
+#     learned windows, full-discharge cells    0.44-0.88    works (median 1.95%)
+#     top-of-charge partials (Type 6)          0.82-0.83    works (3.2-3.4%)
+#     bottom-of-charge partials (Type 5)       8.2-10.4     failed at 6.8-12.8%
+#                                                           before this gate
+#
+# (Flattest sub-window in each band; reports/metrics/calce_partial_soh/.)
+# So the flattest sub-window of the band is chosen, and refused if even that
+# is steeper than `MAX_WINDOW_STEEPNESS`. The threshold is physical rather
+# than tuned: any value between about 0.9 and 8 gives the same verdict on
+# every cell measured, and 2.0 is a round number just above the plateau.
+#
+# Steepness is per unit of state of charge, so it needs the cell's rated
+# capacity. Without one there is no learned window, only the fixed one.
+
+LEARN_DISCHARGES = 10
+# Fraction of the band trimmed from each end. The top of a discharge carries
+# the load-step transient and the bottom the cutoff, neither of which repeats
+# exactly from one discharge to the next.
+BAND_MARGIN = 0.15
+# Samples skipped at the start of each discharge when finding the band's top:
+# the voltage is still settling from the load step.
+SETTLE_SAMPLES = 2
+MIN_LEARNED_SPAN_V = 0.10
+MAX_LEARNED_SPAN_V = 0.30
+SCAN_STEP_V = 0.01
+MAX_WINDOW_STEEPNESS = 2.0
+
+
+@dataclass(frozen=True)
+class LearnedWindow:
+    """A window chosen from a cell's own early discharges, or why there is none."""
+
+    spec: WindowSpec | None
+    steepness: float
+    band: tuple[float, float]
+    refusal: str = ""
+
+
+def learn_usage_window(
+    curves: pd.DataFrame,
+    rated_capacity_ah: float,
+    learn_discharges: int = LEARN_DISCHARGES,
+) -> LearnedWindow:
+    """The flattest window inside the band the first discharges all cover.
+
+    `curves` must be terminal-voltage discharge curves as
+    `curves_from_telemetry` builds them. The returned window is in that same
+    terminal-voltage frame, as seen on the learning discharges.
+    """
+    cycles = sorted(curves["cycle"].unique())[:learn_discharges]
+    if len(cycles) < learn_discharges:
+        return LearnedWindow(None, float("nan"), (float("nan"), float("nan")),
+                             f"only {len(cycles)} discharges to learn a window "
+                             f"from; {learn_discharges} are needed")
+    early = curves[curves["cycle"].isin(cycles)]
+    tops, bottoms = [], []
+    for _, block in early.groupby("cycle"):
+        v = block["voltage_v"].to_numpy(float)
+        settled = v[SETTLE_SAMPLES:] if len(v) > SETTLE_SAMPLES + 2 else v
+        tops.append(float(np.nanmax(settled)))
+        bottoms.append(float(np.nanmin(v)))
+    hi, lo = min(tops), max(bottoms)
+    band = (hi, lo)
+    margin = BAND_MARGIN * (hi - lo)
+    usable_hi, usable_lo = hi - margin, lo + margin
+    span = min(MAX_LEARNED_SPAN_V, usable_hi - usable_lo)
+    if span < MIN_LEARNED_SPAN_V:
+        return LearnedWindow(None, float("nan"), band,
+                             f"the band every early discharge covers is "
+                             f"{hi:.2f}-{lo:.2f} V, too narrow to hold a window "
+                             f"of {MIN_LEARNED_SPAN_V} V once its edges are trimmed")
+
+    best: tuple[float, WindowSpec] | None = None
+    low = usable_lo
+    while low + span <= usable_hi + 1e-9:
+        spec = WindowSpec(round(low + span, 3), round(low, 3))
+        steep = _steepness(early, spec, rated_capacity_ah)
+        if np.isfinite(steep) and (best is None or steep < best[0]):
+            best = (steep, spec)
+        low += SCAN_STEP_V
+    if best is None:
+        return LearnedWindow(None, float("nan"), band,
+                             "no window inside the usage band could be read on "
+                             "the early discharges")
+    steep, spec = best
+    if steep > MAX_WINDOW_STEEPNESS:
+        return LearnedWindow(None, steep, band,
+                             f"the flattest window in this cell's usage band "
+                             f"({spec}) falls {steep:.1f} V per unit state of "
+                             f"charge - the knee of the curve, where voltage "
+                             f"reflects resistance rather than capacity. A "
+                             f"plateau window is under {MAX_WINDOW_STEEPNESS}.")
+    return LearnedWindow(spec, steep, band)
+
+
+def _steepness(curves: pd.DataFrame, spec: WindowSpec, rated_capacity_ah: float) -> float:
+    """Median volts per unit state of charge across the window, over discharges."""
+    values = []
+    for _, block in curves.groupby("cycle"):
+        q = window_charge(block["voltage_v"].to_numpy(float),
+                          block["capacity_ah_curve"].to_numpy(float), spec)
+        if np.isfinite(q) and q > 0:
+            values.append(spec.span_v / (q / rated_capacity_ah))
+    return float(np.median(values)) if values else float("nan")
+
+
+def learned_field_soh(
+    telemetry: pd.DataFrame,
+    discharges: pd.DataFrame,
+    cell_id: str,
+    rest_threshold_a: float,
+    rated_capacity_ah: float,
+    reference_cycles: int = DEFAULT_REFERENCE_CYCLES,
+) -> tuple[FieldSOH, pd.DataFrame]:
+    """Field SOH on a window learned from the cell's own usage band.
+
+    Returns the current estimate and the full per-discharge table, so a study
+    can score every discharge, not only the latest.
+    """
+    n = int(len(discharges))
+    curves, steps = curves_from_telemetry(telemetry, discharges, cell_id, rest_threshold_a)
+    none = FieldSOH(float("nan"), None, 0, n, True, "", window_mode="learned")
+    if curves.empty or steps.empty or steps["r_step_ohm"].notna().sum() == 0:
+        return _with(none, "no discharge was preceded by a clean rest-to-load "
+                           "step, so the ohmic correction is unknown"), pd.DataFrame()
+    learned = learn_usage_window(curves, rated_capacity_ah)
+    if learned.spec is None:
+        return _with(none, learned.refusal), pd.DataFrame()
+
+    overpotential = step_overpotential(steps).dropna(subset=["ir_drop_v"])
+    curves = curves[curves["cycle"].isin(set(overpotential["cycle"]))]
+    # The window was learned in terminal voltage on the early discharges, so
+    # it is moved into the compensated frame by their own ohmic drop; each
+    # later discharge then reads it shifted by ITS drop, as the fixed window
+    # does.
+    early = sorted(curves["cycle"].unique())[:LEARN_DISCHARGES]
+    ir_ref = float(overpotential.loc[overpotential["cycle"].isin(early), "ir_drop_v"].median())
+    spec = WindowSpec(learned.spec.v_high + ir_ref, learned.spec.v_low + ir_ref)
+    table = window_soh_table(curves, spec=spec, reference_cycles=reference_cycles,
+                             overpotential=overpotential)
+    table = apply_field_gates(table, discharges, reference_cycles)
+    table["learned_window"] = str(learned.spec)
+    table["window_steepness"] = learned.steepness
+
+    label = f"{learned.spec} (learned)"
+    accepted = table.dropna(subset=["soh_window_accepted"]).sort_values("cycle")
+    if bool(table["cell_refused"].any()):
+        return _with(replace(none, window=label),
+                     str(table.loc[table["cell_refused"], "refusal"].iloc[0])), table
+    beyond = accepted.iloc[reference_cycles:]
+    if beyond.empty:
+        return _with(replace(none, window=label, n_accepted=len(accepted)),
+                     f"only {len(accepted)} discharge(s) read the learned "
+                     f"window; more are needed"), table
+    latest = beyond.tail(REPORT_CYCLES)
+    return FieldSOH(
+        soh=float(latest["soh_window_accepted"].median()),
+        at_cycle=int(latest["cycle"].iloc[-1]),
+        n_accepted=int(len(accepted)), n_discharges=n, compensated=True,
+        window=label, window_mode="learned",
+    ), table
