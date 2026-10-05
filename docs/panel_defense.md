@@ -216,7 +216,7 @@ For the shipped estimators: when to plan replacement (SOH crossing 90% or 80%), 
 The report card maps measured SOH to a state and an action. Under 80%: replace. 80–90%: plan replacement. 90–95%: monitor. It's advice to a person; nothing is actuated.
 
 **54. How does RUL help?**
-Near end of life, it says roughly how many cycles remain, to schedule a replacement. Far from end of life it isn't accurate, and the card says so beside the number.
+Near end of life, it says roughly how many cycles remain, to schedule a replacement. When it predicts under 25 cycles, the cell lasted at least that long 95% of the time. It needs complete discharges. For a driver who almost never fully discharges, four methods were tested (`reports/metrics/calce_field_rul/`): extrapolating the field SOH trajectory, a self-calibrated version, and sparse capacity checks with a lowered minimum. None was accurate enough to ship. So for partial-only logs the card refuses RUL and says why. That's an open problem, not a solved one.
 
 **55. How is uncertainty communicated?**
 As validation-derived error bands printed with every figure on the report card (`health/error_bands.py`, pinned to `reports/metrics/error_bands.csv`). SOH: 90% of readings were within ±3.4 points (±4.9 with a learned window). RUL: the band is indexed by the *predicted* value, the only one a user sees. Example: when the card predicts under 25 cycles, the true life fell 1–82 cycles later in 90% of cases. These are empirical bands from lab cells, not model confidence intervals.

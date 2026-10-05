@@ -1,0 +1,2033 @@
+cell_id,arm,cycle,sparsity,rul_pred,rul_true,error,refused
+CS2_24,capacity_sparse,1.0,real (lab capacity checks),,564.0,,True
+CS2_24,field_raw,1.0,real (lab capacity checks),,564.0,,True
+CS2_24,field_selfcal,1.0,real (lab capacity checks),,564.0,,True
+CS2_24,capacity_sparse_lowmin,1.0,real (lab capacity checks),,564.0,,True
+CS2_24,capacity_sparse,11.0,real (lab capacity checks),,554.0,,True
+CS2_24,field_raw,11.0,real (lab capacity checks),,554.0,,True
+CS2_24,field_selfcal,11.0,real (lab capacity checks),,554.0,,True
+CS2_24,capacity_sparse_lowmin,11.0,real (lab capacity checks),,554.0,,True
+CS2_24,capacity_sparse,21.0,real (lab capacity checks),,544.0,,True
+CS2_24,field_raw,21.0,real (lab capacity checks),,544.0,,True
+CS2_24,field_selfcal,21.0,real (lab capacity checks),,544.0,,True
+CS2_24,capacity_sparse_lowmin,21.0,real (lab capacity checks),,544.0,,True
+CS2_24,capacity_sparse,31.0,real (lab capacity checks),,534.0,,True
+CS2_24,field_raw,31.0,real (lab capacity checks),10.717209373130423,534.0,-523.2827906268695,False
+CS2_24,field_selfcal,31.0,real (lab capacity checks),5.967562945596029,534.0,-528.032437054404,False
+CS2_24,capacity_sparse_lowmin,31.0,real (lab capacity checks),,534.0,,True
+CS2_24,capacity_sparse,42.0,real (lab capacity checks),,523.0,,True
+CS2_24,field_raw,42.0,real (lab capacity checks),,523.0,,True
+CS2_24,field_selfcal,42.0,real (lab capacity checks),,523.0,,True
+CS2_24,capacity_sparse_lowmin,42.0,real (lab capacity checks),,523.0,,True
+CS2_24,capacity_sparse,52.0,real (lab capacity checks),,513.0,,True
+CS2_24,field_raw,52.0,real (lab capacity checks),79.56397487018705,513.0,-433.43602512981295,False
+CS2_24,field_selfcal,52.0,real (lab capacity checks),,513.0,,True
+CS2_24,capacity_sparse_lowmin,52.0,real (lab capacity checks),,513.0,,True
+CS2_24,capacity_sparse,62.0,real (lab capacity checks),,503.0,,True
+CS2_24,field_raw,62.0,real (lab capacity checks),108.85590863905654,503.0,-394.14409136094343,False
+CS2_24,field_selfcal,62.0,real (lab capacity checks),,503.0,,True
+CS2_24,capacity_sparse_lowmin,62.0,real (lab capacity checks),,503.0,,True
+CS2_24,capacity_sparse,72.0,real (lab capacity checks),,493.0,,True
+CS2_24,field_raw,72.0,real (lab capacity checks),,493.0,,True
+CS2_24,field_selfcal,72.0,real (lab capacity checks),,493.0,,True
+CS2_24,capacity_sparse_lowmin,72.0,real (lab capacity checks),,493.0,,True
+CS2_24,capacity_sparse,82.0,real (lab capacity checks),,483.0,,True
+CS2_24,field_raw,82.0,real (lab capacity checks),99.78365875035351,483.0,-383.21634124964646,False
+CS2_24,field_selfcal,82.0,real (lab capacity checks),,483.0,,True
+CS2_24,capacity_sparse_lowmin,82.0,real (lab capacity checks),,483.0,,True
+CS2_24,capacity_sparse,92.0,real (lab capacity checks),,473.0,,True
+CS2_24,field_raw,92.0,real (lab capacity checks),,473.0,,True
+CS2_24,field_selfcal,92.0,real (lab capacity checks),,473.0,,True
+CS2_24,capacity_sparse_lowmin,92.0,real (lab capacity checks),,473.0,,True
+CS2_24,capacity_sparse,102.0,real (lab capacity checks),,463.0,,True
+CS2_24,field_raw,102.0,real (lab capacity checks),,463.0,,True
+CS2_24,field_selfcal,102.0,real (lab capacity checks),,463.0,,True
+CS2_24,capacity_sparse_lowmin,102.0,real (lab capacity checks),,463.0,,True
+CS2_24,capacity_sparse,112.0,real (lab capacity checks),,453.0,,True
+CS2_24,field_raw,112.0,real (lab capacity checks),,453.0,,True
+CS2_24,field_selfcal,112.0,real (lab capacity checks),,453.0,,True
+CS2_24,capacity_sparse_lowmin,112.0,real (lab capacity checks),,453.0,,True
+CS2_24,capacity_sparse,122.0,real (lab capacity checks),,443.0,,True
+CS2_24,field_raw,122.0,real (lab capacity checks),,443.0,,True
+CS2_24,field_selfcal,122.0,real (lab capacity checks),,443.0,,True
+CS2_24,capacity_sparse_lowmin,122.0,real (lab capacity checks),,443.0,,True
+CS2_24,capacity_sparse,132.0,real (lab capacity checks),,433.0,,True
+CS2_24,field_raw,132.0,real (lab capacity checks),,433.0,,True
+CS2_24,field_selfcal,132.0,real (lab capacity checks),,433.0,,True
+CS2_24,capacity_sparse_lowmin,132.0,real (lab capacity checks),,433.0,,True
+CS2_24,capacity_sparse,142.0,real (lab capacity checks),,423.0,,True
+CS2_24,field_raw,142.0,real (lab capacity checks),,423.0,,True
+CS2_24,field_selfcal,142.0,real (lab capacity checks),,423.0,,True
+CS2_24,capacity_sparse_lowmin,142.0,real (lab capacity checks),,423.0,,True
+CS2_24,capacity_sparse,152.0,real (lab capacity checks),,413.0,,True
+CS2_24,field_raw,152.0,real (lab capacity checks),,413.0,,True
+CS2_24,field_selfcal,152.0,real (lab capacity checks),,413.0,,True
+CS2_24,capacity_sparse_lowmin,152.0,real (lab capacity checks),,413.0,,True
+CS2_24,capacity_sparse,162.0,real (lab capacity checks),,403.0,,True
+CS2_24,field_raw,162.0,real (lab capacity checks),,403.0,,True
+CS2_24,field_selfcal,162.0,real (lab capacity checks),,403.0,,True
+CS2_24,capacity_sparse_lowmin,162.0,real (lab capacity checks),,403.0,,True
+CS2_24,capacity_sparse,172.0,real (lab capacity checks),,393.0,,True
+CS2_24,field_raw,172.0,real (lab capacity checks),,393.0,,True
+CS2_24,field_selfcal,172.0,real (lab capacity checks),,393.0,,True
+CS2_24,capacity_sparse_lowmin,172.0,real (lab capacity checks),,393.0,,True
+CS2_24,capacity_sparse,182.0,real (lab capacity checks),,383.0,,True
+CS2_24,field_raw,182.0,real (lab capacity checks),,383.0,,True
+CS2_24,field_selfcal,182.0,real (lab capacity checks),,383.0,,True
+CS2_24,capacity_sparse_lowmin,182.0,real (lab capacity checks),,383.0,,True
+CS2_24,capacity_sparse,192.0,real (lab capacity checks),,373.0,,True
+CS2_24,field_raw,192.0,real (lab capacity checks),,373.0,,True
+CS2_24,field_selfcal,192.0,real (lab capacity checks),,373.0,,True
+CS2_24,capacity_sparse_lowmin,192.0,real (lab capacity checks),,373.0,,True
+CS2_24,capacity_sparse,202.0,real (lab capacity checks),,363.0,,True
+CS2_24,field_raw,202.0,real (lab capacity checks),,363.0,,True
+CS2_24,field_selfcal,202.0,real (lab capacity checks),,363.0,,True
+CS2_24,capacity_sparse_lowmin,202.0,real (lab capacity checks),,363.0,,True
+CS2_24,capacity_sparse,212.0,real (lab capacity checks),,353.0,,True
+CS2_24,field_raw,212.0,real (lab capacity checks),,353.0,,True
+CS2_24,field_selfcal,212.0,real (lab capacity checks),,353.0,,True
+CS2_24,capacity_sparse_lowmin,212.0,real (lab capacity checks),,353.0,,True
+CS2_24,capacity_sparse,222.0,real (lab capacity checks),,343.0,,True
+CS2_24,field_raw,222.0,real (lab capacity checks),,343.0,,True
+CS2_24,field_selfcal,222.0,real (lab capacity checks),,343.0,,True
+CS2_24,capacity_sparse_lowmin,222.0,real (lab capacity checks),,343.0,,True
+CS2_24,capacity_sparse,232.0,real (lab capacity checks),,333.0,,True
+CS2_24,field_raw,232.0,real (lab capacity checks),,333.0,,True
+CS2_24,field_selfcal,232.0,real (lab capacity checks),,333.0,,True
+CS2_24,capacity_sparse_lowmin,232.0,real (lab capacity checks),,333.0,,True
+CS2_24,capacity_sparse,242.0,real (lab capacity checks),,323.0,,True
+CS2_24,field_raw,242.0,real (lab capacity checks),,323.0,,True
+CS2_24,field_selfcal,242.0,real (lab capacity checks),,323.0,,True
+CS2_24,capacity_sparse_lowmin,242.0,real (lab capacity checks),,323.0,,True
+CS2_24,capacity_sparse,252.0,real (lab capacity checks),,313.0,,True
+CS2_24,field_raw,252.0,real (lab capacity checks),,313.0,,True
+CS2_24,field_selfcal,252.0,real (lab capacity checks),,313.0,,True
+CS2_24,capacity_sparse_lowmin,252.0,real (lab capacity checks),,313.0,,True
+CS2_24,capacity_sparse,262.0,real (lab capacity checks),,303.0,,True
+CS2_24,field_raw,262.0,real (lab capacity checks),,303.0,,True
+CS2_24,field_selfcal,262.0,real (lab capacity checks),,303.0,,True
+CS2_24,capacity_sparse_lowmin,262.0,real (lab capacity checks),,303.0,,True
+CS2_24,capacity_sparse,272.0,real (lab capacity checks),,293.0,,True
+CS2_24,field_raw,272.0,real (lab capacity checks),,293.0,,True
+CS2_24,field_selfcal,272.0,real (lab capacity checks),,293.0,,True
+CS2_24,capacity_sparse_lowmin,272.0,real (lab capacity checks),,293.0,,True
+CS2_24,capacity_sparse,282.0,real (lab capacity checks),,283.0,,True
+CS2_24,field_raw,282.0,real (lab capacity checks),,283.0,,True
+CS2_24,field_selfcal,282.0,real (lab capacity checks),,283.0,,True
+CS2_24,capacity_sparse_lowmin,282.0,real (lab capacity checks),,283.0,,True
+CS2_24,capacity_sparse,292.0,real (lab capacity checks),,273.0,,True
+CS2_24,field_raw,292.0,real (lab capacity checks),,273.0,,True
+CS2_24,field_selfcal,292.0,real (lab capacity checks),,273.0,,True
+CS2_24,capacity_sparse_lowmin,292.0,real (lab capacity checks),,273.0,,True
+CS2_24,capacity_sparse,302.0,real (lab capacity checks),,263.0,,True
+CS2_24,field_raw,302.0,real (lab capacity checks),,263.0,,True
+CS2_24,field_selfcal,302.0,real (lab capacity checks),,263.0,,True
+CS2_24,capacity_sparse_lowmin,302.0,real (lab capacity checks),,263.0,,True
+CS2_24,capacity_sparse,312.0,real (lab capacity checks),,253.0,,True
+CS2_24,field_raw,312.0,real (lab capacity checks),,253.0,,True
+CS2_24,field_selfcal,312.0,real (lab capacity checks),,253.0,,True
+CS2_24,capacity_sparse_lowmin,312.0,real (lab capacity checks),,253.0,,True
+CS2_24,capacity_sparse,322.0,real (lab capacity checks),,243.0,,True
+CS2_24,field_raw,322.0,real (lab capacity checks),,243.0,,True
+CS2_24,field_selfcal,322.0,real (lab capacity checks),,243.0,,True
+CS2_24,capacity_sparse_lowmin,322.0,real (lab capacity checks),,243.0,,True
+CS2_24,capacity_sparse,332.0,real (lab capacity checks),,233.0,,True
+CS2_24,field_raw,332.0,real (lab capacity checks),,233.0,,True
+CS2_24,field_selfcal,332.0,real (lab capacity checks),,233.0,,True
+CS2_24,capacity_sparse_lowmin,332.0,real (lab capacity checks),,233.0,,True
+CS2_24,capacity_sparse,344.0,real (lab capacity checks),,221.0,,True
+CS2_24,field_raw,344.0,real (lab capacity checks),,221.0,,True
+CS2_24,field_selfcal,344.0,real (lab capacity checks),,221.0,,True
+CS2_24,capacity_sparse_lowmin,344.0,real (lab capacity checks),,221.0,,True
+CS2_24,capacity_sparse,357.0,real (lab capacity checks),,208.0,,True
+CS2_24,field_raw,357.0,real (lab capacity checks),,208.0,,True
+CS2_24,field_selfcal,357.0,real (lab capacity checks),,208.0,,True
+CS2_24,capacity_sparse_lowmin,357.0,real (lab capacity checks),,208.0,,True
+CS2_24,capacity_sparse,367.0,real (lab capacity checks),,198.0,,True
+CS2_24,field_raw,367.0,real (lab capacity checks),,198.0,,True
+CS2_24,field_selfcal,367.0,real (lab capacity checks),,198.0,,True
+CS2_24,capacity_sparse_lowmin,367.0,real (lab capacity checks),,198.0,,True
+CS2_24,capacity_sparse,377.0,real (lab capacity checks),,188.0,,True
+CS2_24,field_raw,377.0,real (lab capacity checks),,188.0,,True
+CS2_24,field_selfcal,377.0,real (lab capacity checks),,188.0,,True
+CS2_24,capacity_sparse_lowmin,377.0,real (lab capacity checks),,188.0,,True
+CS2_24,capacity_sparse,387.0,real (lab capacity checks),,178.0,,True
+CS2_24,field_raw,387.0,real (lab capacity checks),,178.0,,True
+CS2_24,field_selfcal,387.0,real (lab capacity checks),,178.0,,True
+CS2_24,capacity_sparse_lowmin,387.0,real (lab capacity checks),,178.0,,True
+CS2_24,capacity_sparse,397.0,real (lab capacity checks),,168.0,,True
+CS2_24,field_raw,397.0,real (lab capacity checks),,168.0,,True
+CS2_24,field_selfcal,397.0,real (lab capacity checks),,168.0,,True
+CS2_24,capacity_sparse_lowmin,397.0,real (lab capacity checks),,168.0,,True
+CS2_24,capacity_sparse,407.0,real (lab capacity checks),,158.0,,True
+CS2_24,field_raw,407.0,real (lab capacity checks),,158.0,,True
+CS2_24,field_selfcal,407.0,real (lab capacity checks),,158.0,,True
+CS2_24,capacity_sparse_lowmin,407.0,real (lab capacity checks),,158.0,,True
+CS2_24,capacity_sparse,418.0,real (lab capacity checks),,147.0,,True
+CS2_24,field_raw,418.0,real (lab capacity checks),,147.0,,True
+CS2_24,field_selfcal,418.0,real (lab capacity checks),,147.0,,True
+CS2_24,capacity_sparse_lowmin,418.0,real (lab capacity checks),,147.0,,True
+CS2_24,capacity_sparse,429.0,real (lab capacity checks),,136.0,,True
+CS2_24,field_raw,429.0,real (lab capacity checks),,136.0,,True
+CS2_24,field_selfcal,429.0,real (lab capacity checks),,136.0,,True
+CS2_24,capacity_sparse_lowmin,429.0,real (lab capacity checks),,136.0,,True
+CS2_24,capacity_sparse,439.0,real (lab capacity checks),,126.0,,True
+CS2_24,field_raw,439.0,real (lab capacity checks),,126.0,,True
+CS2_24,field_selfcal,439.0,real (lab capacity checks),,126.0,,True
+CS2_24,capacity_sparse_lowmin,439.0,real (lab capacity checks),,126.0,,True
+CS2_24,capacity_sparse,450.0,real (lab capacity checks),,115.0,,True
+CS2_24,field_raw,450.0,real (lab capacity checks),,115.0,,True
+CS2_24,field_selfcal,450.0,real (lab capacity checks),,115.0,,True
+CS2_24,capacity_sparse_lowmin,450.0,real (lab capacity checks),,115.0,,True
+CS2_24,capacity_sparse,461.0,real (lab capacity checks),,104.0,,True
+CS2_24,field_raw,461.0,real (lab capacity checks),,104.0,,True
+CS2_24,field_selfcal,461.0,real (lab capacity checks),,104.0,,True
+CS2_24,capacity_sparse_lowmin,461.0,real (lab capacity checks),,104.0,,True
+CS2_24,capacity_sparse,472.0,real (lab capacity checks),,93.0,,True
+CS2_24,field_raw,472.0,real (lab capacity checks),,93.0,,True
+CS2_24,field_selfcal,472.0,real (lab capacity checks),,93.0,,True
+CS2_24,capacity_sparse_lowmin,472.0,real (lab capacity checks),381.30564409177737,93.0,288.30564409177737,False
+CS2_24,capacity_sparse,483.0,real (lab capacity checks),,82.0,,True
+CS2_24,field_raw,483.0,real (lab capacity checks),,82.0,,True
+CS2_24,field_selfcal,483.0,real (lab capacity checks),,82.0,,True
+CS2_24,capacity_sparse_lowmin,483.0,real (lab capacity checks),370.30564409177737,82.0,288.30564409177737,False
+CS2_24,capacity_sparse,493.0,real (lab capacity checks),,72.0,,True
+CS2_24,field_raw,493.0,real (lab capacity checks),,72.0,,True
+CS2_24,field_selfcal,493.0,real (lab capacity checks),,72.0,,True
+CS2_24,capacity_sparse_lowmin,493.0,real (lab capacity checks),360.30564409177737,72.0,288.30564409177737,False
+CS2_24,capacity_sparse,503.0,real (lab capacity checks),,62.0,,True
+CS2_24,field_raw,503.0,real (lab capacity checks),,62.0,,True
+CS2_24,field_selfcal,503.0,real (lab capacity checks),,62.0,,True
+CS2_24,capacity_sparse_lowmin,503.0,real (lab capacity checks),350.30564409177737,62.0,288.30564409177737,False
+CS2_24,capacity_sparse,513.0,real (lab capacity checks),,52.0,,True
+CS2_24,field_raw,513.0,real (lab capacity checks),,52.0,,True
+CS2_24,field_selfcal,513.0,real (lab capacity checks),,52.0,,True
+CS2_24,capacity_sparse_lowmin,513.0,real (lab capacity checks),340.30564409177737,52.0,288.30564409177737,False
+CS2_24,capacity_sparse,523.0,real (lab capacity checks),,42.0,,True
+CS2_24,field_raw,523.0,real (lab capacity checks),,42.0,,True
+CS2_24,field_selfcal,523.0,real (lab capacity checks),,42.0,,True
+CS2_24,capacity_sparse_lowmin,523.0,real (lab capacity checks),330.30564409177737,42.0,288.30564409177737,False
+CS2_24,capacity_sparse,533.0,real (lab capacity checks),,32.0,,True
+CS2_24,field_raw,533.0,real (lab capacity checks),,32.0,,True
+CS2_24,field_selfcal,533.0,real (lab capacity checks),,32.0,,True
+CS2_24,capacity_sparse_lowmin,533.0,real (lab capacity checks),320.30564409177737,32.0,288.30564409177737,False
+CS2_24,capacity_sparse,544.0,real (lab capacity checks),,21.0,,True
+CS2_24,field_raw,544.0,real (lab capacity checks),,21.0,,True
+CS2_24,field_selfcal,544.0,real (lab capacity checks),,21.0,,True
+CS2_24,capacity_sparse_lowmin,544.0,real (lab capacity checks),309.30564409177737,21.0,288.30564409177737,False
+CS2_24,capacity_sparse,554.0,real (lab capacity checks),,11.0,,True
+CS2_24,field_raw,554.0,real (lab capacity checks),,11.0,,True
+CS2_24,field_selfcal,554.0,real (lab capacity checks),,11.0,,True
+CS2_24,capacity_sparse_lowmin,554.0,real (lab capacity checks),299.30564409177737,11.0,288.30564409177737,False
+CS2_25,capacity_sparse,1.0,real (lab capacity checks),,1212.0,,True
+CS2_25,field_raw,1.0,real (lab capacity checks),,1212.0,,True
+CS2_25,field_selfcal,1.0,real (lab capacity checks),,1212.0,,True
+CS2_25,capacity_sparse_lowmin,1.0,real (lab capacity checks),,1212.0,,True
+CS2_25,capacity_sparse,11.0,real (lab capacity checks),,1202.0,,True
+CS2_25,field_raw,11.0,real (lab capacity checks),,1202.0,,True
+CS2_25,field_selfcal,11.0,real (lab capacity checks),,1202.0,,True
+CS2_25,capacity_sparse_lowmin,11.0,real (lab capacity checks),,1202.0,,True
+CS2_25,capacity_sparse,21.0,real (lab capacity checks),,1192.0,,True
+CS2_25,field_raw,21.0,real (lab capacity checks),,1192.0,,True
+CS2_25,field_selfcal,21.0,real (lab capacity checks),,1192.0,,True
+CS2_25,capacity_sparse_lowmin,21.0,real (lab capacity checks),,1192.0,,True
+CS2_25,capacity_sparse,31.0,real (lab capacity checks),,1182.0,,True
+CS2_25,field_raw,31.0,real (lab capacity checks),,1182.0,,True
+CS2_25,field_selfcal,31.0,real (lab capacity checks),,1182.0,,True
+CS2_25,capacity_sparse_lowmin,31.0,real (lab capacity checks),,1182.0,,True
+CS2_25,capacity_sparse,41.0,real (lab capacity checks),,1172.0,,True
+CS2_25,field_raw,41.0,real (lab capacity checks),,1172.0,,True
+CS2_25,field_selfcal,41.0,real (lab capacity checks),,1172.0,,True
+CS2_25,capacity_sparse_lowmin,41.0,real (lab capacity checks),,1172.0,,True
+CS2_25,capacity_sparse,54.0,real (lab capacity checks),,1159.0,,True
+CS2_25,field_raw,54.0,real (lab capacity checks),,1159.0,,True
+CS2_25,field_selfcal,54.0,real (lab capacity checks),,1159.0,,True
+CS2_25,capacity_sparse_lowmin,54.0,real (lab capacity checks),,1159.0,,True
+CS2_25,capacity_sparse,64.0,real (lab capacity checks),,1149.0,,True
+CS2_25,field_raw,64.0,real (lab capacity checks),,1149.0,,True
+CS2_25,field_selfcal,64.0,real (lab capacity checks),,1149.0,,True
+CS2_25,capacity_sparse_lowmin,64.0,real (lab capacity checks),,1149.0,,True
+CS2_25,capacity_sparse,75.0,real (lab capacity checks),,1138.0,,True
+CS2_25,field_raw,75.0,real (lab capacity checks),,1138.0,,True
+CS2_25,field_selfcal,75.0,real (lab capacity checks),,1138.0,,True
+CS2_25,capacity_sparse_lowmin,75.0,real (lab capacity checks),,1138.0,,True
+CS2_25,capacity_sparse,85.0,real (lab capacity checks),,1128.0,,True
+CS2_25,field_raw,85.0,real (lab capacity checks),,1128.0,,True
+CS2_25,field_selfcal,85.0,real (lab capacity checks),,1128.0,,True
+CS2_25,capacity_sparse_lowmin,85.0,real (lab capacity checks),,1128.0,,True
+CS2_25,capacity_sparse,95.0,real (lab capacity checks),,1118.0,,True
+CS2_25,field_raw,95.0,real (lab capacity checks),,1118.0,,True
+CS2_25,field_selfcal,95.0,real (lab capacity checks),,1118.0,,True
+CS2_25,capacity_sparse_lowmin,95.0,real (lab capacity checks),,1118.0,,True
+CS2_25,capacity_sparse,106.0,real (lab capacity checks),,1107.0,,True
+CS2_25,field_raw,106.0,real (lab capacity checks),,1107.0,,True
+CS2_25,field_selfcal,106.0,real (lab capacity checks),,1107.0,,True
+CS2_25,capacity_sparse_lowmin,106.0,real (lab capacity checks),,1107.0,,True
+CS2_25,capacity_sparse,116.0,real (lab capacity checks),,1097.0,,True
+CS2_25,field_raw,116.0,real (lab capacity checks),,1097.0,,True
+CS2_25,field_selfcal,116.0,real (lab capacity checks),,1097.0,,True
+CS2_25,capacity_sparse_lowmin,116.0,real (lab capacity checks),,1097.0,,True
+CS2_25,capacity_sparse,126.0,real (lab capacity checks),,1087.0,,True
+CS2_25,field_raw,126.0,real (lab capacity checks),,1087.0,,True
+CS2_25,field_selfcal,126.0,real (lab capacity checks),,1087.0,,True
+CS2_25,capacity_sparse_lowmin,126.0,real (lab capacity checks),,1087.0,,True
+CS2_25,capacity_sparse,136.0,real (lab capacity checks),,1077.0,,True
+CS2_25,field_raw,136.0,real (lab capacity checks),,1077.0,,True
+CS2_25,field_selfcal,136.0,real (lab capacity checks),,1077.0,,True
+CS2_25,capacity_sparse_lowmin,136.0,real (lab capacity checks),,1077.0,,True
+CS2_25,capacity_sparse,149.0,real (lab capacity checks),,1064.0,,True
+CS2_25,field_raw,149.0,real (lab capacity checks),,1064.0,,True
+CS2_25,field_selfcal,149.0,real (lab capacity checks),,1064.0,,True
+CS2_25,capacity_sparse_lowmin,149.0,real (lab capacity checks),,1064.0,,True
+CS2_25,capacity_sparse,159.0,real (lab capacity checks),,1054.0,,True
+CS2_25,field_raw,159.0,real (lab capacity checks),,1054.0,,True
+CS2_25,field_selfcal,159.0,real (lab capacity checks),,1054.0,,True
+CS2_25,capacity_sparse_lowmin,159.0,real (lab capacity checks),,1054.0,,True
+CS2_25,capacity_sparse,170.0,real (lab capacity checks),,1043.0,,True
+CS2_25,field_raw,170.0,real (lab capacity checks),,1043.0,,True
+CS2_25,field_selfcal,170.0,real (lab capacity checks),,1043.0,,True
+CS2_25,capacity_sparse_lowmin,170.0,real (lab capacity checks),,1043.0,,True
+CS2_25,capacity_sparse,180.0,real (lab capacity checks),,1033.0,,True
+CS2_25,field_raw,180.0,real (lab capacity checks),,1033.0,,True
+CS2_25,field_selfcal,180.0,real (lab capacity checks),,1033.0,,True
+CS2_25,capacity_sparse_lowmin,180.0,real (lab capacity checks),,1033.0,,True
+CS2_25,capacity_sparse,190.0,real (lab capacity checks),,1023.0,,True
+CS2_25,field_raw,190.0,real (lab capacity checks),,1023.0,,True
+CS2_25,field_selfcal,190.0,real (lab capacity checks),,1023.0,,True
+CS2_25,capacity_sparse_lowmin,190.0,real (lab capacity checks),,1023.0,,True
+CS2_25,capacity_sparse,200.0,real (lab capacity checks),,1013.0,,True
+CS2_25,field_raw,200.0,real (lab capacity checks),,1013.0,,True
+CS2_25,field_selfcal,200.0,real (lab capacity checks),,1013.0,,True
+CS2_25,capacity_sparse_lowmin,200.0,real (lab capacity checks),,1013.0,,True
+CS2_25,capacity_sparse,210.0,real (lab capacity checks),,1003.0,,True
+CS2_25,field_raw,210.0,real (lab capacity checks),,1003.0,,True
+CS2_25,field_selfcal,210.0,real (lab capacity checks),,1003.0,,True
+CS2_25,capacity_sparse_lowmin,210.0,real (lab capacity checks),,1003.0,,True
+CS2_25,capacity_sparse,220.0,real (lab capacity checks),,993.0,,True
+CS2_25,field_raw,220.0,real (lab capacity checks),,993.0,,True
+CS2_25,field_selfcal,220.0,real (lab capacity checks),,993.0,,True
+CS2_25,capacity_sparse_lowmin,220.0,real (lab capacity checks),,993.0,,True
+CS2_25,capacity_sparse,230.0,real (lab capacity checks),,983.0,,True
+CS2_25,field_raw,230.0,real (lab capacity checks),,983.0,,True
+CS2_25,field_selfcal,230.0,real (lab capacity checks),,983.0,,True
+CS2_25,capacity_sparse_lowmin,230.0,real (lab capacity checks),,983.0,,True
+CS2_25,capacity_sparse,240.0,real (lab capacity checks),,973.0,,True
+CS2_25,field_raw,240.0,real (lab capacity checks),,973.0,,True
+CS2_25,field_selfcal,240.0,real (lab capacity checks),,973.0,,True
+CS2_25,capacity_sparse_lowmin,240.0,real (lab capacity checks),,973.0,,True
+CS2_25,capacity_sparse,250.0,real (lab capacity checks),,963.0,,True
+CS2_25,field_raw,250.0,real (lab capacity checks),,963.0,,True
+CS2_25,field_selfcal,250.0,real (lab capacity checks),,963.0,,True
+CS2_25,capacity_sparse_lowmin,250.0,real (lab capacity checks),,963.0,,True
+CS2_25,capacity_sparse,260.0,real (lab capacity checks),,953.0,,True
+CS2_25,field_raw,260.0,real (lab capacity checks),,953.0,,True
+CS2_25,field_selfcal,260.0,real (lab capacity checks),,953.0,,True
+CS2_25,capacity_sparse_lowmin,260.0,real (lab capacity checks),,953.0,,True
+CS2_25,capacity_sparse,270.0,real (lab capacity checks),,943.0,,True
+CS2_25,field_raw,270.0,real (lab capacity checks),,943.0,,True
+CS2_25,field_selfcal,270.0,real (lab capacity checks),,943.0,,True
+CS2_25,capacity_sparse_lowmin,270.0,real (lab capacity checks),,943.0,,True
+CS2_25,capacity_sparse,280.0,real (lab capacity checks),,933.0,,True
+CS2_25,field_raw,280.0,real (lab capacity checks),,933.0,,True
+CS2_25,field_selfcal,280.0,real (lab capacity checks),,933.0,,True
+CS2_25,capacity_sparse_lowmin,280.0,real (lab capacity checks),,933.0,,True
+CS2_25,capacity_sparse,290.0,real (lab capacity checks),,923.0,,True
+CS2_25,field_raw,290.0,real (lab capacity checks),492.0085051580894,923.0,-430.9914948419106,False
+CS2_25,field_selfcal,290.0,real (lab capacity checks),448.252456985196,923.0,-474.747543014804,False
+CS2_25,capacity_sparse_lowmin,290.0,real (lab capacity checks),,923.0,,True
+CS2_25,capacity_sparse,301.0,real (lab capacity checks),,912.0,,True
+CS2_25,field_raw,301.0,real (lab capacity checks),,912.0,,True
+CS2_25,field_selfcal,301.0,real (lab capacity checks),577.2815565134864,912.0,-334.7184434865136,False
+CS2_25,capacity_sparse_lowmin,301.0,real (lab capacity checks),,912.0,,True
+CS2_25,capacity_sparse,311.0,real (lab capacity checks),,902.0,,True
+CS2_25,field_raw,311.0,real (lab capacity checks),,902.0,,True
+CS2_25,field_selfcal,311.0,real (lab capacity checks),552.9911058523438,902.0,-349.0088941476562,False
+CS2_25,capacity_sparse_lowmin,311.0,real (lab capacity checks),,902.0,,True
+CS2_25,capacity_sparse,321.0,real (lab capacity checks),,892.0,,True
+CS2_25,field_raw,321.0,real (lab capacity checks),,892.0,,True
+CS2_25,field_selfcal,321.0,real (lab capacity checks),528.1049188320492,892.0,-363.8950811679508,False
+CS2_25,capacity_sparse_lowmin,321.0,real (lab capacity checks),,892.0,,True
+CS2_25,capacity_sparse,331.0,real (lab capacity checks),,882.0,,True
+CS2_25,field_raw,331.0,real (lab capacity checks),,882.0,,True
+CS2_25,field_selfcal,331.0,real (lab capacity checks),515.9415746150422,882.0,-366.0584253849578,False
+CS2_25,capacity_sparse_lowmin,331.0,real (lab capacity checks),,882.0,,True
+CS2_25,capacity_sparse,341.0,real (lab capacity checks),,872.0,,True
+CS2_25,field_raw,341.0,real (lab capacity checks),,872.0,,True
+CS2_25,field_selfcal,341.0,real (lab capacity checks),561.0252861798053,872.0,-310.97471382019467,False
+CS2_25,capacity_sparse_lowmin,341.0,real (lab capacity checks),,872.0,,True
+CS2_25,capacity_sparse,351.0,real (lab capacity checks),,862.0,,True
+CS2_25,field_raw,351.0,real (lab capacity checks),,862.0,,True
+CS2_25,field_selfcal,351.0,real (lab capacity checks),651.7426815638969,862.0,-210.2573184361031,False
+CS2_25,capacity_sparse_lowmin,351.0,real (lab capacity checks),,862.0,,True
+CS2_25,capacity_sparse,367.0,real (lab capacity checks),,846.0,,True
+CS2_25,field_raw,367.0,real (lab capacity checks),,846.0,,True
+CS2_25,field_selfcal,367.0,real (lab capacity checks),704.006910930188,846.0,-141.99308906981196,False
+CS2_25,capacity_sparse_lowmin,367.0,real (lab capacity checks),,846.0,,True
+CS2_25,capacity_sparse,377.0,real (lab capacity checks),,836.0,,True
+CS2_25,field_raw,377.0,real (lab capacity checks),,836.0,,True
+CS2_25,field_selfcal,377.0,real (lab capacity checks),625.6046279661742,836.0,-210.39537203382577,False
+CS2_25,capacity_sparse_lowmin,377.0,real (lab capacity checks),,836.0,,True
+CS2_25,capacity_sparse,387.0,real (lab capacity checks),,826.0,,True
+CS2_25,field_raw,387.0,real (lab capacity checks),,826.0,,True
+CS2_25,field_selfcal,387.0,real (lab capacity checks),509.7557576863941,826.0,-316.2442423136059,False
+CS2_25,capacity_sparse_lowmin,387.0,real (lab capacity checks),,826.0,,True
+CS2_25,capacity_sparse,397.0,real (lab capacity checks),,816.0,,True
+CS2_25,field_raw,397.0,real (lab capacity checks),,816.0,,True
+CS2_25,field_selfcal,397.0,real (lab capacity checks),474.89729313044063,816.0,-341.10270686955937,False
+CS2_25,capacity_sparse_lowmin,397.0,real (lab capacity checks),,816.0,,True
+CS2_25,capacity_sparse,407.0,real (lab capacity checks),,806.0,,True
+CS2_25,field_raw,407.0,real (lab capacity checks),,806.0,,True
+CS2_25,field_selfcal,407.0,real (lab capacity checks),493.5979912517615,806.0,-312.4020087482385,False
+CS2_25,capacity_sparse_lowmin,407.0,real (lab capacity checks),,806.0,,True
+CS2_25,capacity_sparse,418.0,real (lab capacity checks),,795.0,,True
+CS2_25,field_raw,418.0,real (lab capacity checks),,795.0,,True
+CS2_25,field_selfcal,418.0,real (lab capacity checks),510.42685025350386,795.0,-284.57314974649614,False
+CS2_25,capacity_sparse_lowmin,418.0,real (lab capacity checks),,795.0,,True
+CS2_25,capacity_sparse,429.0,real (lab capacity checks),,784.0,,True
+CS2_25,field_raw,429.0,real (lab capacity checks),,784.0,,True
+CS2_25,field_selfcal,429.0,real (lab capacity checks),432.2088643684125,784.0,-351.7911356315875,False
+CS2_25,capacity_sparse_lowmin,429.0,real (lab capacity checks),,784.0,,True
+CS2_25,capacity_sparse,439.0,real (lab capacity checks),,774.0,,True
+CS2_25,field_raw,439.0,real (lab capacity checks),,774.0,,True
+CS2_25,field_selfcal,439.0,real (lab capacity checks),371.79714385600175,774.0,-402.20285614399825,False
+CS2_25,capacity_sparse_lowmin,439.0,real (lab capacity checks),,774.0,,True
+CS2_25,capacity_sparse,449.0,real (lab capacity checks),,764.0,,True
+CS2_25,field_raw,449.0,real (lab capacity checks),,764.0,,True
+CS2_25,field_selfcal,449.0,real (lab capacity checks),340.1559859790766,764.0,-423.8440140209234,False
+CS2_25,capacity_sparse_lowmin,449.0,real (lab capacity checks),,764.0,,True
+CS2_25,capacity_sparse,459.0,real (lab capacity checks),,754.0,,True
+CS2_25,field_raw,459.0,real (lab capacity checks),,754.0,,True
+CS2_25,field_selfcal,459.0,real (lab capacity checks),343.1142098062626,754.0,-410.8857901937374,False
+CS2_25,capacity_sparse_lowmin,459.0,real (lab capacity checks),,754.0,,True
+CS2_25,capacity_sparse,469.0,real (lab capacity checks),,744.0,,True
+CS2_25,field_raw,469.0,real (lab capacity checks),,744.0,,True
+CS2_25,field_selfcal,469.0,real (lab capacity checks),351.43650415870025,744.0,-392.56349584129975,False
+CS2_25,capacity_sparse_lowmin,469.0,real (lab capacity checks),,744.0,,True
+CS2_25,capacity_sparse,483.0,real (lab capacity checks),,730.0,,True
+CS2_25,field_raw,483.0,real (lab capacity checks),,730.0,,True
+CS2_25,field_selfcal,483.0,real (lab capacity checks),354.9371710083923,730.0,-375.0628289916077,False
+CS2_25,capacity_sparse_lowmin,483.0,real (lab capacity checks),,730.0,,True
+CS2_25,capacity_sparse,494.0,real (lab capacity checks),,719.0,,True
+CS2_25,field_raw,494.0,real (lab capacity checks),,719.0,,True
+CS2_25,field_selfcal,494.0,real (lab capacity checks),309.98396330710807,719.0,-409.01603669289193,False
+CS2_25,capacity_sparse_lowmin,494.0,real (lab capacity checks),,719.0,,True
+CS2_25,capacity_sparse,505.0,real (lab capacity checks),,708.0,,True
+CS2_25,field_raw,505.0,real (lab capacity checks),,708.0,,True
+CS2_25,field_selfcal,505.0,real (lab capacity checks),279.9376928684933,708.0,-428.0623071315067,False
+CS2_25,capacity_sparse_lowmin,505.0,real (lab capacity checks),,708.0,,True
+CS2_25,capacity_sparse,515.0,real (lab capacity checks),,698.0,,True
+CS2_25,field_raw,515.0,real (lab capacity checks),,698.0,,True
+CS2_25,field_selfcal,515.0,real (lab capacity checks),248.86181478573417,698.0,-449.13818521426583,False
+CS2_25,capacity_sparse_lowmin,515.0,real (lab capacity checks),222.9121271068119,698.0,-475.0878728931881,False
+CS2_25,capacity_sparse,525.0,real (lab capacity checks),,688.0,,True
+CS2_25,field_raw,525.0,real (lab capacity checks),,688.0,,True
+CS2_25,field_selfcal,525.0,real (lab capacity checks),231.0126475830897,688.0,-456.9873524169103,False
+CS2_25,capacity_sparse_lowmin,525.0,real (lab capacity checks),212.9121271068119,688.0,-475.0878728931881,False
+CS2_25,capacity_sparse,535.0,real (lab capacity checks),,678.0,,True
+CS2_25,field_raw,535.0,real (lab capacity checks),,678.0,,True
+CS2_25,field_selfcal,535.0,real (lab capacity checks),226.2363830042251,678.0,-451.7636169957749,False
+CS2_25,capacity_sparse_lowmin,535.0,real (lab capacity checks),202.9121271068119,678.0,-475.0878728931881,False
+CS2_25,capacity_sparse,545.0,real (lab capacity checks),,668.0,,True
+CS2_25,field_raw,545.0,real (lab capacity checks),,668.0,,True
+CS2_25,field_selfcal,545.0,real (lab capacity checks),227.27137733073164,668.0,-440.72862266926836,False
+CS2_25,capacity_sparse_lowmin,545.0,real (lab capacity checks),192.9121271068119,668.0,-475.0878728931881,False
+CS2_25,capacity_sparse,555.0,real (lab capacity checks),,658.0,,True
+CS2_25,field_raw,555.0,real (lab capacity checks),,658.0,,True
+CS2_25,field_selfcal,555.0,real (lab capacity checks),229.9459436931644,658.0,-428.0540563068356,False
+CS2_25,capacity_sparse_lowmin,555.0,real (lab capacity checks),182.9121271068119,658.0,-475.0878728931881,False
+CS2_25,capacity_sparse,565.0,real (lab capacity checks),,648.0,,True
+CS2_25,field_raw,565.0,real (lab capacity checks),,648.0,,True
+CS2_25,field_selfcal,565.0,real (lab capacity checks),201.3345605101074,648.0,-446.6654394898926,False
+CS2_25,capacity_sparse_lowmin,565.0,real (lab capacity checks),172.9121271068119,648.0,-475.0878728931881,False
+CS2_25,capacity_sparse,575.0,real (lab capacity checks),,638.0,,True
+CS2_25,field_raw,575.0,real (lab capacity checks),,638.0,,True
+CS2_25,field_selfcal,575.0,real (lab capacity checks),183.45234215340292,638.0,-454.5476578465971,False
+CS2_25,capacity_sparse_lowmin,575.0,real (lab capacity checks),162.9121271068119,638.0,-475.0878728931881,False
+CS2_25,capacity_sparse,585.0,real (lab capacity checks),,628.0,,True
+CS2_25,field_raw,585.0,real (lab capacity checks),,628.0,,True
+CS2_25,field_selfcal,585.0,real (lab capacity checks),164.99484349289492,628.0,-463.0051565071051,False
+CS2_25,capacity_sparse_lowmin,585.0,real (lab capacity checks),152.9121271068119,628.0,-475.0878728931881,False
+CS2_25,capacity_sparse,595.0,real (lab capacity checks),,618.0,,True
+CS2_25,field_raw,595.0,real (lab capacity checks),,618.0,,True
+CS2_25,field_selfcal,595.0,real (lab capacity checks),146.17355998954008,618.0,-471.8264400104599,False
+CS2_25,capacity_sparse_lowmin,595.0,real (lab capacity checks),142.9121271068119,618.0,-475.0878728931881,False
+CS2_25,capacity_sparse,605.0,real (lab capacity checks),,608.0,,True
+CS2_25,field_raw,605.0,real (lab capacity checks),1113.2130235293653,608.0,505.2130235293653,False
+CS2_25,field_selfcal,605.0,real (lab capacity checks),120.77627093968727,608.0,-487.22372906031273,False
+CS2_25,capacity_sparse_lowmin,605.0,real (lab capacity checks),132.9121271068119,608.0,-475.0878728931881,False
+CS2_25,capacity_sparse,615.0,real (lab capacity checks),,598.0,,True
+CS2_25,field_raw,615.0,real (lab capacity checks),1148.2467614215866,598.0,550.2467614215866,False
+CS2_25,field_selfcal,615.0,real (lab capacity checks),116.22645144111675,598.0,-481.77354855888325,False
+CS2_25,capacity_sparse_lowmin,615.0,real (lab capacity checks),196.82748518225117,598.0,-401.17251481774883,False
+CS2_25,capacity_sparse,626.0,real (lab capacity checks),,587.0,,True
+CS2_25,field_raw,626.0,real (lab capacity checks),1241.7173218252778,587.0,654.7173218252778,False
+CS2_25,field_selfcal,626.0,real (lab capacity checks),113.3363956753318,587.0,-473.6636043246682,False
+CS2_25,capacity_sparse_lowmin,626.0,real (lab capacity checks),185.82748518225117,587.0,-401.17251481774883,False
+CS2_25,capacity_sparse,636.0,real (lab capacity checks),,577.0,,True
+CS2_25,field_raw,636.0,real (lab capacity checks),,577.0,,True
+CS2_25,field_selfcal,636.0,real (lab capacity checks),110.9226561975305,577.0,-466.0773438024695,False
+CS2_25,capacity_sparse_lowmin,636.0,real (lab capacity checks),175.82748518225117,577.0,-401.17251481774883,False
+CS2_25,capacity_sparse,646.0,real (lab capacity checks),,567.0,,True
+CS2_25,field_raw,646.0,real (lab capacity checks),,567.0,,True
+CS2_25,field_selfcal,646.0,real (lab capacity checks),99.1282251460417,567.0,-467.8717748539583,False
+CS2_25,capacity_sparse_lowmin,646.0,real (lab capacity checks),165.82748518225117,567.0,-401.17251481774883,False
+CS2_25,capacity_sparse,656.0,real (lab capacity checks),,557.0,,True
+CS2_25,field_raw,656.0,real (lab capacity checks),1253.7139723781509,557.0,696.7139723781509,False
+CS2_25,field_selfcal,656.0,real (lab capacity checks),82.81815530578922,557.0,-474.1818446942108,False
+CS2_25,capacity_sparse_lowmin,656.0,real (lab capacity checks),155.82748518225117,557.0,-401.17251481774883,False
+CS2_25,capacity_sparse,666.0,real (lab capacity checks),,547.0,,True
+CS2_25,field_raw,666.0,real (lab capacity checks),1138.663103176877,547.0,591.663103176877,False
+CS2_25,field_selfcal,666.0,real (lab capacity checks),60.600084638214184,547.0,-486.3999153617858,False
+CS2_25,capacity_sparse_lowmin,666.0,real (lab capacity checks),145.82748518225117,547.0,-401.17251481774883,False
+CS2_25,capacity_sparse,676.0,real (lab capacity checks),,537.0,,True
+CS2_25,field_raw,676.0,real (lab capacity checks),1022.3630666377398,537.0,485.36306663773985,False
+CS2_25,field_selfcal,676.0,real (lab capacity checks),37.75539223500266,537.0,-499.24460776499734,False
+CS2_25,capacity_sparse_lowmin,676.0,real (lab capacity checks),135.82748518225117,537.0,-401.17251481774883,False
+CS2_25,capacity_sparse,686.0,real (lab capacity checks),,527.0,,True
+CS2_25,field_raw,686.0,real (lab capacity checks),963.4791358596171,527.0,436.47913585961714,False
+CS2_25,field_selfcal,686.0,real (lab capacity checks),21.860194354215764,527.0,-505.13980564578424,False
+CS2_25,capacity_sparse_lowmin,686.0,real (lab capacity checks),125.82748518225117,527.0,-401.17251481774883,False
+CS2_25,capacity_sparse,696.0,real (lab capacity checks),,517.0,,True
+CS2_25,field_raw,696.0,real (lab capacity checks),930.1338099893958,517.0,413.1338099893958,False
+CS2_25,field_selfcal,696.0,real (lab capacity checks),9.468404188254112,517.0,-507.5315958117459,False
+CS2_25,capacity_sparse_lowmin,696.0,real (lab capacity checks),115.82748518225117,517.0,-401.17251481774883,False
+CS2_25,capacity_sparse,706.0,real (lab capacity checks),,507.0,,True
+CS2_25,field_raw,706.0,real (lab capacity checks),842.0541958886065,507.0,335.0541958886065,False
+CS2_25,field_selfcal,706.0,real (lab capacity checks),0.0,507.0,-507.0,True
+CS2_25,capacity_sparse_lowmin,706.0,real (lab capacity checks),105.82748518225117,507.0,-401.17251481774883,False
+CS2_25,capacity_sparse,716.0,real (lab capacity checks),,497.0,,True
+CS2_25,field_raw,716.0,real (lab capacity checks),904.3405882480868,497.0,407.34058824808676,False
+CS2_25,field_selfcal,716.0,real (lab capacity checks),0.0,497.0,-497.0,True
+CS2_25,capacity_sparse_lowmin,716.0,real (lab capacity checks),226.78115177339384,497.0,-270.21884822660616,False
+CS2_25,capacity_sparse,726.0,real (lab capacity checks),,487.0,,True
+CS2_25,field_raw,726.0,real (lab capacity checks),973.5008309474033,487.0,486.5008309474033,False
+CS2_25,field_selfcal,726.0,real (lab capacity checks),0.0,487.0,-487.0,True
+CS2_25,capacity_sparse_lowmin,726.0,real (lab capacity checks),216.78115177339384,487.0,-270.21884822660616,False
+CS2_25,capacity_sparse,736.0,real (lab capacity checks),,477.0,,True
+CS2_25,field_raw,736.0,real (lab capacity checks),1053.5504426004454,477.0,576.5504426004454,False
+CS2_25,field_selfcal,736.0,real (lab capacity checks),0.0,477.0,-477.0,True
+CS2_25,capacity_sparse_lowmin,736.0,real (lab capacity checks),206.78115177339384,477.0,-270.21884822660616,False
+CS2_25,capacity_sparse,746.0,real (lab capacity checks),,467.0,,True
+CS2_25,field_raw,746.0,real (lab capacity checks),1126.6266667983139,467.0,659.6266667983139,False
+CS2_25,field_selfcal,746.0,real (lab capacity checks),0.0,467.0,-467.0,True
+CS2_25,capacity_sparse_lowmin,746.0,real (lab capacity checks),196.78115177339384,467.0,-270.21884822660616,False
+CS2_25,capacity_sparse,756.0,real (lab capacity checks),,457.0,,True
+CS2_25,field_raw,756.0,real (lab capacity checks),1061.629840865418,457.0,604.6298408654179,False
+CS2_25,field_selfcal,756.0,real (lab capacity checks),0.0,457.0,-457.0,True
+CS2_25,capacity_sparse_lowmin,756.0,real (lab capacity checks),186.78115177339384,457.0,-270.21884822660616,False
+CS2_25,capacity_sparse,766.0,real (lab capacity checks),,447.0,,True
+CS2_25,field_raw,766.0,real (lab capacity checks),968.0322179702348,447.0,521.0322179702348,False
+CS2_25,field_selfcal,766.0,real (lab capacity checks),0.0,447.0,-447.0,True
+CS2_25,capacity_sparse_lowmin,766.0,real (lab capacity checks),176.78115177339384,447.0,-270.21884822660616,False
+CS2_25,capacity_sparse,776.0,real (lab capacity checks),,437.0,,True
+CS2_25,field_raw,776.0,real (lab capacity checks),916.6885138195312,437.0,479.6885138195312,False
+CS2_25,field_selfcal,776.0,real (lab capacity checks),0.0,437.0,-437.0,True
+CS2_25,capacity_sparse_lowmin,776.0,real (lab capacity checks),166.78115177339384,437.0,-270.21884822660616,False
+CS2_25,capacity_sparse,786.0,real (lab capacity checks),,427.0,,True
+CS2_25,field_raw,786.0,real (lab capacity checks),884.037391789825,427.0,457.03739178982505,False
+CS2_25,field_selfcal,786.0,real (lab capacity checks),0.0,427.0,-427.0,True
+CS2_25,capacity_sparse_lowmin,786.0,real (lab capacity checks),156.78115177339384,427.0,-270.21884822660616,False
+CS2_25,capacity_sparse,796.0,real (lab capacity checks),,417.0,,True
+CS2_25,field_raw,796.0,real (lab capacity checks),804.5914592511772,417.0,387.5914592511772,False
+CS2_25,field_selfcal,796.0,real (lab capacity checks),0.0,417.0,-417.0,True
+CS2_25,capacity_sparse_lowmin,796.0,real (lab capacity checks),146.78115177339384,417.0,-270.21884822660616,False
+CS2_25,capacity_sparse,806.0,real (lab capacity checks),,407.0,,True
+CS2_25,field_raw,806.0,real (lab capacity checks),723.5560234534184,407.0,316.55602345341845,False
+CS2_25,field_selfcal,806.0,real (lab capacity checks),0.0,407.0,-407.0,True
+CS2_25,capacity_sparse_lowmin,806.0,real (lab capacity checks),136.78115177339384,407.0,-270.21884822660616,False
+CS2_25,capacity_sparse,816.0,real (lab capacity checks),,397.0,,True
+CS2_25,field_raw,816.0,real (lab capacity checks),767.1427890171096,397.0,370.14278901710964,False
+CS2_25,field_selfcal,816.0,real (lab capacity checks),0.0,397.0,-397.0,True
+CS2_25,capacity_sparse_lowmin,816.0,real (lab capacity checks),294.1823845625231,397.0,-102.81761543747689,False
+CS2_25,capacity_sparse,826.0,real (lab capacity checks),,387.0,,True
+CS2_25,field_raw,826.0,real (lab capacity checks),707.745566990443,387.0,320.74556699044297,False
+CS2_25,field_selfcal,826.0,real (lab capacity checks),0.0,387.0,-387.0,True
+CS2_25,capacity_sparse_lowmin,826.0,real (lab capacity checks),284.1823845625231,387.0,-102.81761543747689,False
+CS2_25,capacity_sparse,836.0,real (lab capacity checks),,377.0,,True
+CS2_25,field_raw,836.0,real (lab capacity checks),662.1957231419613,377.0,285.19572314196125,False
+CS2_25,field_selfcal,836.0,real (lab capacity checks),0.0,377.0,-377.0,True
+CS2_25,capacity_sparse_lowmin,836.0,real (lab capacity checks),274.1823845625231,377.0,-102.81761543747689,False
+CS2_25,capacity_sparse,846.0,real (lab capacity checks),,367.0,,True
+CS2_25,field_raw,846.0,real (lab capacity checks),640.8241584265841,367.0,273.82415842658406,False
+CS2_25,field_selfcal,846.0,real (lab capacity checks),0.0,367.0,-367.0,True
+CS2_25,capacity_sparse_lowmin,846.0,real (lab capacity checks),264.1823845625231,367.0,-102.81761543747689,False
+CS2_25,capacity_sparse,856.0,real (lab capacity checks),,357.0,,True
+CS2_25,field_raw,856.0,real (lab capacity checks),588.0271263285651,357.0,231.02712632856515,False
+CS2_25,field_selfcal,856.0,real (lab capacity checks),0.0,357.0,-357.0,True
+CS2_25,capacity_sparse_lowmin,856.0,real (lab capacity checks),254.1823845625231,357.0,-102.81761543747689,False
+CS2_25,capacity_sparse,866.0,real (lab capacity checks),,347.0,,True
+CS2_25,field_raw,866.0,real (lab capacity checks),547.4999541982138,347.0,200.4999541982138,False
+CS2_25,field_selfcal,866.0,real (lab capacity checks),0.0,347.0,-347.0,True
+CS2_25,capacity_sparse_lowmin,866.0,real (lab capacity checks),244.1823845625231,347.0,-102.81761543747689,False
+CS2_25,capacity_sparse,876.0,real (lab capacity checks),,337.0,,True
+CS2_25,field_raw,876.0,real (lab capacity checks),573.1187343728043,337.0,236.11873437280428,False
+CS2_25,field_selfcal,876.0,real (lab capacity checks),0.0,337.0,-337.0,True
+CS2_25,capacity_sparse_lowmin,876.0,real (lab capacity checks),234.1823845625231,337.0,-102.81761543747689,False
+CS2_25,capacity_sparse,886.0,real (lab capacity checks),,327.0,,True
+CS2_25,field_raw,886.0,real (lab capacity checks),595.5657726731547,327.0,268.5657726731547,False
+CS2_25,field_selfcal,886.0,real (lab capacity checks),0.0,327.0,-327.0,True
+CS2_25,capacity_sparse_lowmin,886.0,real (lab capacity checks),224.1823845625231,327.0,-102.81761543747689,False
+CS2_25,capacity_sparse,898.0,real (lab capacity checks),,315.0,,True
+CS2_25,field_raw,898.0,real (lab capacity checks),618.2405424079175,315.0,303.2405424079175,False
+CS2_25,field_selfcal,898.0,real (lab capacity checks),0.0,315.0,-315.0,True
+CS2_25,capacity_sparse_lowmin,898.0,real (lab capacity checks),212.1823845625231,315.0,-102.81761543747689,False
+CS2_25,capacity_sparse,908.0,real (lab capacity checks),,305.0,,True
+CS2_25,field_raw,908.0,real (lab capacity checks),567.3219385860436,305.0,262.32193858604364,False
+CS2_25,field_selfcal,908.0,real (lab capacity checks),0.0,305.0,-305.0,True
+CS2_25,capacity_sparse_lowmin,908.0,real (lab capacity checks),202.1823845625231,305.0,-102.81761543747689,False
+CS2_25,capacity_sparse,918.0,real (lab capacity checks),,295.0,,True
+CS2_25,field_raw,918.0,real (lab capacity checks),585.5080284127262,295.0,290.50802841272616,False
+CS2_25,field_selfcal,918.0,real (lab capacity checks),0.0,295.0,-295.0,True
+CS2_25,capacity_sparse_lowmin,918.0,real (lab capacity checks),382.51583573085486,295.0,87.51583573085486,False
+CS2_25,capacity_sparse,928.0,real (lab capacity checks),,285.0,,True
+CS2_25,field_raw,928.0,real (lab capacity checks),533.8448592436077,285.0,248.84485924360774,False
+CS2_25,field_selfcal,928.0,real (lab capacity checks),0.0,285.0,-285.0,True
+CS2_25,capacity_sparse_lowmin,928.0,real (lab capacity checks),372.51583573085486,285.0,87.51583573085486,False
+CS2_25,capacity_sparse,938.0,real (lab capacity checks),,275.0,,True
+CS2_25,field_raw,938.0,real (lab capacity checks),503.10933652884546,275.0,228.10933652884546,False
+CS2_25,field_selfcal,938.0,real (lab capacity checks),0.0,275.0,-275.0,True
+CS2_25,capacity_sparse_lowmin,938.0,real (lab capacity checks),362.51583573085486,275.0,87.51583573085486,False
+CS2_25,capacity_sparse,948.0,real (lab capacity checks),,265.0,,True
+CS2_25,field_raw,948.0,real (lab capacity checks),487.28729216198826,265.0,222.28729216198826,False
+CS2_25,field_selfcal,948.0,real (lab capacity checks),0.0,265.0,-265.0,True
+CS2_25,capacity_sparse_lowmin,948.0,real (lab capacity checks),352.51583573085486,265.0,87.51583573085486,False
+CS2_25,capacity_sparse,958.0,real (lab capacity checks),,255.0,,True
+CS2_25,field_raw,958.0,real (lab capacity checks),441.9348224050418,255.0,186.9348224050418,False
+CS2_25,field_selfcal,958.0,real (lab capacity checks),0.0,255.0,-255.0,True
+CS2_25,capacity_sparse_lowmin,958.0,real (lab capacity checks),342.51583573085486,255.0,87.51583573085486,False
+CS2_25,capacity_sparse,968.0,real (lab capacity checks),,245.0,,True
+CS2_25,field_raw,968.0,real (lab capacity checks),465.0478546243114,245.0,220.0478546243114,False
+CS2_25,field_selfcal,968.0,real (lab capacity checks),0.0,245.0,-245.0,True
+CS2_25,capacity_sparse_lowmin,968.0,real (lab capacity checks),332.51583573085486,245.0,87.51583573085486,False
+CS2_25,capacity_sparse,979.0,real (lab capacity checks),,234.0,,True
+CS2_25,field_raw,979.0,real (lab capacity checks),481.75059788695785,234.0,247.75059788695785,False
+CS2_25,field_selfcal,979.0,real (lab capacity checks),0.0,234.0,-234.0,True
+CS2_25,capacity_sparse_lowmin,979.0,real (lab capacity checks),321.51583573085486,234.0,87.51583573085486,False
+CS2_25,capacity_sparse,991.0,real (lab capacity checks),,222.0,,True
+CS2_25,field_raw,991.0,real (lab capacity checks),491.2193104048449,222.0,269.2193104048449,False
+CS2_25,field_selfcal,991.0,real (lab capacity checks),0.0,222.0,-222.0,True
+CS2_25,capacity_sparse_lowmin,991.0,real (lab capacity checks),309.51583573085486,222.0,87.51583573085486,False
+CS2_25,capacity_sparse,1001.0,real (lab capacity checks),,212.0,,True
+CS2_25,field_raw,1001.0,real (lab capacity checks),475.99699613667576,212.0,263.99699613667576,False
+CS2_25,field_selfcal,1001.0,real (lab capacity checks),0.0,212.0,-212.0,True
+CS2_25,capacity_sparse_lowmin,1001.0,real (lab capacity checks),299.51583573085486,212.0,87.51583573085486,False
+CS2_25,capacity_sparse,1011.0,real (lab capacity checks),,202.0,,True
+CS2_25,field_raw,1011.0,real (lab capacity checks),434.4332751245679,202.0,232.4332751245679,False
+CS2_25,field_selfcal,1011.0,real (lab capacity checks),0.0,202.0,-202.0,True
+CS2_25,capacity_sparse_lowmin,1011.0,real (lab capacity checks),289.51583573085486,202.0,87.51583573085486,False
+CS2_25,capacity_sparse,1021.0,real (lab capacity checks),,192.0,,True
+CS2_25,field_raw,1021.0,real (lab capacity checks),422.95990250525415,192.0,230.95990250525415,False
+CS2_25,field_selfcal,1021.0,real (lab capacity checks),0.0,192.0,-192.0,True
+CS2_25,capacity_sparse_lowmin,1021.0,real (lab capacity checks),408.23037249344065,192.0,216.23037249344065,False
+CS2_25,capacity_sparse,1031.0,real (lab capacity checks),,182.0,,True
+CS2_25,field_raw,1031.0,real (lab capacity checks),410.620702039688,182.0,228.620702039688,False
+CS2_25,field_selfcal,1031.0,real (lab capacity checks),0.0,182.0,-182.0,True
+CS2_25,capacity_sparse_lowmin,1031.0,real (lab capacity checks),398.23037249344065,182.0,216.23037249344065,False
+CS2_25,capacity_sparse,1041.0,real (lab capacity checks),,172.0,,True
+CS2_25,field_raw,1041.0,real (lab capacity checks),367.49711293517794,172.0,195.49711293517794,False
+CS2_25,field_selfcal,1041.0,real (lab capacity checks),0.0,172.0,-172.0,True
+CS2_25,capacity_sparse_lowmin,1041.0,real (lab capacity checks),388.23037249344065,172.0,216.23037249344065,False
+CS2_25,capacity_sparse,1051.0,real (lab capacity checks),,162.0,,True
+CS2_25,field_raw,1051.0,real (lab capacity checks),342.65327651364555,162.0,180.65327651364555,False
+CS2_25,field_selfcal,1051.0,real (lab capacity checks),0.0,162.0,-162.0,True
+CS2_25,capacity_sparse_lowmin,1051.0,real (lab capacity checks),378.23037249344065,162.0,216.23037249344065,False
+CS2_25,capacity_sparse,1061.0,real (lab capacity checks),,152.0,,True
+CS2_25,field_raw,1061.0,real (lab capacity checks),325.65087741829984,152.0,173.65087741829984,False
+CS2_25,field_selfcal,1061.0,real (lab capacity checks),0.0,152.0,-152.0,True
+CS2_25,capacity_sparse_lowmin,1061.0,real (lab capacity checks),368.23037249344065,152.0,216.23037249344065,False
+CS2_25,capacity_sparse,1071.0,real (lab capacity checks),,142.0,,True
+CS2_25,field_raw,1071.0,real (lab capacity checks),301.42857321888346,142.0,159.42857321888346,False
+CS2_25,field_selfcal,1071.0,real (lab capacity checks),0.0,142.0,-142.0,True
+CS2_25,capacity_sparse_lowmin,1071.0,real (lab capacity checks),358.23037249344065,142.0,216.23037249344065,False
+CS2_25,capacity_sparse,1081.0,real (lab capacity checks),,132.0,,True
+CS2_25,field_raw,1081.0,real (lab capacity checks),310.9033894587228,132.0,178.9033894587228,False
+CS2_25,field_selfcal,1081.0,real (lab capacity checks),0.0,132.0,-132.0,True
+CS2_25,capacity_sparse_lowmin,1081.0,real (lab capacity checks),348.23037249344065,132.0,216.23037249344065,False
+CS2_25,capacity_sparse,1091.0,real (lab capacity checks),,122.0,,True
+CS2_25,field_raw,1091.0,real (lab capacity checks),313.9994217949695,122.0,191.99942179496952,False
+CS2_25,field_selfcal,1091.0,real (lab capacity checks),0.0,122.0,-122.0,True
+CS2_25,capacity_sparse_lowmin,1091.0,real (lab capacity checks),338.23037249344065,122.0,216.23037249344065,False
+CS2_25,capacity_sparse,1101.0,real (lab capacity checks),,112.0,,True
+CS2_25,field_raw,1101.0,real (lab capacity checks),317.40707014836585,112.0,205.40707014836585,False
+CS2_25,field_selfcal,1101.0,real (lab capacity checks),0.0,112.0,-112.0,True
+CS2_25,capacity_sparse_lowmin,1101.0,real (lab capacity checks),328.23037249344065,112.0,216.23037249344065,False
+CS2_25,capacity_sparse,1111.0,real (lab capacity checks),,102.0,,True
+CS2_25,field_raw,1111.0,real (lab capacity checks),290.3789517160749,102.0,188.37895171607488,False
+CS2_25,field_selfcal,1111.0,real (lab capacity checks),0.0,102.0,-102.0,True
+CS2_25,capacity_sparse_lowmin,1111.0,real (lab capacity checks),318.23037249344065,102.0,216.23037249344065,False
+CS2_25,capacity_sparse,1121.0,real (lab capacity checks),,92.0,,True
+CS2_25,field_raw,1121.0,real (lab capacity checks),285.5523713401433,92.0,193.55237134014328,False
+CS2_25,field_selfcal,1121.0,real (lab capacity checks),0.0,92.0,-92.0,True
+CS2_25,capacity_sparse_lowmin,1121.0,real (lab capacity checks),455.51703512410836,92.0,363.51703512410836,False
+CS2_25,capacity_sparse,1131.0,real (lab capacity checks),,82.0,,True
+CS2_25,field_raw,1131.0,real (lab capacity checks),284.78929609003467,82.0,202.78929609003467,False
+CS2_25,field_selfcal,1131.0,real (lab capacity checks),0.0,82.0,-82.0,True
+CS2_25,capacity_sparse_lowmin,1131.0,real (lab capacity checks),445.51703512410836,82.0,363.51703512410836,False
+CS2_25,capacity_sparse,1141.0,real (lab capacity checks),,72.0,,True
+CS2_25,field_raw,1141.0,real (lab capacity checks),275.0632344653368,72.0,203.0632344653368,False
+CS2_25,field_selfcal,1141.0,real (lab capacity checks),0.0,72.0,-72.0,True
+CS2_25,capacity_sparse_lowmin,1141.0,real (lab capacity checks),435.51703512410836,72.0,363.51703512410836,False
+CS2_25,capacity_sparse,1151.0,real (lab capacity checks),,62.0,,True
+CS2_25,field_raw,1151.0,real (lab capacity checks),261.0728981887032,62.0,199.07289818870322,False
+CS2_25,field_selfcal,1151.0,real (lab capacity checks),0.0,62.0,-62.0,True
+CS2_25,capacity_sparse_lowmin,1151.0,real (lab capacity checks),425.51703512410836,62.0,363.51703512410836,False
+CS2_25,capacity_sparse,1161.0,real (lab capacity checks),,52.0,,True
+CS2_25,field_raw,1161.0,real (lab capacity checks),254.72972432661618,52.0,202.72972432661618,False
+CS2_25,field_selfcal,1161.0,real (lab capacity checks),0.0,52.0,-52.0,True
+CS2_25,capacity_sparse_lowmin,1161.0,real (lab capacity checks),415.51703512410836,52.0,363.51703512410836,False
+CS2_25,capacity_sparse,1171.0,real (lab capacity checks),,42.0,,True
+CS2_25,field_raw,1171.0,real (lab capacity checks),255.6255846655033,42.0,213.6255846655033,False
+CS2_25,field_selfcal,1171.0,real (lab capacity checks),0.0,42.0,-42.0,True
+CS2_25,capacity_sparse_lowmin,1171.0,real (lab capacity checks),405.51703512410836,42.0,363.51703512410836,False
+CS2_25,capacity_sparse,1181.0,real (lab capacity checks),,32.0,,True
+CS2_25,field_raw,1181.0,real (lab capacity checks),264.1088148456731,32.0,232.10881484567312,False
+CS2_25,field_selfcal,1181.0,real (lab capacity checks),0.0,32.0,-32.0,True
+CS2_25,capacity_sparse_lowmin,1181.0,real (lab capacity checks),395.51703512410836,32.0,363.51703512410836,False
+CS2_25,capacity_sparse,1191.0,real (lab capacity checks),,22.0,,True
+CS2_25,field_raw,1191.0,real (lab capacity checks),270.7673897644447,22.0,248.76738976444472,False
+CS2_25,field_selfcal,1191.0,real (lab capacity checks),0.0,22.0,-22.0,True
+CS2_25,capacity_sparse_lowmin,1191.0,real (lab capacity checks),385.51703512410836,22.0,363.51703512410836,False
+CS2_25,capacity_sparse,1201.0,real (lab capacity checks),,12.0,,True
+CS2_25,field_raw,1201.0,real (lab capacity checks),258.301048254031,12.0,246.301048254031,False
+CS2_25,field_selfcal,1201.0,real (lab capacity checks),0.0,12.0,-12.0,True
+CS2_25,capacity_sparse_lowmin,1201.0,real (lab capacity checks),375.51703512410836,12.0,363.51703512410836,False
+CS2_25,capacity_sparse,1211.0,real (lab capacity checks),,2.0,,True
+CS2_25,field_raw,1211.0,real (lab capacity checks),249.09454327385743,2.0,247.09454327385743,False
+CS2_25,field_selfcal,1211.0,real (lab capacity checks),0.0,2.0,-2.0,True
+CS2_25,capacity_sparse_lowmin,1211.0,real (lab capacity checks),365.51703512410836,2.0,363.51703512410836,False
+CS2_3,capacity_sparse,1.0,emulated: 1 complete discharge in 50,,56.0,,True
+CS2_3,field_raw,1.0,emulated: 1 complete discharge in 50,,56.0,,True
+CS2_3,field_selfcal,1.0,emulated: 1 complete discharge in 50,,56.0,,True
+CS2_3,capacity_sparse_lowmin,1.0,emulated: 1 complete discharge in 50,,56.0,,True
+CS2_3,capacity_sparse,11.0,emulated: 1 complete discharge in 50,,46.0,,True
+CS2_3,field_raw,11.0,emulated: 1 complete discharge in 50,,46.0,,True
+CS2_3,field_selfcal,11.0,emulated: 1 complete discharge in 50,,46.0,,True
+CS2_3,capacity_sparse_lowmin,11.0,emulated: 1 complete discharge in 50,,46.0,,True
+CS2_3,capacity_sparse,21.0,emulated: 1 complete discharge in 50,,36.0,,True
+CS2_3,field_raw,21.0,emulated: 1 complete discharge in 50,,36.0,,True
+CS2_3,field_selfcal,21.0,emulated: 1 complete discharge in 50,,36.0,,True
+CS2_3,capacity_sparse_lowmin,21.0,emulated: 1 complete discharge in 50,,36.0,,True
+CS2_3,capacity_sparse,32.0,emulated: 1 complete discharge in 50,,25.0,,True
+CS2_3,field_raw,32.0,emulated: 1 complete discharge in 50,9.60422803499128,25.0,-15.39577196500872,False
+CS2_3,field_selfcal,32.0,emulated: 1 complete discharge in 50,45.81848379788495,25.0,20.81848379788495,False
+CS2_3,capacity_sparse_lowmin,32.0,emulated: 1 complete discharge in 50,,25.0,,True
+CS2_3,capacity_sparse,42.0,emulated: 1 complete discharge in 50,,15.0,,True
+CS2_3,field_raw,42.0,emulated: 1 complete discharge in 50,4.5643484078493515,15.0,-10.435651592150649,False
+CS2_3,field_selfcal,42.0,emulated: 1 complete discharge in 50,43.64598083624443,15.0,28.645980836244433,False
+CS2_3,capacity_sparse_lowmin,42.0,emulated: 1 complete discharge in 50,,15.0,,True
+CS2_3,capacity_sparse,52.0,emulated: 1 complete discharge in 50,,5.0,,True
+CS2_3,field_raw,52.0,emulated: 1 complete discharge in 50,0.0,5.0,-5.0,True
+CS2_3,field_selfcal,52.0,emulated: 1 complete discharge in 50,40.29563425217914,5.0,35.29563425217914,False
+CS2_3,capacity_sparse_lowmin,52.0,emulated: 1 complete discharge in 50,,5.0,,True
+CS2_33,capacity_sparse,1.0,emulated: 1 complete discharge in 50,,285.0,,True
+CS2_33,field_raw,1.0,emulated: 1 complete discharge in 50,,285.0,,True
+CS2_33,field_selfcal,1.0,emulated: 1 complete discharge in 50,,285.0,,True
+CS2_33,capacity_sparse_lowmin,1.0,emulated: 1 complete discharge in 50,,285.0,,True
+CS2_33,capacity_sparse,11.0,emulated: 1 complete discharge in 50,,275.0,,True
+CS2_33,field_raw,11.0,emulated: 1 complete discharge in 50,,275.0,,True
+CS2_33,field_selfcal,11.0,emulated: 1 complete discharge in 50,,275.0,,True
+CS2_33,capacity_sparse_lowmin,11.0,emulated: 1 complete discharge in 50,,275.0,,True
+CS2_33,capacity_sparse,21.0,emulated: 1 complete discharge in 50,,265.0,,True
+CS2_33,field_raw,21.0,emulated: 1 complete discharge in 50,,265.0,,True
+CS2_33,field_selfcal,21.0,emulated: 1 complete discharge in 50,,265.0,,True
+CS2_33,capacity_sparse_lowmin,21.0,emulated: 1 complete discharge in 50,,265.0,,True
+CS2_33,capacity_sparse,31.0,emulated: 1 complete discharge in 50,,255.0,,True
+CS2_33,field_raw,31.0,emulated: 1 complete discharge in 50,,255.0,,True
+CS2_33,field_selfcal,31.0,emulated: 1 complete discharge in 50,,255.0,,True
+CS2_33,capacity_sparse_lowmin,31.0,emulated: 1 complete discharge in 50,,255.0,,True
+CS2_33,capacity_sparse,41.0,emulated: 1 complete discharge in 50,,245.0,,True
+CS2_33,field_raw,41.0,emulated: 1 complete discharge in 50,59.74091742186576,245.0,-185.25908257813424,False
+CS2_33,field_selfcal,41.0,emulated: 1 complete discharge in 50,,245.0,,True
+CS2_33,capacity_sparse_lowmin,41.0,emulated: 1 complete discharge in 50,,245.0,,True
+CS2_33,capacity_sparse,51.0,emulated: 1 complete discharge in 50,,235.0,,True
+CS2_33,field_raw,51.0,emulated: 1 complete discharge in 50,47.357108815483684,235.0,-187.64289118451632,False
+CS2_33,field_selfcal,51.0,emulated: 1 complete discharge in 50,95.81209146339083,235.0,-139.18790853660917,False
+CS2_33,capacity_sparse_lowmin,51.0,emulated: 1 complete discharge in 50,,235.0,,True
+CS2_33,capacity_sparse,61.0,emulated: 1 complete discharge in 50,,225.0,,True
+CS2_33,field_raw,61.0,emulated: 1 complete discharge in 50,67.4541837209812,225.0,-157.5458162790188,False
+CS2_33,field_selfcal,61.0,emulated: 1 complete discharge in 50,,225.0,,True
+CS2_33,capacity_sparse_lowmin,61.0,emulated: 1 complete discharge in 50,,225.0,,True
+CS2_33,capacity_sparse,71.0,emulated: 1 complete discharge in 50,,215.0,,True
+CS2_33,field_raw,71.0,emulated: 1 complete discharge in 50,74.4641787973249,215.0,-140.5358212026751,False
+CS2_33,field_selfcal,71.0,emulated: 1 complete discharge in 50,,215.0,,True
+CS2_33,capacity_sparse_lowmin,71.0,emulated: 1 complete discharge in 50,,215.0,,True
+CS2_33,capacity_sparse,81.0,emulated: 1 complete discharge in 50,,205.0,,True
+CS2_33,field_raw,81.0,emulated: 1 complete discharge in 50,63.10610063656961,205.0,-141.8938993634304,False
+CS2_33,field_selfcal,81.0,emulated: 1 complete discharge in 50,,205.0,,True
+CS2_33,capacity_sparse_lowmin,81.0,emulated: 1 complete discharge in 50,,205.0,,True
+CS2_33,capacity_sparse,92.0,emulated: 1 complete discharge in 50,,194.0,,True
+CS2_33,field_raw,92.0,emulated: 1 complete discharge in 50,54.70815448428064,194.0,-139.29184551571936,False
+CS2_33,field_selfcal,92.0,emulated: 1 complete discharge in 50,,194.0,,True
+CS2_33,capacity_sparse_lowmin,92.0,emulated: 1 complete discharge in 50,,194.0,,True
+CS2_33,capacity_sparse,102.0,emulated: 1 complete discharge in 50,,184.0,,True
+CS2_33,field_raw,102.0,emulated: 1 complete discharge in 50,46.16316303787019,184.0,-137.8368369621298,False
+CS2_33,field_selfcal,102.0,emulated: 1 complete discharge in 50,,184.0,,True
+CS2_33,capacity_sparse_lowmin,102.0,emulated: 1 complete discharge in 50,,184.0,,True
+CS2_33,capacity_sparse,112.0,emulated: 1 complete discharge in 50,,174.0,,True
+CS2_33,field_raw,112.0,emulated: 1 complete discharge in 50,34.48708038037066,174.0,-139.51291961962934,False
+CS2_33,field_selfcal,112.0,emulated: 1 complete discharge in 50,,174.0,,True
+CS2_33,capacity_sparse_lowmin,112.0,emulated: 1 complete discharge in 50,,174.0,,True
+CS2_33,capacity_sparse,122.0,emulated: 1 complete discharge in 50,,164.0,,True
+CS2_33,field_raw,122.0,emulated: 1 complete discharge in 50,29.640936042576413,164.0,-134.3590639574236,False
+CS2_33,field_selfcal,122.0,emulated: 1 complete discharge in 50,,164.0,,True
+CS2_33,capacity_sparse_lowmin,122.0,emulated: 1 complete discharge in 50,,164.0,,True
+CS2_33,capacity_sparse,132.0,emulated: 1 complete discharge in 50,,154.0,,True
+CS2_33,field_raw,132.0,emulated: 1 complete discharge in 50,23.63732358556973,154.0,-130.36267641443027,False
+CS2_33,field_selfcal,132.0,emulated: 1 complete discharge in 50,,154.0,,True
+CS2_33,capacity_sparse_lowmin,132.0,emulated: 1 complete discharge in 50,,154.0,,True
+CS2_33,capacity_sparse,142.0,emulated: 1 complete discharge in 50,,144.0,,True
+CS2_33,field_raw,142.0,emulated: 1 complete discharge in 50,17.538891959409312,144.0,-126.46110804059069,False
+CS2_33,field_selfcal,142.0,emulated: 1 complete discharge in 50,278.71033195428555,144.0,134.71033195428555,False
+CS2_33,capacity_sparse_lowmin,142.0,emulated: 1 complete discharge in 50,,144.0,,True
+CS2_33,capacity_sparse,152.0,emulated: 1 complete discharge in 50,,134.0,,True
+CS2_33,field_raw,152.0,emulated: 1 complete discharge in 50,13.524043878813956,134.0,-120.47595612118604,False
+CS2_33,field_selfcal,152.0,emulated: 1 complete discharge in 50,282.38298164534837,134.0,148.38298164534837,False
+CS2_33,capacity_sparse_lowmin,152.0,emulated: 1 complete discharge in 50,,134.0,,True
+CS2_33,capacity_sparse,162.0,emulated: 1 complete discharge in 50,,124.0,,True
+CS2_33,field_raw,162.0,emulated: 1 complete discharge in 50,12.81216525410602,124.0,-111.18783474589398,False
+CS2_33,field_selfcal,162.0,emulated: 1 complete discharge in 50,300.30158641402,124.0,176.30158641402,False
+CS2_33,capacity_sparse_lowmin,162.0,emulated: 1 complete discharge in 50,,124.0,,True
+CS2_33,capacity_sparse,172.0,emulated: 1 complete discharge in 50,,114.0,,True
+CS2_33,field_raw,172.0,emulated: 1 complete discharge in 50,5.19618799416142,114.0,-108.80381200583858,False
+CS2_33,field_selfcal,172.0,emulated: 1 complete discharge in 50,278.5474004877456,114.0,164.54740048774562,False
+CS2_33,capacity_sparse_lowmin,172.0,emulated: 1 complete discharge in 50,,114.0,,True
+CS2_33,capacity_sparse,182.0,emulated: 1 complete discharge in 50,,104.0,,True
+CS2_33,field_raw,182.0,emulated: 1 complete discharge in 50,0.0,104.0,-104.0,True
+CS2_33,field_selfcal,182.0,emulated: 1 complete discharge in 50,251.84524888038544,104.0,147.84524888038544,False
+CS2_33,capacity_sparse_lowmin,182.0,emulated: 1 complete discharge in 50,,104.0,,True
+CS2_33,capacity_sparse,192.0,emulated: 1 complete discharge in 50,,94.0,,True
+CS2_33,field_raw,192.0,emulated: 1 complete discharge in 50,0.0,94.0,-94.0,True
+CS2_33,field_selfcal,192.0,emulated: 1 complete discharge in 50,261.5398700087317,94.0,167.53987000873173,False
+CS2_33,capacity_sparse_lowmin,192.0,emulated: 1 complete discharge in 50,,94.0,,True
+CS2_33,capacity_sparse,202.0,emulated: 1 complete discharge in 50,,84.0,,True
+CS2_33,field_raw,202.0,emulated: 1 complete discharge in 50,0.0,84.0,-84.0,True
+CS2_33,field_selfcal,202.0,emulated: 1 complete discharge in 50,265.53608715897195,84.0,181.53608715897195,False
+CS2_33,capacity_sparse_lowmin,202.0,emulated: 1 complete discharge in 50,,84.0,,True
+CS2_33,capacity_sparse,213.0,emulated: 1 complete discharge in 50,,73.0,,True
+CS2_33,field_raw,213.0,emulated: 1 complete discharge in 50,0.0,73.0,-73.0,True
+CS2_33,field_selfcal,213.0,emulated: 1 complete discharge in 50,253.59071384324875,73.0,180.59071384324875,False
+CS2_33,capacity_sparse_lowmin,213.0,emulated: 1 complete discharge in 50,,73.0,,True
+CS2_33,capacity_sparse,224.0,emulated: 1 complete discharge in 50,,62.0,,True
+CS2_33,field_raw,224.0,emulated: 1 complete discharge in 50,0.0,62.0,-62.0,True
+CS2_33,field_selfcal,224.0,emulated: 1 complete discharge in 50,226.2707398022086,62.0,164.2707398022086,False
+CS2_33,capacity_sparse_lowmin,224.0,emulated: 1 complete discharge in 50,,62.0,,True
+CS2_33,capacity_sparse,234.0,emulated: 1 complete discharge in 50,,52.0,,True
+CS2_33,field_raw,234.0,emulated: 1 complete discharge in 50,0.0,52.0,-52.0,True
+CS2_33,field_selfcal,234.0,emulated: 1 complete discharge in 50,207.79049337478472,52.0,155.79049337478472,False
+CS2_33,capacity_sparse_lowmin,234.0,emulated: 1 complete discharge in 50,,52.0,,True
+CS2_33,capacity_sparse,244.0,emulated: 1 complete discharge in 50,,42.0,,True
+CS2_33,field_raw,244.0,emulated: 1 complete discharge in 50,0.0,42.0,-42.0,True
+CS2_33,field_selfcal,244.0,emulated: 1 complete discharge in 50,195.62637287876942,42.0,153.62637287876942,False
+CS2_33,capacity_sparse_lowmin,244.0,emulated: 1 complete discharge in 50,,42.0,,True
+CS2_33,capacity_sparse,254.0,emulated: 1 complete discharge in 50,,32.0,,True
+CS2_33,field_raw,254.0,emulated: 1 complete discharge in 50,0.0,32.0,-32.0,True
+CS2_33,field_selfcal,254.0,emulated: 1 complete discharge in 50,192.33832304345867,32.0,160.33832304345867,False
+CS2_33,capacity_sparse_lowmin,254.0,emulated: 1 complete discharge in 50,,32.0,,True
+CS2_33,capacity_sparse,264.0,emulated: 1 complete discharge in 50,,22.0,,True
+CS2_33,field_raw,264.0,emulated: 1 complete discharge in 50,0.0,22.0,-22.0,True
+CS2_33,field_selfcal,264.0,emulated: 1 complete discharge in 50,184.08250988424777,22.0,162.08250988424777,False
+CS2_33,capacity_sparse_lowmin,264.0,emulated: 1 complete discharge in 50,,22.0,,True
+CS2_33,capacity_sparse,274.0,emulated: 1 complete discharge in 50,,12.0,,True
+CS2_33,field_raw,274.0,emulated: 1 complete discharge in 50,0.0,12.0,-12.0,True
+CS2_33,field_selfcal,274.0,emulated: 1 complete discharge in 50,177.79140531094185,12.0,165.79140531094185,False
+CS2_33,capacity_sparse_lowmin,274.0,emulated: 1 complete discharge in 50,,12.0,,True
+CS2_33,capacity_sparse,284.0,emulated: 1 complete discharge in 50,,2.0,,True
+CS2_33,field_raw,284.0,emulated: 1 complete discharge in 50,0.0,2.0,-2.0,True
+CS2_33,field_selfcal,284.0,emulated: 1 complete discharge in 50,176.5282079655073,2.0,174.5282079655073,False
+CS2_33,capacity_sparse_lowmin,284.0,emulated: 1 complete discharge in 50,,2.0,,True
+CS2_34,capacity_sparse,1.0,emulated: 1 complete discharge in 50,,274.0,,True
+CS2_34,field_raw,1.0,emulated: 1 complete discharge in 50,,274.0,,True
+CS2_34,field_selfcal,1.0,emulated: 1 complete discharge in 50,,274.0,,True
+CS2_34,capacity_sparse_lowmin,1.0,emulated: 1 complete discharge in 50,,274.0,,True
+CS2_34,capacity_sparse,11.0,emulated: 1 complete discharge in 50,,264.0,,True
+CS2_34,field_raw,11.0,emulated: 1 complete discharge in 50,,264.0,,True
+CS2_34,field_selfcal,11.0,emulated: 1 complete discharge in 50,,264.0,,True
+CS2_34,capacity_sparse_lowmin,11.0,emulated: 1 complete discharge in 50,,264.0,,True
+CS2_34,capacity_sparse,21.0,emulated: 1 complete discharge in 50,,254.0,,True
+CS2_34,field_raw,21.0,emulated: 1 complete discharge in 50,,254.0,,True
+CS2_34,field_selfcal,21.0,emulated: 1 complete discharge in 50,,254.0,,True
+CS2_34,capacity_sparse_lowmin,21.0,emulated: 1 complete discharge in 50,,254.0,,True
+CS2_34,capacity_sparse,31.0,emulated: 1 complete discharge in 50,,244.0,,True
+CS2_34,field_raw,31.0,emulated: 1 complete discharge in 50,29.880965556164135,244.0,-214.11903444383586,False
+CS2_34,field_selfcal,31.0,emulated: 1 complete discharge in 50,,244.0,,True
+CS2_34,capacity_sparse_lowmin,31.0,emulated: 1 complete discharge in 50,,244.0,,True
+CS2_34,capacity_sparse,41.0,emulated: 1 complete discharge in 50,,234.0,,True
+CS2_34,field_raw,41.0,emulated: 1 complete discharge in 50,30.278794331312497,234.0,-203.7212056686875,False
+CS2_34,field_selfcal,41.0,emulated: 1 complete discharge in 50,68.53095796748664,234.0,-165.46904203251336,False
+CS2_34,capacity_sparse_lowmin,41.0,emulated: 1 complete discharge in 50,,234.0,,True
+CS2_34,capacity_sparse,51.0,emulated: 1 complete discharge in 50,,224.0,,True
+CS2_34,field_raw,51.0,emulated: 1 complete discharge in 50,26.08041672749141,224.0,-197.9195832725086,False
+CS2_34,field_selfcal,51.0,emulated: 1 complete discharge in 50,73.53554884095908,224.0,-150.46445115904092,False
+CS2_34,capacity_sparse_lowmin,51.0,emulated: 1 complete discharge in 50,,224.0,,True
+CS2_34,capacity_sparse,61.0,emulated: 1 complete discharge in 50,,214.0,,True
+CS2_34,field_raw,61.0,emulated: 1 complete discharge in 50,32.73060362036384,214.0,-181.26939637963616,False
+CS2_34,field_selfcal,61.0,emulated: 1 complete discharge in 50,,214.0,,True
+CS2_34,capacity_sparse_lowmin,61.0,emulated: 1 complete discharge in 50,,214.0,,True
+CS2_34,capacity_sparse,71.0,emulated: 1 complete discharge in 50,,204.0,,True
+CS2_34,field_raw,71.0,emulated: 1 complete discharge in 50,43.0203739683825,204.0,-160.9796260316175,False
+CS2_34,field_selfcal,71.0,emulated: 1 complete discharge in 50,,204.0,,True
+CS2_34,capacity_sparse_lowmin,71.0,emulated: 1 complete discharge in 50,,204.0,,True
+CS2_34,capacity_sparse,81.0,emulated: 1 complete discharge in 50,,194.0,,True
+CS2_34,field_raw,81.0,emulated: 1 complete discharge in 50,41.92192147794486,194.0,-152.07807852205514,False
+CS2_34,field_selfcal,81.0,emulated: 1 complete discharge in 50,,194.0,,True
+CS2_34,capacity_sparse_lowmin,81.0,emulated: 1 complete discharge in 50,,194.0,,True
+CS2_34,capacity_sparse,93.0,emulated: 1 complete discharge in 50,,182.0,,True
+CS2_34,field_raw,93.0,emulated: 1 complete discharge in 50,37.2377498822884,182.0,-144.7622501177116,False
+CS2_34,field_selfcal,93.0,emulated: 1 complete discharge in 50,,182.0,,True
+CS2_34,capacity_sparse_lowmin,93.0,emulated: 1 complete discharge in 50,,182.0,,True
+CS2_34,capacity_sparse,103.0,emulated: 1 complete discharge in 50,,172.0,,True
+CS2_34,field_raw,103.0,emulated: 1 complete discharge in 50,33.479425726022555,172.0,-138.52057427397745,False
+CS2_34,field_selfcal,103.0,emulated: 1 complete discharge in 50,,172.0,,True
+CS2_34,capacity_sparse_lowmin,103.0,emulated: 1 complete discharge in 50,,172.0,,True
+CS2_34,capacity_sparse,113.0,emulated: 1 complete discharge in 50,,162.0,,True
+CS2_34,field_raw,113.0,emulated: 1 complete discharge in 50,23.070188982600143,162.0,-138.92981101739986,False
+CS2_34,field_selfcal,113.0,emulated: 1 complete discharge in 50,,162.0,,True
+CS2_34,capacity_sparse_lowmin,113.0,emulated: 1 complete discharge in 50,,162.0,,True
+CS2_34,capacity_sparse,123.0,emulated: 1 complete discharge in 50,,152.0,,True
+CS2_34,field_raw,123.0,emulated: 1 complete discharge in 50,8.296689414803694,152.0,-143.7033105851963,False
+CS2_34,field_selfcal,123.0,emulated: 1 complete discharge in 50,236.8109510873025,152.0,84.8109510873025,False
+CS2_34,capacity_sparse_lowmin,123.0,emulated: 1 complete discharge in 50,,152.0,,True
+CS2_34,capacity_sparse,133.0,emulated: 1 complete discharge in 50,,142.0,,True
+CS2_34,field_raw,133.0,emulated: 1 complete discharge in 50,2.4914183104087613,142.0,-139.50858168959124,False
+CS2_34,field_selfcal,133.0,emulated: 1 complete discharge in 50,225.81279761008653,142.0,83.81279761008653,False
+CS2_34,capacity_sparse_lowmin,133.0,emulated: 1 complete discharge in 50,,142.0,,True
+CS2_34,capacity_sparse,143.0,emulated: 1 complete discharge in 50,,132.0,,True
+CS2_34,field_raw,143.0,emulated: 1 complete discharge in 50,0.0,132.0,-132.0,True
+CS2_34,field_selfcal,143.0,emulated: 1 complete discharge in 50,206.35875331295534,132.0,74.35875331295534,False
+CS2_34,capacity_sparse_lowmin,143.0,emulated: 1 complete discharge in 50,,132.0,,True
+CS2_34,capacity_sparse,153.0,emulated: 1 complete discharge in 50,,122.0,,True
+CS2_34,field_raw,153.0,emulated: 1 complete discharge in 50,0.0,122.0,-122.0,True
+CS2_34,field_selfcal,153.0,emulated: 1 complete discharge in 50,182.96424280653713,122.0,60.96424280653713,False
+CS2_34,capacity_sparse_lowmin,153.0,emulated: 1 complete discharge in 50,,122.0,,True
+CS2_34,capacity_sparse,163.0,emulated: 1 complete discharge in 50,,112.0,,True
+CS2_34,field_raw,163.0,emulated: 1 complete discharge in 50,0.0,112.0,-112.0,True
+CS2_34,field_selfcal,163.0,emulated: 1 complete discharge in 50,188.21408548883585,112.0,76.21408548883585,False
+CS2_34,capacity_sparse_lowmin,163.0,emulated: 1 complete discharge in 50,,112.0,,True
+CS2_34,capacity_sparse,173.0,emulated: 1 complete discharge in 50,,102.0,,True
+CS2_34,field_raw,173.0,emulated: 1 complete discharge in 50,0.0,102.0,-102.0,True
+CS2_34,field_selfcal,173.0,emulated: 1 complete discharge in 50,198.14226851799003,102.0,96.14226851799003,False
+CS2_34,capacity_sparse_lowmin,173.0,emulated: 1 complete discharge in 50,,102.0,,True
+CS2_34,capacity_sparse,184.0,emulated: 1 complete discharge in 50,,91.0,,True
+CS2_34,field_raw,184.0,emulated: 1 complete discharge in 50,0.0,91.0,-91.0,True
+CS2_34,field_selfcal,184.0,emulated: 1 complete discharge in 50,204.60743841688662,91.0,113.60743841688662,False
+CS2_34,capacity_sparse_lowmin,184.0,emulated: 1 complete discharge in 50,,91.0,,True
+CS2_34,capacity_sparse,194.0,emulated: 1 complete discharge in 50,,81.0,,True
+CS2_34,field_raw,194.0,emulated: 1 complete discharge in 50,0.0,81.0,-81.0,True
+CS2_34,field_selfcal,194.0,emulated: 1 complete discharge in 50,318.7689357215279,81.0,237.7689357215279,False
+CS2_34,capacity_sparse_lowmin,194.0,emulated: 1 complete discharge in 50,,81.0,,True
+CS2_34,capacity_sparse,204.0,emulated: 1 complete discharge in 50,,71.0,,True
+CS2_34,field_raw,204.0,emulated: 1 complete discharge in 50,0.0,71.0,-71.0,True
+CS2_34,field_selfcal,204.0,emulated: 1 complete discharge in 50,,71.0,,True
+CS2_34,capacity_sparse_lowmin,204.0,emulated: 1 complete discharge in 50,,71.0,,True
+CS2_34,capacity_sparse,214.0,emulated: 1 complete discharge in 50,,61.0,,True
+CS2_34,field_raw,214.0,emulated: 1 complete discharge in 50,0.0,61.0,-61.0,True
+CS2_34,field_selfcal,214.0,emulated: 1 complete discharge in 50,,61.0,,True
+CS2_34,capacity_sparse_lowmin,214.0,emulated: 1 complete discharge in 50,,61.0,,True
+CS2_34,capacity_sparse,224.0,emulated: 1 complete discharge in 50,,51.0,,True
+CS2_34,field_raw,224.0,emulated: 1 complete discharge in 50,0.0,51.0,-51.0,True
+CS2_34,field_selfcal,224.0,emulated: 1 complete discharge in 50,,51.0,,True
+CS2_34,capacity_sparse_lowmin,224.0,emulated: 1 complete discharge in 50,,51.0,,True
+CS2_34,capacity_sparse,234.0,emulated: 1 complete discharge in 50,,41.0,,True
+CS2_34,field_raw,234.0,emulated: 1 complete discharge in 50,0.0,41.0,-41.0,True
+CS2_34,field_selfcal,234.0,emulated: 1 complete discharge in 50,,41.0,,True
+CS2_34,capacity_sparse_lowmin,234.0,emulated: 1 complete discharge in 50,,41.0,,True
+CS2_34,capacity_sparse,244.0,emulated: 1 complete discharge in 50,,31.0,,True
+CS2_34,field_raw,244.0,emulated: 1 complete discharge in 50,0.0,31.0,-31.0,True
+CS2_34,field_selfcal,244.0,emulated: 1 complete discharge in 50,,31.0,,True
+CS2_34,capacity_sparse_lowmin,244.0,emulated: 1 complete discharge in 50,,31.0,,True
+CS2_34,capacity_sparse,254.0,emulated: 1 complete discharge in 50,,21.0,,True
+CS2_34,field_raw,254.0,emulated: 1 complete discharge in 50,0.0,21.0,-21.0,True
+CS2_34,field_selfcal,254.0,emulated: 1 complete discharge in 50,495.2554343532447,21.0,474.2554343532447,False
+CS2_34,capacity_sparse_lowmin,254.0,emulated: 1 complete discharge in 50,,21.0,,True
+CS2_34,capacity_sparse,264.0,emulated: 1 complete discharge in 50,,11.0,,True
+CS2_34,field_raw,264.0,emulated: 1 complete discharge in 50,0.0,11.0,-11.0,True
+CS2_34,field_selfcal,264.0,emulated: 1 complete discharge in 50,490.3093314323272,11.0,479.3093314323272,False
+CS2_34,capacity_sparse_lowmin,264.0,emulated: 1 complete discharge in 50,,11.0,,True
+CS2_34,capacity_sparse,274.0,emulated: 1 complete discharge in 50,,1.0,,True
+CS2_34,field_raw,274.0,emulated: 1 complete discharge in 50,0.0,1.0,-1.0,True
+CS2_34,field_selfcal,274.0,emulated: 1 complete discharge in 50,475.7705381769233,1.0,474.7705381769233,False
+CS2_34,capacity_sparse_lowmin,274.0,emulated: 1 complete discharge in 50,,1.0,,True
+CS2_35,capacity_sparse,1.0,emulated: 1 complete discharge in 50,,145.0,,True
+CS2_35,field_raw,1.0,emulated: 1 complete discharge in 50,,145.0,,True
+CS2_35,field_selfcal,1.0,emulated: 1 complete discharge in 50,,145.0,,True
+CS2_35,capacity_sparse_lowmin,1.0,emulated: 1 complete discharge in 50,,145.0,,True
+CS2_35,capacity_sparse,11.0,emulated: 1 complete discharge in 50,,135.0,,True
+CS2_35,field_raw,11.0,emulated: 1 complete discharge in 50,,135.0,,True
+CS2_35,field_selfcal,11.0,emulated: 1 complete discharge in 50,,135.0,,True
+CS2_35,capacity_sparse_lowmin,11.0,emulated: 1 complete discharge in 50,,135.0,,True
+CS2_35,capacity_sparse,21.0,emulated: 1 complete discharge in 50,,125.0,,True
+CS2_35,field_raw,21.0,emulated: 1 complete discharge in 50,,125.0,,True
+CS2_35,field_selfcal,21.0,emulated: 1 complete discharge in 50,,125.0,,True
+CS2_35,capacity_sparse_lowmin,21.0,emulated: 1 complete discharge in 50,,125.0,,True
+CS2_35,capacity_sparse,31.0,emulated: 1 complete discharge in 50,,115.0,,True
+CS2_35,field_raw,31.0,emulated: 1 complete discharge in 50,,115.0,,True
+CS2_35,field_selfcal,31.0,emulated: 1 complete discharge in 50,,115.0,,True
+CS2_35,capacity_sparse_lowmin,31.0,emulated: 1 complete discharge in 50,,115.0,,True
+CS2_35,capacity_sparse,41.0,emulated: 1 complete discharge in 50,,105.0,,True
+CS2_35,field_raw,41.0,emulated: 1 complete discharge in 50,43.90604659096475,105.0,-61.09395340903525,False
+CS2_35,field_selfcal,41.0,emulated: 1 complete discharge in 50,76.63919898707066,105.0,-28.360801012929343,False
+CS2_35,capacity_sparse_lowmin,41.0,emulated: 1 complete discharge in 50,,105.0,,True
+CS2_35,capacity_sparse,51.0,emulated: 1 complete discharge in 50,,95.0,,True
+CS2_35,field_raw,51.0,emulated: 1 complete discharge in 50,23.189456509483776,95.0,-71.81054349051622,False
+CS2_35,field_selfcal,51.0,emulated: 1 complete discharge in 50,53.02986119619263,95.0,-41.97013880380737,False
+CS2_35,capacity_sparse_lowmin,51.0,emulated: 1 complete discharge in 50,,95.0,,True
+CS2_35,capacity_sparse,61.0,emulated: 1 complete discharge in 50,,85.0,,True
+CS2_35,field_raw,61.0,emulated: 1 complete discharge in 50,33.59400557258189,85.0,-51.40599442741811,False
+CS2_35,field_selfcal,61.0,emulated: 1 complete discharge in 50,,85.0,,True
+CS2_35,capacity_sparse_lowmin,61.0,emulated: 1 complete discharge in 50,,85.0,,True
+CS2_35,capacity_sparse,71.0,emulated: 1 complete discharge in 50,,75.0,,True
+CS2_35,field_raw,71.0,emulated: 1 complete discharge in 50,48.027916012159295,75.0,-26.972083987840705,False
+CS2_35,field_selfcal,71.0,emulated: 1 complete discharge in 50,,75.0,,True
+CS2_35,capacity_sparse_lowmin,71.0,emulated: 1 complete discharge in 50,,75.0,,True
+CS2_35,capacity_sparse,81.0,emulated: 1 complete discharge in 50,,65.0,,True
+CS2_35,field_raw,81.0,emulated: 1 complete discharge in 50,28.86696677282002,65.0,-36.13303322717998,False
+CS2_35,field_selfcal,81.0,emulated: 1 complete discharge in 50,,65.0,,True
+CS2_35,capacity_sparse_lowmin,81.0,emulated: 1 complete discharge in 50,,65.0,,True
+CS2_35,capacity_sparse,91.0,emulated: 1 complete discharge in 50,,55.0,,True
+CS2_35,field_raw,91.0,emulated: 1 complete discharge in 50,14.199155968127982,55.0,-40.80084403187202,False
+CS2_35,field_selfcal,91.0,emulated: 1 complete discharge in 50,134.8486409667217,55.0,79.84864096672169,False
+CS2_35,capacity_sparse_lowmin,91.0,emulated: 1 complete discharge in 50,,55.0,,True
+CS2_35,capacity_sparse,102.0,emulated: 1 complete discharge in 50,,44.0,,True
+CS2_35,field_raw,102.0,emulated: 1 complete discharge in 50,1.5281712191946895,44.0,-42.47182878080531,False
+CS2_35,field_selfcal,102.0,emulated: 1 complete discharge in 50,107.2520682657327,44.0,63.2520682657327,False
+CS2_35,capacity_sparse_lowmin,102.0,emulated: 1 complete discharge in 50,,44.0,,True
+CS2_35,capacity_sparse,113.0,emulated: 1 complete discharge in 50,,33.0,,True
+CS2_35,field_raw,113.0,emulated: 1 complete discharge in 50,0.0,33.0,-33.0,True
+CS2_35,field_selfcal,113.0,emulated: 1 complete discharge in 50,138.2042075534006,33.0,105.20420755340061,False
+CS2_35,capacity_sparse_lowmin,113.0,emulated: 1 complete discharge in 50,,33.0,,True
+CS2_35,capacity_sparse,123.0,emulated: 1 complete discharge in 50,,23.0,,True
+CS2_35,field_raw,123.0,emulated: 1 complete discharge in 50,0.0,23.0,-23.0,True
+CS2_35,field_selfcal,123.0,emulated: 1 complete discharge in 50,190.87519494107778,23.0,167.87519494107778,False
+CS2_35,capacity_sparse_lowmin,123.0,emulated: 1 complete discharge in 50,,23.0,,True
+CS2_35,capacity_sparse,133.0,emulated: 1 complete discharge in 50,,13.0,,True
+CS2_35,field_raw,133.0,emulated: 1 complete discharge in 50,0.0,13.0,-13.0,True
+CS2_35,field_selfcal,133.0,emulated: 1 complete discharge in 50,204.75972699725656,13.0,191.75972699725656,False
+CS2_35,capacity_sparse_lowmin,133.0,emulated: 1 complete discharge in 50,,13.0,,True
+CS2_35,capacity_sparse,143.0,emulated: 1 complete discharge in 50,,3.0,,True
+CS2_35,field_raw,143.0,emulated: 1 complete discharge in 50,0.0,3.0,-3.0,True
+CS2_35,field_selfcal,143.0,emulated: 1 complete discharge in 50,208.57429702606407,3.0,205.57429702606407,False
+CS2_35,capacity_sparse_lowmin,143.0,emulated: 1 complete discharge in 50,,3.0,,True
+CS2_36,capacity_sparse,1.0,emulated: 1 complete discharge in 50,,301.0,,True
+CS2_36,field_raw,1.0,emulated: 1 complete discharge in 50,,301.0,,True
+CS2_36,field_selfcal,1.0,emulated: 1 complete discharge in 50,,301.0,,True
+CS2_36,capacity_sparse_lowmin,1.0,emulated: 1 complete discharge in 50,,301.0,,True
+CS2_36,capacity_sparse,11.0,emulated: 1 complete discharge in 50,,291.0,,True
+CS2_36,field_raw,11.0,emulated: 1 complete discharge in 50,,291.0,,True
+CS2_36,field_selfcal,11.0,emulated: 1 complete discharge in 50,,291.0,,True
+CS2_36,capacity_sparse_lowmin,11.0,emulated: 1 complete discharge in 50,,291.0,,True
+CS2_36,capacity_sparse,21.0,emulated: 1 complete discharge in 50,,281.0,,True
+CS2_36,field_raw,21.0,emulated: 1 complete discharge in 50,,281.0,,True
+CS2_36,field_selfcal,21.0,emulated: 1 complete discharge in 50,,281.0,,True
+CS2_36,capacity_sparse_lowmin,21.0,emulated: 1 complete discharge in 50,,281.0,,True
+CS2_36,capacity_sparse,31.0,emulated: 1 complete discharge in 50,,271.0,,True
+CS2_36,field_raw,31.0,emulated: 1 complete discharge in 50,,271.0,,True
+CS2_36,field_selfcal,31.0,emulated: 1 complete discharge in 50,,271.0,,True
+CS2_36,capacity_sparse_lowmin,31.0,emulated: 1 complete discharge in 50,,271.0,,True
+CS2_36,capacity_sparse,41.0,emulated: 1 complete discharge in 50,,261.0,,True
+CS2_36,field_raw,41.0,emulated: 1 complete discharge in 50,,261.0,,True
+CS2_36,field_selfcal,41.0,emulated: 1 complete discharge in 50,,261.0,,True
+CS2_36,capacity_sparse_lowmin,41.0,emulated: 1 complete discharge in 50,,261.0,,True
+CS2_36,capacity_sparse,51.0,emulated: 1 complete discharge in 50,,251.0,,True
+CS2_36,field_raw,51.0,emulated: 1 complete discharge in 50,58.130581038590876,251.0,-192.8694189614091,False
+CS2_36,field_selfcal,51.0,emulated: 1 complete discharge in 50,86.20672885600396,251.0,-164.79327114399604,False
+CS2_36,capacity_sparse_lowmin,51.0,emulated: 1 complete discharge in 50,,251.0,,True
+CS2_36,capacity_sparse,61.0,emulated: 1 complete discharge in 50,,241.0,,True
+CS2_36,field_raw,61.0,emulated: 1 complete discharge in 50,75.649023188706,241.0,-165.350976811294,False
+CS2_36,field_selfcal,61.0,emulated: 1 complete discharge in 50,,241.0,,True
+CS2_36,capacity_sparse_lowmin,61.0,emulated: 1 complete discharge in 50,,241.0,,True
+CS2_36,capacity_sparse,71.0,emulated: 1 complete discharge in 50,,231.0,,True
+CS2_36,field_raw,71.0,emulated: 1 complete discharge in 50,101.62798094242905,231.0,-129.37201905757095,False
+CS2_36,field_selfcal,71.0,emulated: 1 complete discharge in 50,,231.0,,True
+CS2_36,capacity_sparse_lowmin,71.0,emulated: 1 complete discharge in 50,,231.0,,True
+CS2_36,capacity_sparse,81.0,emulated: 1 complete discharge in 50,,221.0,,True
+CS2_36,field_raw,81.0,emulated: 1 complete discharge in 50,79.44446144216352,221.0,-141.55553855783648,False
+CS2_36,field_selfcal,81.0,emulated: 1 complete discharge in 50,,221.0,,True
+CS2_36,capacity_sparse_lowmin,81.0,emulated: 1 complete discharge in 50,,221.0,,True
+CS2_36,capacity_sparse,91.0,emulated: 1 complete discharge in 50,,211.0,,True
+CS2_36,field_raw,91.0,emulated: 1 complete discharge in 50,63.725295390025764,211.0,-147.27470460997424,False
+CS2_36,field_selfcal,91.0,emulated: 1 complete discharge in 50,,211.0,,True
+CS2_36,capacity_sparse_lowmin,91.0,emulated: 1 complete discharge in 50,,211.0,,True
+CS2_36,capacity_sparse,102.0,emulated: 1 complete discharge in 50,,200.0,,True
+CS2_36,field_raw,102.0,emulated: 1 complete discharge in 50,48.75507467596981,200.0,-151.2449253240302,False
+CS2_36,field_selfcal,102.0,emulated: 1 complete discharge in 50,,200.0,,True
+CS2_36,capacity_sparse_lowmin,102.0,emulated: 1 complete discharge in 50,,200.0,,True
+CS2_36,capacity_sparse,112.0,emulated: 1 complete discharge in 50,,190.0,,True
+CS2_36,field_raw,112.0,emulated: 1 complete discharge in 50,38.15707540394922,190.0,-151.84292459605078,False
+CS2_36,field_selfcal,112.0,emulated: 1 complete discharge in 50,,190.0,,True
+CS2_36,capacity_sparse_lowmin,112.0,emulated: 1 complete discharge in 50,,190.0,,True
+CS2_36,capacity_sparse,122.0,emulated: 1 complete discharge in 50,,180.0,,True
+CS2_36,field_raw,122.0,emulated: 1 complete discharge in 50,28.00314989774759,180.0,-151.9968501022524,False
+CS2_36,field_selfcal,122.0,emulated: 1 complete discharge in 50,,180.0,,True
+CS2_36,capacity_sparse_lowmin,122.0,emulated: 1 complete discharge in 50,,180.0,,True
+CS2_36,capacity_sparse,132.0,emulated: 1 complete discharge in 50,,170.0,,True
+CS2_36,field_raw,132.0,emulated: 1 complete discharge in 50,18.574533306547835,170.0,-151.42546669345217,False
+CS2_36,field_selfcal,132.0,emulated: 1 complete discharge in 50,,170.0,,True
+CS2_36,capacity_sparse_lowmin,132.0,emulated: 1 complete discharge in 50,,170.0,,True
+CS2_36,capacity_sparse,142.0,emulated: 1 complete discharge in 50,,160.0,,True
+CS2_36,field_raw,142.0,emulated: 1 complete discharge in 50,17.558221132799474,160.0,-142.44177886720053,False
+CS2_36,field_selfcal,142.0,emulated: 1 complete discharge in 50,,160.0,,True
+CS2_36,capacity_sparse_lowmin,142.0,emulated: 1 complete discharge in 50,,160.0,,True
+CS2_36,capacity_sparse,152.0,emulated: 1 complete discharge in 50,,150.0,,True
+CS2_36,field_raw,152.0,emulated: 1 complete discharge in 50,15.288890499069538,150.0,-134.71110950093046,False
+CS2_36,field_selfcal,152.0,emulated: 1 complete discharge in 50,,150.0,,True
+CS2_36,capacity_sparse_lowmin,152.0,emulated: 1 complete discharge in 50,,150.0,,True
+CS2_36,capacity_sparse,162.0,emulated: 1 complete discharge in 50,,140.0,,True
+CS2_36,field_raw,162.0,emulated: 1 complete discharge in 50,8.604864286082972,140.0,-131.39513571391703,False
+CS2_36,field_selfcal,162.0,emulated: 1 complete discharge in 50,,140.0,,True
+CS2_36,capacity_sparse_lowmin,162.0,emulated: 1 complete discharge in 50,,140.0,,True
+CS2_36,capacity_sparse,172.0,emulated: 1 complete discharge in 50,,130.0,,True
+CS2_36,field_raw,172.0,emulated: 1 complete discharge in 50,1.5276660696132467,130.0,-128.47233393038675,False
+CS2_36,field_selfcal,172.0,emulated: 1 complete discharge in 50,,130.0,,True
+CS2_36,capacity_sparse_lowmin,172.0,emulated: 1 complete discharge in 50,,130.0,,True
+CS2_36,capacity_sparse,182.0,emulated: 1 complete discharge in 50,,120.0,,True
+CS2_36,field_raw,182.0,emulated: 1 complete discharge in 50,0.0,120.0,-120.0,True
+CS2_36,field_selfcal,182.0,emulated: 1 complete discharge in 50,356.1740100623301,120.0,236.17401006233013,False
+CS2_36,capacity_sparse_lowmin,182.0,emulated: 1 complete discharge in 50,,120.0,,True
+CS2_36,capacity_sparse,192.0,emulated: 1 complete discharge in 50,,110.0,,True
+CS2_36,field_raw,192.0,emulated: 1 complete discharge in 50,0.0,110.0,-110.0,True
+CS2_36,field_selfcal,192.0,emulated: 1 complete discharge in 50,,110.0,,True
+CS2_36,capacity_sparse_lowmin,192.0,emulated: 1 complete discharge in 50,,110.0,,True
+CS2_36,capacity_sparse,202.0,emulated: 1 complete discharge in 50,,100.0,,True
+CS2_36,field_raw,202.0,emulated: 1 complete discharge in 50,0.0,100.0,-100.0,True
+CS2_36,field_selfcal,202.0,emulated: 1 complete discharge in 50,382.61601406635805,100.0,282.61601406635805,False
+CS2_36,capacity_sparse_lowmin,202.0,emulated: 1 complete discharge in 50,,100.0,,True
+CS2_36,capacity_sparse,212.0,emulated: 1 complete discharge in 50,,90.0,,True
+CS2_36,field_raw,212.0,emulated: 1 complete discharge in 50,0.0,90.0,-90.0,True
+CS2_36,field_selfcal,212.0,emulated: 1 complete discharge in 50,355.4697367128441,90.0,265.4697367128441,False
+CS2_36,capacity_sparse_lowmin,212.0,emulated: 1 complete discharge in 50,,90.0,,True
+CS2_36,capacity_sparse,222.0,emulated: 1 complete discharge in 50,,80.0,,True
+CS2_36,field_raw,222.0,emulated: 1 complete discharge in 50,0.0,80.0,-80.0,True
+CS2_36,field_selfcal,222.0,emulated: 1 complete discharge in 50,321.26818371959905,80.0,241.26818371959905,False
+CS2_36,capacity_sparse_lowmin,222.0,emulated: 1 complete discharge in 50,,80.0,,True
+CS2_36,capacity_sparse,232.0,emulated: 1 complete discharge in 50,,70.0,,True
+CS2_36,field_raw,232.0,emulated: 1 complete discharge in 50,0.0,70.0,-70.0,True
+CS2_36,field_selfcal,232.0,emulated: 1 complete discharge in 50,323.1560308377268,70.0,253.1560308377268,False
+CS2_36,capacity_sparse_lowmin,232.0,emulated: 1 complete discharge in 50,,70.0,,True
+CS2_36,capacity_sparse,242.0,emulated: 1 complete discharge in 50,,60.0,,True
+CS2_36,field_raw,242.0,emulated: 1 complete discharge in 50,0.0,60.0,-60.0,True
+CS2_36,field_selfcal,242.0,emulated: 1 complete discharge in 50,337.44250719279967,60.0,277.44250719279967,False
+CS2_36,capacity_sparse_lowmin,242.0,emulated: 1 complete discharge in 50,,60.0,,True
+CS2_36,capacity_sparse,252.0,emulated: 1 complete discharge in 50,,50.0,,True
+CS2_36,field_raw,252.0,emulated: 1 complete discharge in 50,0.0,50.0,-50.0,True
+CS2_36,field_selfcal,252.0,emulated: 1 complete discharge in 50,328.7310758739743,50.0,278.7310758739743,False
+CS2_36,capacity_sparse_lowmin,252.0,emulated: 1 complete discharge in 50,,50.0,,True
+CS2_36,capacity_sparse,263.0,emulated: 1 complete discharge in 50,,39.0,,True
+CS2_36,field_raw,263.0,emulated: 1 complete discharge in 50,0.0,39.0,-39.0,True
+CS2_36,field_selfcal,263.0,emulated: 1 complete discharge in 50,319.17202268413075,39.0,280.17202268413075,False
+CS2_36,capacity_sparse_lowmin,263.0,emulated: 1 complete discharge in 50,,39.0,,True
+CS2_36,capacity_sparse,274.0,emulated: 1 complete discharge in 50,,28.0,,True
+CS2_36,field_raw,274.0,emulated: 1 complete discharge in 50,0.0,28.0,-28.0,True
+CS2_36,field_selfcal,274.0,emulated: 1 complete discharge in 50,294.1226948111429,28.0,266.1226948111429,False
+CS2_36,capacity_sparse_lowmin,274.0,emulated: 1 complete discharge in 50,,28.0,,True
+CS2_36,capacity_sparse,284.0,emulated: 1 complete discharge in 50,,18.0,,True
+CS2_36,field_raw,284.0,emulated: 1 complete discharge in 50,0.0,18.0,-18.0,True
+CS2_36,field_selfcal,284.0,emulated: 1 complete discharge in 50,280.65931574667695,18.0,262.65931574667695,False
+CS2_36,capacity_sparse_lowmin,284.0,emulated: 1 complete discharge in 50,,18.0,,True
+CS2_36,capacity_sparse,294.0,emulated: 1 complete discharge in 50,,8.0,,True
+CS2_36,field_raw,294.0,emulated: 1 complete discharge in 50,0.0,8.0,-8.0,True
+CS2_36,field_selfcal,294.0,emulated: 1 complete discharge in 50,258.27501530616564,8.0,250.27501530616564,False
+CS2_36,capacity_sparse_lowmin,294.0,emulated: 1 complete discharge in 50,,8.0,,True
+CS2_37,capacity_sparse,1.0,emulated: 1 complete discharge in 50,,117.0,,True
+CS2_37,field_raw,1.0,emulated: 1 complete discharge in 50,,117.0,,True
+CS2_37,field_selfcal,1.0,emulated: 1 complete discharge in 50,,117.0,,True
+CS2_37,capacity_sparse_lowmin,1.0,emulated: 1 complete discharge in 50,,117.0,,True
+CS2_37,capacity_sparse,11.0,emulated: 1 complete discharge in 50,,107.0,,True
+CS2_37,field_raw,11.0,emulated: 1 complete discharge in 50,,107.0,,True
+CS2_37,field_selfcal,11.0,emulated: 1 complete discharge in 50,,107.0,,True
+CS2_37,capacity_sparse_lowmin,11.0,emulated: 1 complete discharge in 50,,107.0,,True
+CS2_37,capacity_sparse,21.0,emulated: 1 complete discharge in 50,,97.0,,True
+CS2_37,field_raw,21.0,emulated: 1 complete discharge in 50,,97.0,,True
+CS2_37,field_selfcal,21.0,emulated: 1 complete discharge in 50,,97.0,,True
+CS2_37,capacity_sparse_lowmin,21.0,emulated: 1 complete discharge in 50,,97.0,,True
+CS2_37,capacity_sparse,31.0,emulated: 1 complete discharge in 50,,87.0,,True
+CS2_37,field_raw,31.0,emulated: 1 complete discharge in 50,,87.0,,True
+CS2_37,field_selfcal,31.0,emulated: 1 complete discharge in 50,,87.0,,True
+CS2_37,capacity_sparse_lowmin,31.0,emulated: 1 complete discharge in 50,,87.0,,True
+CS2_37,capacity_sparse,41.0,emulated: 1 complete discharge in 50,,77.0,,True
+CS2_37,field_raw,41.0,emulated: 1 complete discharge in 50,58.48426703474706,77.0,-18.515732965252937,False
+CS2_37,field_selfcal,41.0,emulated: 1 complete discharge in 50,,77.0,,True
+CS2_37,capacity_sparse_lowmin,41.0,emulated: 1 complete discharge in 50,,77.0,,True
+CS2_37,capacity_sparse,51.0,emulated: 1 complete discharge in 50,,67.0,,True
+CS2_37,field_raw,51.0,emulated: 1 complete discharge in 50,36.66712819103121,67.0,-30.33287180896879,False
+CS2_37,field_selfcal,51.0,emulated: 1 complete discharge in 50,74.78164357580157,67.0,7.781643575801567,False
+CS2_37,capacity_sparse_lowmin,51.0,emulated: 1 complete discharge in 50,,67.0,,True
+CS2_37,capacity_sparse,61.0,emulated: 1 complete discharge in 50,,57.0,,True
+CS2_37,field_raw,61.0,emulated: 1 complete discharge in 50,47.404417664392184,57.0,-9.595582335607816,False
+CS2_37,field_selfcal,61.0,emulated: 1 complete discharge in 50,,57.0,,True
+CS2_37,capacity_sparse_lowmin,61.0,emulated: 1 complete discharge in 50,,57.0,,True
+CS2_37,capacity_sparse,71.0,emulated: 1 complete discharge in 50,,47.0,,True
+CS2_37,field_raw,71.0,emulated: 1 complete discharge in 50,59.304869266842275,47.0,12.304869266842275,False
+CS2_37,field_selfcal,71.0,emulated: 1 complete discharge in 50,,47.0,,True
+CS2_37,capacity_sparse_lowmin,71.0,emulated: 1 complete discharge in 50,,47.0,,True
+CS2_37,capacity_sparse,81.0,emulated: 1 complete discharge in 50,,37.0,,True
+CS2_37,field_raw,81.0,emulated: 1 complete discharge in 50,40.003813715442746,37.0,3.003813715442746,False
+CS2_37,field_selfcal,81.0,emulated: 1 complete discharge in 50,,37.0,,True
+CS2_37,capacity_sparse_lowmin,81.0,emulated: 1 complete discharge in 50,,37.0,,True
+CS2_37,capacity_sparse,91.0,emulated: 1 complete discharge in 50,,27.0,,True
+CS2_37,field_raw,91.0,emulated: 1 complete discharge in 50,26.73352335033718,27.0,-0.26647664966282036,False
+CS2_37,field_selfcal,91.0,emulated: 1 complete discharge in 50,175.90977545696546,27.0,148.90977545696546,False
+CS2_37,capacity_sparse_lowmin,91.0,emulated: 1 complete discharge in 50,,27.0,,True
+CS2_37,capacity_sparse,102.0,emulated: 1 complete discharge in 50,,16.0,,True
+CS2_37,field_raw,102.0,emulated: 1 complete discharge in 50,12.443977028254992,16.0,-3.5560229717450085,False
+CS2_37,field_selfcal,102.0,emulated: 1 complete discharge in 50,136.83400271434306,16.0,120.83400271434306,False
+CS2_37,capacity_sparse_lowmin,102.0,emulated: 1 complete discharge in 50,,16.0,,True
+CS2_37,capacity_sparse,112.0,emulated: 1 complete discharge in 50,,6.0,,True
+CS2_37,field_raw,112.0,emulated: 1 complete discharge in 50,2.4332398784451925,6.0,-3.5667601215548075,False
+CS2_37,field_selfcal,112.0,emulated: 1 complete discharge in 50,146.31178298966762,6.0,140.31178298966762,False
+CS2_37,capacity_sparse_lowmin,112.0,emulated: 1 complete discharge in 50,,6.0,,True
+CS2_38,capacity_sparse,1.0,emulated: 1 complete discharge in 50,,149.0,,True
+CS2_38,field_raw,1.0,emulated: 1 complete discharge in 50,,149.0,,True
+CS2_38,field_selfcal,1.0,emulated: 1 complete discharge in 50,,149.0,,True
+CS2_38,capacity_sparse_lowmin,1.0,emulated: 1 complete discharge in 50,,149.0,,True
+CS2_38,capacity_sparse,11.0,emulated: 1 complete discharge in 50,,139.0,,True
+CS2_38,field_raw,11.0,emulated: 1 complete discharge in 50,,139.0,,True
+CS2_38,field_selfcal,11.0,emulated: 1 complete discharge in 50,,139.0,,True
+CS2_38,capacity_sparse_lowmin,11.0,emulated: 1 complete discharge in 50,,139.0,,True
+CS2_38,capacity_sparse,21.0,emulated: 1 complete discharge in 50,,129.0,,True
+CS2_38,field_raw,21.0,emulated: 1 complete discharge in 50,,129.0,,True
+CS2_38,field_selfcal,21.0,emulated: 1 complete discharge in 50,,129.0,,True
+CS2_38,capacity_sparse_lowmin,21.0,emulated: 1 complete discharge in 50,,129.0,,True
+CS2_38,capacity_sparse,31.0,emulated: 1 complete discharge in 50,,119.0,,True
+CS2_38,field_raw,31.0,emulated: 1 complete discharge in 50,,119.0,,True
+CS2_38,field_selfcal,31.0,emulated: 1 complete discharge in 50,,119.0,,True
+CS2_38,capacity_sparse_lowmin,31.0,emulated: 1 complete discharge in 50,,119.0,,True
+CS2_38,capacity_sparse,41.0,emulated: 1 complete discharge in 50,,109.0,,True
+CS2_38,field_raw,41.0,emulated: 1 complete discharge in 50,65.05205619772296,109.0,-43.94794380227704,False
+CS2_38,field_selfcal,41.0,emulated: 1 complete discharge in 50,,109.0,,True
+CS2_38,capacity_sparse_lowmin,41.0,emulated: 1 complete discharge in 50,,109.0,,True
+CS2_38,capacity_sparse,51.0,emulated: 1 complete discharge in 50,,99.0,,True
+CS2_38,field_raw,51.0,emulated: 1 complete discharge in 50,60.04892843805102,99.0,-38.95107156194898,False
+CS2_38,field_selfcal,51.0,emulated: 1 complete discharge in 50,,99.0,,True
+CS2_38,capacity_sparse_lowmin,51.0,emulated: 1 complete discharge in 50,,99.0,,True
+CS2_38,capacity_sparse,61.0,emulated: 1 complete discharge in 50,,89.0,,True
+CS2_38,field_raw,61.0,emulated: 1 complete discharge in 50,,89.0,,True
+CS2_38,field_selfcal,61.0,emulated: 1 complete discharge in 50,,89.0,,True
+CS2_38,capacity_sparse_lowmin,61.0,emulated: 1 complete discharge in 50,,89.0,,True
+CS2_38,capacity_sparse,71.0,emulated: 1 complete discharge in 50,,79.0,,True
+CS2_38,field_raw,71.0,emulated: 1 complete discharge in 50,,79.0,,True
+CS2_38,field_selfcal,71.0,emulated: 1 complete discharge in 50,,79.0,,True
+CS2_38,capacity_sparse_lowmin,71.0,emulated: 1 complete discharge in 50,,79.0,,True
+CS2_38,capacity_sparse,81.0,emulated: 1 complete discharge in 50,,69.0,,True
+CS2_38,field_raw,81.0,emulated: 1 complete discharge in 50,,69.0,,True
+CS2_38,field_selfcal,81.0,emulated: 1 complete discharge in 50,,69.0,,True
+CS2_38,capacity_sparse_lowmin,81.0,emulated: 1 complete discharge in 50,,69.0,,True
+CS2_38,capacity_sparse,91.0,emulated: 1 complete discharge in 50,,59.0,,True
+CS2_38,field_raw,91.0,emulated: 1 complete discharge in 50,,59.0,,True
+CS2_38,field_selfcal,91.0,emulated: 1 complete discharge in 50,,59.0,,True
+CS2_38,capacity_sparse_lowmin,91.0,emulated: 1 complete discharge in 50,,59.0,,True
+CS2_38,capacity_sparse,102.0,emulated: 1 complete discharge in 50,,48.0,,True
+CS2_38,field_raw,102.0,emulated: 1 complete discharge in 50,,48.0,,True
+CS2_38,field_selfcal,102.0,emulated: 1 complete discharge in 50,,48.0,,True
+CS2_38,capacity_sparse_lowmin,102.0,emulated: 1 complete discharge in 50,,48.0,,True
+CS2_38,capacity_sparse,112.0,emulated: 1 complete discharge in 50,,38.0,,True
+CS2_38,field_raw,112.0,emulated: 1 complete discharge in 50,,38.0,,True
+CS2_38,field_selfcal,112.0,emulated: 1 complete discharge in 50,,38.0,,True
+CS2_38,capacity_sparse_lowmin,112.0,emulated: 1 complete discharge in 50,,38.0,,True
+CS2_38,capacity_sparse,122.0,emulated: 1 complete discharge in 50,,28.0,,True
+CS2_38,field_raw,122.0,emulated: 1 complete discharge in 50,,28.0,,True
+CS2_38,field_selfcal,122.0,emulated: 1 complete discharge in 50,,28.0,,True
+CS2_38,capacity_sparse_lowmin,122.0,emulated: 1 complete discharge in 50,,28.0,,True
+CS2_38,capacity_sparse,132.0,emulated: 1 complete discharge in 50,,18.0,,True
+CS2_38,field_raw,132.0,emulated: 1 complete discharge in 50,,18.0,,True
+CS2_38,field_selfcal,132.0,emulated: 1 complete discharge in 50,,18.0,,True
+CS2_38,capacity_sparse_lowmin,132.0,emulated: 1 complete discharge in 50,,18.0,,True
+CS2_38,capacity_sparse,142.0,emulated: 1 complete discharge in 50,,8.0,,True
+CS2_38,field_raw,142.0,emulated: 1 complete discharge in 50,,8.0,,True
+CS2_38,field_selfcal,142.0,emulated: 1 complete discharge in 50,,8.0,,True
+CS2_38,capacity_sparse_lowmin,142.0,emulated: 1 complete discharge in 50,,8.0,,True
+CS2_9,capacity_sparse,1.0,emulated: 1 complete discharge in 50,,43.0,,True
+CS2_9,field_raw,1.0,emulated: 1 complete discharge in 50,,43.0,,True
+CS2_9,field_selfcal,1.0,emulated: 1 complete discharge in 50,,43.0,,True
+CS2_9,capacity_sparse_lowmin,1.0,emulated: 1 complete discharge in 50,,43.0,,True
+CS2_9,capacity_sparse,11.0,emulated: 1 complete discharge in 50,,33.0,,True
+CS2_9,field_raw,11.0,emulated: 1 complete discharge in 50,,33.0,,True
+CS2_9,field_selfcal,11.0,emulated: 1 complete discharge in 50,,33.0,,True
+CS2_9,capacity_sparse_lowmin,11.0,emulated: 1 complete discharge in 50,,33.0,,True
+CS2_9,capacity_sparse,21.0,emulated: 1 complete discharge in 50,,23.0,,True
+CS2_9,field_raw,21.0,emulated: 1 complete discharge in 50,,23.0,,True
+CS2_9,field_selfcal,21.0,emulated: 1 complete discharge in 50,,23.0,,True
+CS2_9,capacity_sparse_lowmin,21.0,emulated: 1 complete discharge in 50,,23.0,,True
+CS2_9,capacity_sparse,32.0,emulated: 1 complete discharge in 50,,12.0,,True
+CS2_9,field_raw,32.0,emulated: 1 complete discharge in 50,3.4936131081806536,12.0,-8.506386891819346,False
+CS2_9,field_selfcal,32.0,emulated: 1 complete discharge in 50,25.564552094981785,12.0,13.564552094981785,False
+CS2_9,capacity_sparse_lowmin,32.0,emulated: 1 complete discharge in 50,,12.0,,True
+CS2_9,capacity_sparse,43.0,emulated: 1 complete discharge in 50,,1.0,,True
+CS2_9,field_raw,43.0,emulated: 1 complete discharge in 50,0.0,1.0,-1.0,True
+CS2_9,field_selfcal,43.0,emulated: 1 complete discharge in 50,12.020926335120457,1.0,11.020926335120457,False
+CS2_9,capacity_sparse_lowmin,43.0,emulated: 1 complete discharge in 50,,1.0,,True
+CX2_3,capacity_sparse,1.0,emulated: 1 complete discharge in 50,,18925.0,,True
+CX2_3,field_raw,1.0,emulated: 1 complete discharge in 50,,18925.0,,True
+CX2_3,field_selfcal,1.0,emulated: 1 complete discharge in 50,,18925.0,,True
+CX2_3,capacity_sparse_lowmin,1.0,emulated: 1 complete discharge in 50,,18925.0,,True
+CX2_3,capacity_sparse,645.0,emulated: 1 complete discharge in 50,,18281.0,,True
+CX2_3,field_raw,645.0,emulated: 1 complete discharge in 50,,18281.0,,True
+CX2_3,field_selfcal,645.0,emulated: 1 complete discharge in 50,,18281.0,,True
+CX2_3,capacity_sparse_lowmin,645.0,emulated: 1 complete discharge in 50,,18281.0,,True
+CX2_3,capacity_sparse,1443.0,emulated: 1 complete discharge in 50,,17483.0,,True
+CX2_3,field_raw,1443.0,emulated: 1 complete discharge in 50,,17483.0,,True
+CX2_3,field_selfcal,1443.0,emulated: 1 complete discharge in 50,,17483.0,,True
+CX2_3,capacity_sparse_lowmin,1443.0,emulated: 1 complete discharge in 50,,17483.0,,True
+CX2_3,capacity_sparse,2240.0,emulated: 1 complete discharge in 50,,16686.0,,True
+CX2_3,field_raw,2240.0,emulated: 1 complete discharge in 50,,16686.0,,True
+CX2_3,field_selfcal,2240.0,emulated: 1 complete discharge in 50,,16686.0,,True
+CX2_3,capacity_sparse_lowmin,2240.0,emulated: 1 complete discharge in 50,,16686.0,,True
+CX2_3,capacity_sparse,2999.0,emulated: 1 complete discharge in 50,,15927.0,,True
+CX2_3,field_raw,2999.0,emulated: 1 complete discharge in 50,2914.4536738544366,15927.0,-13012.546326145562,False
+CX2_3,field_selfcal,2999.0,emulated: 1 complete discharge in 50,5959.795499488744,15927.0,-9967.204500511256,False
+CX2_3,capacity_sparse_lowmin,2999.0,emulated: 1 complete discharge in 50,,15927.0,,True
+CX2_3,capacity_sparse,3778.0,emulated: 1 complete discharge in 50,,15148.0,,True
+CX2_3,field_raw,3778.0,emulated: 1 complete discharge in 50,0.0,15148.0,-15148.0,True
+CX2_3,field_selfcal,3778.0,emulated: 1 complete discharge in 50,1747.4819454443004,15148.0,-13400.5180545557,False
+CX2_3,capacity_sparse_lowmin,3778.0,emulated: 1 complete discharge in 50,,15148.0,,True
+CX2_3,capacity_sparse,4554.0,emulated: 1 complete discharge in 50,,14372.0,,True
+CX2_3,field_raw,4554.0,emulated: 1 complete discharge in 50,742.1862634652553,14372.0,-13629.813736534745,False
+CX2_3,field_selfcal,4554.0,emulated: 1 complete discharge in 50,4277.641858034845,14372.0,-10094.358141965155,False
+CX2_3,capacity_sparse_lowmin,4554.0,emulated: 1 complete discharge in 50,,14372.0,,True
+CX2_3,capacity_sparse,5325.0,emulated: 1 complete discharge in 50,,13601.0,,True
+CX2_3,field_raw,5325.0,emulated: 1 complete discharge in 50,496.23521807900215,13601.0,-13104.764781920998,False
+CX2_3,field_selfcal,5325.0,emulated: 1 complete discharge in 50,4898.471317804839,13601.0,-8702.528682195161,False
+CX2_3,capacity_sparse_lowmin,5325.0,emulated: 1 complete discharge in 50,,13601.0,,True
+CX2_3,capacity_sparse,6092.0,emulated: 1 complete discharge in 50,,12834.0,,True
+CX2_3,field_raw,6092.0,emulated: 1 complete discharge in 50,0.0,12834.0,-12834.0,True
+CX2_3,field_selfcal,6092.0,emulated: 1 complete discharge in 50,3663.37986835242,12834.0,-9170.62013164758,False
+CX2_3,capacity_sparse_lowmin,6092.0,emulated: 1 complete discharge in 50,,12834.0,,True
+CX2_3,capacity_sparse,6856.0,emulated: 1 complete discharge in 50,,12070.0,,True
+CX2_3,field_raw,6856.0,emulated: 1 complete discharge in 50,0.0,12070.0,-12070.0,True
+CX2_3,field_selfcal,6856.0,emulated: 1 complete discharge in 50,3959.3491513445642,12070.0,-8110.650848655436,False
+CX2_3,capacity_sparse_lowmin,6856.0,emulated: 1 complete discharge in 50,,12070.0,,True
+CX2_3,capacity_sparse,7546.0,emulated: 1 complete discharge in 50,,11380.0,,True
+CX2_3,field_raw,7546.0,emulated: 1 complete discharge in 50,0.0,11380.0,-11380.0,True
+CX2_3,field_selfcal,7546.0,emulated: 1 complete discharge in 50,7597.237732516169,11380.0,-3782.7622674838312,False
+CX2_3,capacity_sparse_lowmin,7546.0,emulated: 1 complete discharge in 50,,11380.0,,True
+CX2_3,capacity_sparse,8236.0,emulated: 1 complete discharge in 50,,10690.0,,True
+CX2_3,field_raw,8236.0,emulated: 1 complete discharge in 50,0.0,10690.0,-10690.0,True
+CX2_3,field_selfcal,8236.0,emulated: 1 complete discharge in 50,7823.240179338247,10690.0,-2866.759820661753,False
+CX2_3,capacity_sparse_lowmin,8236.0,emulated: 1 complete discharge in 50,,10690.0,,True
+CX2_3,capacity_sparse,8998.0,emulated: 1 complete discharge in 50,,9928.0,,True
+CX2_3,field_raw,8998.0,emulated: 1 complete discharge in 50,0.0,9928.0,-9928.0,True
+CX2_3,field_selfcal,8998.0,emulated: 1 complete discharge in 50,10446.767311608088,9928.0,518.7673116080878,False
+CX2_3,capacity_sparse_lowmin,8998.0,emulated: 1 complete discharge in 50,,9928.0,,True
+CX2_3,capacity_sparse,9762.0,emulated: 1 complete discharge in 50,,9164.0,,True
+CX2_3,field_raw,9762.0,emulated: 1 complete discharge in 50,0.0,9164.0,-9164.0,True
+CX2_3,field_selfcal,9762.0,emulated: 1 complete discharge in 50,8749.142958939308,9164.0,-414.8570410606917,False
+CX2_3,capacity_sparse_lowmin,9762.0,emulated: 1 complete discharge in 50,,9164.0,,True
+CX2_3,capacity_sparse,10523.0,emulated: 1 complete discharge in 50,,8403.0,,True
+CX2_3,field_raw,10523.0,emulated: 1 complete discharge in 50,0.0,8403.0,-8403.0,True
+CX2_3,field_selfcal,10523.0,emulated: 1 complete discharge in 50,4789.073823649269,8403.0,-3613.926176350731,False
+CX2_3,capacity_sparse_lowmin,10523.0,emulated: 1 complete discharge in 50,,8403.0,,True
+CX2_3,capacity_sparse,11283.0,emulated: 1 complete discharge in 50,,7643.0,,True
+CX2_3,field_raw,11283.0,emulated: 1 complete discharge in 50,0.0,7643.0,-7643.0,True
+CX2_3,field_selfcal,11283.0,emulated: 1 complete discharge in 50,4220.19321067692,7643.0,-3422.80678932308,False
+CX2_3,capacity_sparse_lowmin,11283.0,emulated: 1 complete discharge in 50,,7643.0,,True
+CX2_3,capacity_sparse,12039.0,emulated: 1 complete discharge in 50,,6887.0,,True
+CX2_3,field_raw,12039.0,emulated: 1 complete discharge in 50,0.0,6887.0,-6887.0,True
+CX2_3,field_selfcal,12039.0,emulated: 1 complete discharge in 50,4338.100494092705,6887.0,-2548.899505907295,False
+CX2_3,capacity_sparse_lowmin,12039.0,emulated: 1 complete discharge in 50,5379.140539743636,6887.0,-1507.8594602563644,False
+CX2_3,capacity_sparse,12795.0,emulated: 1 complete discharge in 50,,6131.0,,True
+CX2_3,field_raw,12795.0,emulated: 1 complete discharge in 50,0.0,6131.0,-6131.0,True
+CX2_3,field_selfcal,12795.0,emulated: 1 complete discharge in 50,7232.065195509225,6131.0,1101.0651955092253,False
+CX2_3,capacity_sparse_lowmin,12795.0,emulated: 1 complete discharge in 50,4623.140539743636,6131.0,-1507.8594602563644,False
+CX2_3,capacity_sparse,13538.0,emulated: 1 complete discharge in 50,,5388.0,,True
+CX2_3,field_raw,13538.0,emulated: 1 complete discharge in 50,0.0,5388.0,-5388.0,True
+CX2_3,field_selfcal,13538.0,emulated: 1 complete discharge in 50,8378.513968566982,5388.0,2990.513968566982,False
+CX2_3,capacity_sparse_lowmin,13538.0,emulated: 1 complete discharge in 50,5339.471361738906,5388.0,-48.528638261093874,False
+CX2_3,capacity_sparse,14285.0,emulated: 1 complete discharge in 50,,4641.0,,True
+CX2_3,field_raw,14285.0,emulated: 1 complete discharge in 50,0.0,4641.0,-4641.0,True
+CX2_3,field_selfcal,14285.0,emulated: 1 complete discharge in 50,10636.906671860332,4641.0,5995.906671860332,False
+CX2_3,capacity_sparse_lowmin,14285.0,emulated: 1 complete discharge in 50,4592.471361738906,4641.0,-48.528638261093874,False
+CX2_3,capacity_sparse,14953.0,emulated: 1 complete discharge in 50,,3973.0,,True
+CX2_3,field_raw,14953.0,emulated: 1 complete discharge in 50,0.0,3973.0,-3973.0,True
+CX2_3,field_selfcal,14953.0,emulated: 1 complete discharge in 50,9919.654870871997,3973.0,5946.6548708719965,False
+CX2_3,capacity_sparse_lowmin,14953.0,emulated: 1 complete discharge in 50,3924.471361738906,3973.0,-48.528638261093874,False
+CX2_3,capacity_sparse,15699.0,emulated: 1 complete discharge in 50,,3227.0,,True
+CX2_3,field_raw,15699.0,emulated: 1 complete discharge in 50,0.0,3227.0,-3227.0,True
+CX2_3,field_selfcal,15699.0,emulated: 1 complete discharge in 50,13673.149981566425,3227.0,10446.149981566425,False
+CX2_3,capacity_sparse_lowmin,15699.0,emulated: 1 complete discharge in 50,5543.7551582222695,3227.0,2316.7551582222695,False
+CX2_3,capacity_sparse,16438.0,emulated: 1 complete discharge in 50,,2488.0,,True
+CX2_3,field_raw,16438.0,emulated: 1 complete discharge in 50,0.0,2488.0,-2488.0,True
+CX2_3,field_selfcal,16438.0,emulated: 1 complete discharge in 50,10954.75370197292,2488.0,8466.75370197292,False
+CX2_3,capacity_sparse_lowmin,16438.0,emulated: 1 complete discharge in 50,4804.7551582222695,2488.0,2316.7551582222695,False
+CX2_3,capacity_sparse,17178.0,emulated: 1 complete discharge in 50,,1748.0,,True
+CX2_3,field_raw,17178.0,emulated: 1 complete discharge in 50,0.0,1748.0,-1748.0,True
+CX2_3,field_selfcal,17178.0,emulated: 1 complete discharge in 50,11775.477511817804,1748.0,10027.477511817804,False
+CX2_3,capacity_sparse_lowmin,17178.0,emulated: 1 complete discharge in 50,8639.16174128488,1748.0,6891.161741284879,False
+CX2_3,capacity_sparse,17905.0,emulated: 1 complete discharge in 50,,1021.0,,True
+CX2_3,field_raw,17905.0,emulated: 1 complete discharge in 50,0.0,1021.0,-1021.0,True
+CX2_3,field_selfcal,17905.0,emulated: 1 complete discharge in 50,5547.498644112584,1021.0,4526.498644112584,False
+CX2_3,capacity_sparse_lowmin,17905.0,emulated: 1 complete discharge in 50,7912.161741284879,1021.0,6891.161741284879,False
+CX2_3,capacity_sparse,18635.0,emulated: 1 complete discharge in 50,,291.0,,True
+CX2_3,field_raw,18635.0,emulated: 1 complete discharge in 50,0.0,291.0,-291.0,True
+CX2_3,field_selfcal,18635.0,emulated: 1 complete discharge in 50,2551.953864836709,291.0,2260.953864836709,False
+CX2_3,capacity_sparse_lowmin,18635.0,emulated: 1 complete discharge in 50,7182.161741284879,291.0,6891.161741284879,False
+CX2_33,capacity_sparse,1.0,emulated: 1 complete discharge in 50,,423.0,,True
+CX2_33,field_raw,1.0,emulated: 1 complete discharge in 50,,423.0,,True
+CX2_33,field_selfcal,1.0,emulated: 1 complete discharge in 50,,423.0,,True
+CX2_33,capacity_sparse_lowmin,1.0,emulated: 1 complete discharge in 50,,423.0,,True
+CX2_33,capacity_sparse,11.0,emulated: 1 complete discharge in 50,,413.0,,True
+CX2_33,field_raw,11.0,emulated: 1 complete discharge in 50,,413.0,,True
+CX2_33,field_selfcal,11.0,emulated: 1 complete discharge in 50,,413.0,,True
+CX2_33,capacity_sparse_lowmin,11.0,emulated: 1 complete discharge in 50,,413.0,,True
+CX2_33,capacity_sparse,21.0,emulated: 1 complete discharge in 50,,403.0,,True
+CX2_33,field_raw,21.0,emulated: 1 complete discharge in 50,,403.0,,True
+CX2_33,field_selfcal,21.0,emulated: 1 complete discharge in 50,,403.0,,True
+CX2_33,capacity_sparse_lowmin,21.0,emulated: 1 complete discharge in 50,,403.0,,True
+CX2_33,capacity_sparse,32.0,emulated: 1 complete discharge in 50,,392.0,,True
+CX2_33,field_raw,32.0,emulated: 1 complete discharge in 50,,392.0,,True
+CX2_33,field_selfcal,32.0,emulated: 1 complete discharge in 50,,392.0,,True
+CX2_33,capacity_sparse_lowmin,32.0,emulated: 1 complete discharge in 50,,392.0,,True
+CX2_33,capacity_sparse,42.0,emulated: 1 complete discharge in 50,,382.0,,True
+CX2_33,field_raw,42.0,emulated: 1 complete discharge in 50,,382.0,,True
+CX2_33,field_selfcal,42.0,emulated: 1 complete discharge in 50,,382.0,,True
+CX2_33,capacity_sparse_lowmin,42.0,emulated: 1 complete discharge in 50,,382.0,,True
+CX2_33,capacity_sparse,52.0,emulated: 1 complete discharge in 50,,372.0,,True
+CX2_33,field_raw,52.0,emulated: 1 complete discharge in 50,,372.0,,True
+CX2_33,field_selfcal,52.0,emulated: 1 complete discharge in 50,,372.0,,True
+CX2_33,capacity_sparse_lowmin,52.0,emulated: 1 complete discharge in 50,,372.0,,True
+CX2_33,capacity_sparse,62.0,emulated: 1 complete discharge in 50,,362.0,,True
+CX2_33,field_raw,62.0,emulated: 1 complete discharge in 50,,362.0,,True
+CX2_33,field_selfcal,62.0,emulated: 1 complete discharge in 50,,362.0,,True
+CX2_33,capacity_sparse_lowmin,62.0,emulated: 1 complete discharge in 50,,362.0,,True
+CX2_33,capacity_sparse,72.0,emulated: 1 complete discharge in 50,,352.0,,True
+CX2_33,field_raw,72.0,emulated: 1 complete discharge in 50,,352.0,,True
+CX2_33,field_selfcal,72.0,emulated: 1 complete discharge in 50,,352.0,,True
+CX2_33,capacity_sparse_lowmin,72.0,emulated: 1 complete discharge in 50,,352.0,,True
+CX2_33,capacity_sparse,82.0,emulated: 1 complete discharge in 50,,342.0,,True
+CX2_33,field_raw,82.0,emulated: 1 complete discharge in 50,,342.0,,True
+CX2_33,field_selfcal,82.0,emulated: 1 complete discharge in 50,,342.0,,True
+CX2_33,capacity_sparse_lowmin,82.0,emulated: 1 complete discharge in 50,,342.0,,True
+CX2_33,capacity_sparse,92.0,emulated: 1 complete discharge in 50,,332.0,,True
+CX2_33,field_raw,92.0,emulated: 1 complete discharge in 50,,332.0,,True
+CX2_33,field_selfcal,92.0,emulated: 1 complete discharge in 50,,332.0,,True
+CX2_33,capacity_sparse_lowmin,92.0,emulated: 1 complete discharge in 50,,332.0,,True
+CX2_33,capacity_sparse,102.0,emulated: 1 complete discharge in 50,,322.0,,True
+CX2_33,field_raw,102.0,emulated: 1 complete discharge in 50,,322.0,,True
+CX2_33,field_selfcal,102.0,emulated: 1 complete discharge in 50,,322.0,,True
+CX2_33,capacity_sparse_lowmin,102.0,emulated: 1 complete discharge in 50,,322.0,,True
+CX2_33,capacity_sparse,112.0,emulated: 1 complete discharge in 50,,312.0,,True
+CX2_33,field_raw,112.0,emulated: 1 complete discharge in 50,,312.0,,True
+CX2_33,field_selfcal,112.0,emulated: 1 complete discharge in 50,,312.0,,True
+CX2_33,capacity_sparse_lowmin,112.0,emulated: 1 complete discharge in 50,,312.0,,True
+CX2_33,capacity_sparse,122.0,emulated: 1 complete discharge in 50,,302.0,,True
+CX2_33,field_raw,122.0,emulated: 1 complete discharge in 50,,302.0,,True
+CX2_33,field_selfcal,122.0,emulated: 1 complete discharge in 50,,302.0,,True
+CX2_33,capacity_sparse_lowmin,122.0,emulated: 1 complete discharge in 50,,302.0,,True
+CX2_33,capacity_sparse,132.0,emulated: 1 complete discharge in 50,,292.0,,True
+CX2_33,field_raw,132.0,emulated: 1 complete discharge in 50,,292.0,,True
+CX2_33,field_selfcal,132.0,emulated: 1 complete discharge in 50,,292.0,,True
+CX2_33,capacity_sparse_lowmin,132.0,emulated: 1 complete discharge in 50,,292.0,,True
+CX2_33,capacity_sparse,142.0,emulated: 1 complete discharge in 50,,282.0,,True
+CX2_33,field_raw,142.0,emulated: 1 complete discharge in 50,,282.0,,True
+CX2_33,field_selfcal,142.0,emulated: 1 complete discharge in 50,252.5840318888724,282.0,-29.415968111127597,False
+CX2_33,capacity_sparse_lowmin,142.0,emulated: 1 complete discharge in 50,,282.0,,True
+CX2_33,capacity_sparse,154.0,emulated: 1 complete discharge in 50,,270.0,,True
+CX2_33,field_raw,154.0,emulated: 1 complete discharge in 50,,270.0,,True
+CX2_33,field_selfcal,154.0,emulated: 1 complete discharge in 50,211.56812200549183,270.0,-58.43187799450817,False
+CX2_33,capacity_sparse_lowmin,154.0,emulated: 1 complete discharge in 50,,270.0,,True
+CX2_33,capacity_sparse,164.0,emulated: 1 complete discharge in 50,,260.0,,True
+CX2_33,field_raw,164.0,emulated: 1 complete discharge in 50,,260.0,,True
+CX2_33,field_selfcal,164.0,emulated: 1 complete discharge in 50,199.64160262461354,260.0,-60.35839737538646,False
+CX2_33,capacity_sparse_lowmin,164.0,emulated: 1 complete discharge in 50,,260.0,,True
+CX2_33,capacity_sparse,174.0,emulated: 1 complete discharge in 50,,250.0,,True
+CX2_33,field_raw,174.0,emulated: 1 complete discharge in 50,,250.0,,True
+CX2_33,field_selfcal,174.0,emulated: 1 complete discharge in 50,186.5613725375452,250.0,-63.438627462454804,False
+CX2_33,capacity_sparse_lowmin,174.0,emulated: 1 complete discharge in 50,,250.0,,True
+CX2_33,capacity_sparse,184.0,emulated: 1 complete discharge in 50,,240.0,,True
+CX2_33,field_raw,184.0,emulated: 1 complete discharge in 50,,240.0,,True
+CX2_33,field_selfcal,184.0,emulated: 1 complete discharge in 50,192.797630844452,240.0,-47.20236915554801,False
+CX2_33,capacity_sparse_lowmin,184.0,emulated: 1 complete discharge in 50,,240.0,,True
+CX2_33,capacity_sparse,194.0,emulated: 1 complete discharge in 50,,230.0,,True
+CX2_33,field_raw,194.0,emulated: 1 complete discharge in 50,,230.0,,True
+CX2_33,field_selfcal,194.0,emulated: 1 complete discharge in 50,196.10067477610528,230.0,-33.89932522389472,False
+CX2_33,capacity_sparse_lowmin,194.0,emulated: 1 complete discharge in 50,,230.0,,True
+CX2_33,capacity_sparse,204.0,emulated: 1 complete discharge in 50,,220.0,,True
+CX2_33,field_raw,204.0,emulated: 1 complete discharge in 50,383.8423570584504,220.0,163.84235705845038,False
+CX2_33,field_selfcal,204.0,emulated: 1 complete discharge in 50,194.12435441626417,220.0,-25.87564558373583,False
+CX2_33,capacity_sparse_lowmin,204.0,emulated: 1 complete discharge in 50,,220.0,,True
+CX2_33,capacity_sparse,214.0,emulated: 1 complete discharge in 50,,210.0,,True
+CX2_33,field_raw,214.0,emulated: 1 complete discharge in 50,418.2468809937966,210.0,208.2468809937966,False
+CX2_33,field_selfcal,214.0,emulated: 1 complete discharge in 50,204.37270380592702,210.0,-5.627296194072983,False
+CX2_33,capacity_sparse_lowmin,214.0,emulated: 1 complete discharge in 50,,210.0,,True
+CX2_33,capacity_sparse,224.0,emulated: 1 complete discharge in 50,,200.0,,True
+CX2_33,field_raw,224.0,emulated: 1 complete discharge in 50,445.1632133756559,200.0,245.1632133756559,False
+CX2_33,field_selfcal,224.0,emulated: 1 complete discharge in 50,213.18207850500886,200.0,13.18207850500886,False
+CX2_33,capacity_sparse_lowmin,224.0,emulated: 1 complete discharge in 50,,200.0,,True
+CX2_33,capacity_sparse,234.0,emulated: 1 complete discharge in 50,,190.0,,True
+CX2_33,field_raw,234.0,emulated: 1 complete discharge in 50,417.09236338062465,190.0,227.09236338062465,False
+CX2_33,field_selfcal,234.0,emulated: 1 complete discharge in 50,205.44978853940052,190.0,15.449788539400515,False
+CX2_33,capacity_sparse_lowmin,234.0,emulated: 1 complete discharge in 50,,190.0,,True
+CX2_33,capacity_sparse,244.0,emulated: 1 complete discharge in 50,,180.0,,True
+CX2_33,field_raw,244.0,emulated: 1 complete discharge in 50,383.89301217584364,180.0,203.89301217584364,False
+CX2_33,field_selfcal,244.0,emulated: 1 complete discharge in 50,195.40245250900813,180.0,15.402452509008128,False
+CX2_33,capacity_sparse_lowmin,244.0,emulated: 1 complete discharge in 50,,180.0,,True
+CX2_33,capacity_sparse,254.0,emulated: 1 complete discharge in 50,,170.0,,True
+CX2_33,field_raw,254.0,emulated: 1 complete discharge in 50,367.4549923161667,170.0,197.45499231616668,False
+CX2_33,field_selfcal,254.0,emulated: 1 complete discharge in 50,190.6967378164424,170.0,20.696737816442408,False
+CX2_33,capacity_sparse_lowmin,254.0,emulated: 1 complete discharge in 50,,170.0,,True
+CX2_33,capacity_sparse,265.0,emulated: 1 complete discharge in 50,,159.0,,True
+CX2_33,field_raw,265.0,emulated: 1 complete discharge in 50,342.0259504106133,159.0,183.0259504106133,False
+CX2_33,field_selfcal,265.0,emulated: 1 complete discharge in 50,181.0876577074464,159.0,22.087657707446397,False
+CX2_33,capacity_sparse_lowmin,265.0,emulated: 1 complete discharge in 50,,159.0,,True
+CX2_33,capacity_sparse,275.0,emulated: 1 complete discharge in 50,,149.0,,True
+CX2_33,field_raw,275.0,emulated: 1 complete discharge in 50,290.91010834743236,149.0,141.91010834743236,False
+CX2_33,field_selfcal,275.0,emulated: 1 complete discharge in 50,160.48212784448867,149.0,11.482127844488673,False
+CX2_33,capacity_sparse_lowmin,275.0,emulated: 1 complete discharge in 50,,149.0,,True
+CX2_33,capacity_sparse,285.0,emulated: 1 complete discharge in 50,,139.0,,True
+CX2_33,field_raw,285.0,emulated: 1 complete discharge in 50,245.73799527804977,139.0,106.73799527804977,False
+CX2_33,field_selfcal,285.0,emulated: 1 complete discharge in 50,140.18957546403323,139.0,1.1895754640332257,False
+CX2_33,capacity_sparse_lowmin,285.0,emulated: 1 complete discharge in 50,,139.0,,True
+CX2_33,capacity_sparse,295.0,emulated: 1 complete discharge in 50,,129.0,,True
+CX2_33,field_raw,295.0,emulated: 1 complete discharge in 50,228.98579063264015,129.0,99.98579063264015,False
+CX2_33,field_selfcal,295.0,emulated: 1 complete discharge in 50,132.1765200979574,129.0,3.1765200979573933,False
+CX2_33,capacity_sparse_lowmin,295.0,emulated: 1 complete discharge in 50,,129.0,,True
+CX2_33,capacity_sparse,305.0,emulated: 1 complete discharge in 50,,119.0,,True
+CX2_33,field_raw,305.0,emulated: 1 complete discharge in 50,218.75545839550398,119.0,99.75545839550398,False
+CX2_33,field_selfcal,305.0,emulated: 1 complete discharge in 50,127.14324831546861,119.0,8.143248315468611,False
+CX2_33,capacity_sparse_lowmin,305.0,emulated: 1 complete discharge in 50,,119.0,,True
+CX2_33,capacity_sparse,315.0,emulated: 1 complete discharge in 50,,109.0,,True
+CX2_33,field_raw,315.0,emulated: 1 complete discharge in 50,193.22765277411298,109.0,84.22765277411298,False
+CX2_33,field_selfcal,315.0,emulated: 1 complete discharge in 50,113.81190393837556,109.0,4.811903938375565,False
+CX2_33,capacity_sparse_lowmin,315.0,emulated: 1 complete discharge in 50,373.40140990263967,109.0,264.40140990263967,False
+CX2_33,capacity_sparse,325.0,emulated: 1 complete discharge in 50,,99.0,,True
+CX2_33,field_raw,325.0,emulated: 1 complete discharge in 50,182.39085961037307,99.0,83.39085961037307,False
+CX2_33,field_selfcal,325.0,emulated: 1 complete discharge in 50,107.88397255205615,99.0,8.88397255205615,False
+CX2_33,capacity_sparse_lowmin,325.0,emulated: 1 complete discharge in 50,363.40140990263967,99.0,264.40140990263967,False
+CX2_33,capacity_sparse,335.0,emulated: 1 complete discharge in 50,,89.0,,True
+CX2_33,field_raw,335.0,emulated: 1 complete discharge in 50,166.68830579347213,89.0,77.68830579347213,False
+CX2_33,field_selfcal,335.0,emulated: 1 complete discharge in 50,98.99494972372565,89.0,9.994949723725654,False
+CX2_33,capacity_sparse_lowmin,335.0,emulated: 1 complete discharge in 50,353.40140990263967,89.0,264.40140990263967,False
+CX2_33,capacity_sparse,345.0,emulated: 1 complete discharge in 50,,79.0,,True
+CX2_33,field_raw,345.0,emulated: 1 complete discharge in 50,164.9938424605519,79.0,85.99384246055189,False
+CX2_33,field_selfcal,345.0,emulated: 1 complete discharge in 50,97.95095448576745,79.0,18.950954485767454,False
+CX2_33,capacity_sparse_lowmin,345.0,emulated: 1 complete discharge in 50,343.40140990263967,79.0,264.40140990263967,False
+CX2_33,capacity_sparse,355.0,emulated: 1 complete discharge in 50,,69.0,,True
+CX2_33,field_raw,355.0,emulated: 1 complete discharge in 50,162.295952029334,69.0,93.29595202933399,False
+CX2_33,field_selfcal,355.0,emulated: 1 complete discharge in 50,96.33203106942324,69.0,27.332031069423238,False
+CX2_33,capacity_sparse_lowmin,355.0,emulated: 1 complete discharge in 50,333.40140990263967,69.0,264.40140990263967,False
+CX2_33,capacity_sparse,365.0,emulated: 1 complete discharge in 50,,59.0,,True
+CX2_33,field_raw,365.0,emulated: 1 complete discharge in 50,153.41306744944893,59.0,94.41306744944893,False
+CX2_33,field_selfcal,365.0,emulated: 1 complete discharge in 50,91.02092925059276,59.0,32.02092925059276,False
+CX2_33,capacity_sparse_lowmin,365.0,emulated: 1 complete discharge in 50,164.63547679228452,59.0,105.63547679228452,False
+CX2_33,capacity_sparse,375.0,emulated: 1 complete discharge in 50,,49.0,,True
+CX2_33,field_raw,375.0,emulated: 1 complete discharge in 50,145.3123297020444,49.0,96.3123297020444,False
+CX2_33,field_selfcal,375.0,emulated: 1 complete discharge in 50,86.0546103661539,49.0,37.054610366153895,False
+CX2_33,capacity_sparse_lowmin,375.0,emulated: 1 complete discharge in 50,154.63547679228452,49.0,105.63547679228452,False
+CX2_33,capacity_sparse,385.0,emulated: 1 complete discharge in 50,,39.0,,True
+CX2_33,field_raw,385.0,emulated: 1 complete discharge in 50,122.4622240428202,39.0,83.4622240428202,False
+CX2_33,field_selfcal,385.0,emulated: 1 complete discharge in 50,71.72061347988279,39.0,32.720613479882786,False
+CX2_33,capacity_sparse_lowmin,385.0,emulated: 1 complete discharge in 50,144.63547679228452,39.0,105.63547679228452,False
+CX2_33,capacity_sparse,395.0,emulated: 1 complete discharge in 50,,29.0,,True
+CX2_33,field_raw,395.0,emulated: 1 complete discharge in 50,103.29496829679982,29.0,74.29496829679982,False
+CX2_33,field_selfcal,395.0,emulated: 1 complete discharge in 50,59.16986115099121,29.0,30.16986115099121,False
+CX2_33,capacity_sparse_lowmin,395.0,emulated: 1 complete discharge in 50,134.63547679228452,29.0,105.63547679228452,False
+CX2_33,capacity_sparse,405.0,emulated: 1 complete discharge in 50,,19.0,,True
+CX2_33,field_raw,405.0,emulated: 1 complete discharge in 50,87.87660909316196,19.0,68.87660909316196,False
+CX2_33,field_selfcal,405.0,emulated: 1 complete discharge in 50,48.69284619185777,19.0,29.692846191857768,False
+CX2_33,capacity_sparse_lowmin,405.0,emulated: 1 complete discharge in 50,124.63547679228452,19.0,105.63547679228452,False
+CX2_33,capacity_sparse,415.0,emulated: 1 complete discharge in 50,,9.0,,True
+CX2_33,field_raw,415.0,emulated: 1 complete discharge in 50,74.38799376995075,9.0,65.38799376995075,False
+CX2_33,field_selfcal,415.0,emulated: 1 complete discharge in 50,39.24662467411338,9.0,30.246624674113377,False
+CX2_33,capacity_sparse_lowmin,415.0,emulated: 1 complete discharge in 50,116.23334128756585,9.0,107.23334128756585,False
+CX2_34,capacity_sparse,2.0,emulated: 1 complete discharge in 50,,269.0,,True
+CX2_34,field_raw,2.0,emulated: 1 complete discharge in 50,,269.0,,True
+CX2_34,field_selfcal,2.0,emulated: 1 complete discharge in 50,,269.0,,True
+CX2_34,capacity_sparse_lowmin,2.0,emulated: 1 complete discharge in 50,,269.0,,True
+CX2_34,capacity_sparse,12.0,emulated: 1 complete discharge in 50,,259.0,,True
+CX2_34,field_raw,12.0,emulated: 1 complete discharge in 50,,259.0,,True
+CX2_34,field_selfcal,12.0,emulated: 1 complete discharge in 50,,259.0,,True
+CX2_34,capacity_sparse_lowmin,12.0,emulated: 1 complete discharge in 50,,259.0,,True
+CX2_34,capacity_sparse,22.0,emulated: 1 complete discharge in 50,,249.0,,True
+CX2_34,field_raw,22.0,emulated: 1 complete discharge in 50,,249.0,,True
+CX2_34,field_selfcal,22.0,emulated: 1 complete discharge in 50,,249.0,,True
+CX2_34,capacity_sparse_lowmin,22.0,emulated: 1 complete discharge in 50,,249.0,,True
+CX2_34,capacity_sparse,32.0,emulated: 1 complete discharge in 50,,239.0,,True
+CX2_34,field_raw,32.0,emulated: 1 complete discharge in 50,,239.0,,True
+CX2_34,field_selfcal,32.0,emulated: 1 complete discharge in 50,,239.0,,True
+CX2_34,capacity_sparse_lowmin,32.0,emulated: 1 complete discharge in 50,,239.0,,True
+CX2_34,capacity_sparse,42.0,emulated: 1 complete discharge in 50,,229.0,,True
+CX2_34,field_raw,42.0,emulated: 1 complete discharge in 50,,229.0,,True
+CX2_34,field_selfcal,42.0,emulated: 1 complete discharge in 50,,229.0,,True
+CX2_34,capacity_sparse_lowmin,42.0,emulated: 1 complete discharge in 50,,229.0,,True
+CX2_34,capacity_sparse,52.0,emulated: 1 complete discharge in 50,,219.0,,True
+CX2_34,field_raw,52.0,emulated: 1 complete discharge in 50,61.51508367541315,219.0,-157.48491632458683,False
+CX2_34,field_selfcal,52.0,emulated: 1 complete discharge in 50,,219.0,,True
+CX2_34,capacity_sparse_lowmin,52.0,emulated: 1 complete discharge in 50,,219.0,,True
+CX2_34,capacity_sparse,62.0,emulated: 1 complete discharge in 50,,209.0,,True
+CX2_34,field_raw,62.0,emulated: 1 complete discharge in 50,104.8830332902273,209.0,-104.1169667097727,False
+CX2_34,field_selfcal,62.0,emulated: 1 complete discharge in 50,,209.0,,True
+CX2_34,capacity_sparse_lowmin,62.0,emulated: 1 complete discharge in 50,,209.0,,True
+CX2_34,capacity_sparse,72.0,emulated: 1 complete discharge in 50,,199.0,,True
+CX2_34,field_raw,72.0,emulated: 1 complete discharge in 50,61.943464042230545,199.0,-137.05653595776946,False
+CX2_34,field_selfcal,72.0,emulated: 1 complete discharge in 50,97.59719025670722,199.0,-101.40280974329278,False
+CX2_34,capacity_sparse_lowmin,72.0,emulated: 1 complete discharge in 50,,199.0,,True
+CX2_34,capacity_sparse,82.0,emulated: 1 complete discharge in 50,,189.0,,True
+CX2_34,field_raw,82.0,emulated: 1 complete discharge in 50,48.995530443616815,189.0,-140.00446955638319,False
+CX2_34,field_selfcal,82.0,emulated: 1 complete discharge in 50,84.34573092240359,189.0,-104.65426907759641,False
+CX2_34,capacity_sparse_lowmin,82.0,emulated: 1 complete discharge in 50,,189.0,,True
+CX2_34,capacity_sparse,92.0,emulated: 1 complete discharge in 50,,179.0,,True
+CX2_34,field_raw,92.0,emulated: 1 complete discharge in 50,34.20194817587702,179.0,-144.79805182412298,False
+CX2_34,field_selfcal,92.0,emulated: 1 complete discharge in 50,69.69481429168181,179.0,-109.30518570831819,False
+CX2_34,capacity_sparse_lowmin,92.0,emulated: 1 complete discharge in 50,,179.0,,True
+CX2_34,capacity_sparse,104.0,emulated: 1 complete discharge in 50,,167.0,,True
+CX2_34,field_raw,104.0,emulated: 1 complete discharge in 50,24.301778411818105,167.0,-142.6982215881819,False
+CX2_34,field_selfcal,104.0,emulated: 1 complete discharge in 50,61.79161652077522,167.0,-105.20838347922478,False
+CX2_34,capacity_sparse_lowmin,104.0,emulated: 1 complete discharge in 50,,167.0,,True
+CX2_34,capacity_sparse,114.0,emulated: 1 complete discharge in 50,,157.0,,True
+CX2_34,field_raw,114.0,emulated: 1 complete discharge in 50,41.83728600350753,157.0,-115.16271399649247,False
+CX2_34,field_selfcal,114.0,emulated: 1 complete discharge in 50,81.37397850155912,157.0,-75.62602149844088,False
+CX2_34,capacity_sparse_lowmin,114.0,emulated: 1 complete discharge in 50,,157.0,,True
+CX2_34,capacity_sparse,124.0,emulated: 1 complete discharge in 50,,147.0,,True
+CX2_34,field_raw,124.0,emulated: 1 complete discharge in 50,39.47465090427079,147.0,-107.52534909572921,False
+CX2_34,field_selfcal,124.0,emulated: 1 complete discharge in 50,79.0041380311543,147.0,-67.9958619688457,False
+CX2_34,capacity_sparse_lowmin,124.0,emulated: 1 complete discharge in 50,,147.0,,True
+CX2_34,capacity_sparse,134.0,emulated: 1 complete discharge in 50,,137.0,,True
+CX2_34,field_raw,134.0,emulated: 1 complete discharge in 50,48.41143118571941,137.0,-88.58856881428059,False
+CX2_34,field_selfcal,134.0,emulated: 1 complete discharge in 50,89.76506249749997,137.0,-47.23493750250003,False
+CX2_34,capacity_sparse_lowmin,134.0,emulated: 1 complete discharge in 50,,137.0,,True
+CX2_34,capacity_sparse,144.0,emulated: 1 complete discharge in 50,,127.0,,True
+CX2_34,field_raw,144.0,emulated: 1 complete discharge in 50,39.5904920847901,127.0,-87.4095079152099,False
+CX2_34,field_selfcal,144.0,emulated: 1 complete discharge in 50,82.1890580642364,127.0,-44.810941935763594,False
+CX2_34,capacity_sparse_lowmin,144.0,emulated: 1 complete discharge in 50,,127.0,,True
+CX2_34,capacity_sparse,154.0,emulated: 1 complete discharge in 50,,117.0,,True
+CX2_34,field_raw,154.0,emulated: 1 complete discharge in 50,31.449422536530562,117.0,-85.55057746346944,False
+CX2_34,field_selfcal,154.0,emulated: 1 complete discharge in 50,75.78303893686095,117.0,-41.21696106313905,False
+CX2_34,capacity_sparse_lowmin,154.0,emulated: 1 complete discharge in 50,,117.0,,True
+CX2_34,capacity_sparse,164.0,emulated: 1 complete discharge in 50,,107.0,,True
+CX2_34,field_raw,164.0,emulated: 1 complete discharge in 50,49.94706607000202,107.0,-57.05293392999798,False
+CX2_34,field_selfcal,164.0,emulated: 1 complete discharge in 50,97.13031089754998,107.0,-9.869689102450025,False
+CX2_34,capacity_sparse_lowmin,164.0,emulated: 1 complete discharge in 50,,107.0,,True
+CX2_34,capacity_sparse,174.0,emulated: 1 complete discharge in 50,,97.0,,True
+CX2_34,field_raw,174.0,emulated: 1 complete discharge in 50,61.18353965308128,97.0,-35.81646034691872,False
+CX2_34,field_selfcal,174.0,emulated: 1 complete discharge in 50,110.654170301372,97.0,13.654170301372005,False
+CX2_34,capacity_sparse_lowmin,174.0,emulated: 1 complete discharge in 50,,97.0,,True
+CX2_34,capacity_sparse,184.0,emulated: 1 complete discharge in 50,,87.0,,True
+CX2_34,field_raw,184.0,emulated: 1 complete discharge in 50,51.630152518017724,87.0,-35.369847481982276,False
+CX2_34,field_selfcal,184.0,emulated: 1 complete discharge in 50,103.50648852903089,87.0,16.50648852903089,False
+CX2_34,capacity_sparse_lowmin,184.0,emulated: 1 complete discharge in 50,,87.0,,True
+CX2_34,capacity_sparse,194.0,emulated: 1 complete discharge in 50,,77.0,,True
+CX2_34,field_raw,194.0,emulated: 1 complete discharge in 50,34.1235870508238,77.0,-42.8764129491762,False
+CX2_34,field_selfcal,194.0,emulated: 1 complete discharge in 50,88.04985814202854,77.0,11.04985814202854,False
+CX2_34,capacity_sparse_lowmin,194.0,emulated: 1 complete discharge in 50,,77.0,,True
+CX2_34,capacity_sparse,204.0,emulated: 1 complete discharge in 50,,67.0,,True
+CX2_34,field_raw,204.0,emulated: 1 complete discharge in 50,23.773907834719154,67.0,-43.226092165280846,False
+CX2_34,field_selfcal,204.0,emulated: 1 complete discharge in 50,79.96462065192912,67.0,12.964620651929124,False
+CX2_34,capacity_sparse_lowmin,204.0,emulated: 1 complete discharge in 50,,67.0,,True
+CX2_34,capacity_sparse,214.0,emulated: 1 complete discharge in 50,,57.0,,True
+CX2_34,field_raw,214.0,emulated: 1 complete discharge in 50,58.035062074072925,57.0,1.0350620740729255,False
+CX2_34,field_selfcal,214.0,emulated: 1 complete discharge in 50,118.93125130268152,57.0,61.93125130268152,False
+CX2_34,capacity_sparse_lowmin,214.0,emulated: 1 complete discharge in 50,,57.0,,True
+CX2_34,capacity_sparse,224.0,emulated: 1 complete discharge in 50,,47.0,,True
+CX2_34,field_raw,224.0,emulated: 1 complete discharge in 50,74.84853381757875,47.0,27.848533817578755,False
+CX2_34,field_selfcal,224.0,emulated: 1 complete discharge in 50,138.26882677005813,47.0,91.26882677005813,False
+CX2_34,capacity_sparse_lowmin,224.0,emulated: 1 complete discharge in 50,,47.0,,True
+CX2_34,capacity_sparse,234.0,emulated: 1 complete discharge in 50,,37.0,,True
+CX2_34,field_raw,234.0,emulated: 1 complete discharge in 50,77.25409698079397,37.0,40.254096980793975,False
+CX2_34,field_selfcal,234.0,emulated: 1 complete discharge in 50,143.4547304503846,37.0,106.4547304503846,False
+CX2_34,capacity_sparse_lowmin,234.0,emulated: 1 complete discharge in 50,,37.0,,True
+CX2_34,capacity_sparse,244.0,emulated: 1 complete discharge in 50,,27.0,,True
+CX2_34,field_raw,244.0,emulated: 1 complete discharge in 50,67.21115729626143,27.0,40.21115729626143,False
+CX2_34,field_selfcal,244.0,emulated: 1 complete discharge in 50,136.57714060465293,27.0,109.57714060465293,False
+CX2_34,capacity_sparse_lowmin,244.0,emulated: 1 complete discharge in 50,,27.0,,True
+CX2_34,capacity_sparse,254.0,emulated: 1 complete discharge in 50,,17.0,,True
+CX2_34,field_raw,254.0,emulated: 1 complete discharge in 50,59.67153332301808,17.0,42.67153332301808,False
+CX2_34,field_selfcal,254.0,emulated: 1 complete discharge in 50,132.20894190931017,17.0,115.20894190931017,False
+CX2_34,capacity_sparse_lowmin,254.0,emulated: 1 complete discharge in 50,,17.0,,True
+CX2_34,capacity_sparse,264.0,emulated: 1 complete discharge in 50,,7.0,,True
+CX2_34,field_raw,264.0,emulated: 1 complete discharge in 50,56.87055173066773,7.0,49.87055173066773,False
+CX2_34,field_selfcal,264.0,emulated: 1 complete discharge in 50,131.86060135690735,7.0,124.86060135690735,False
+CX2_34,capacity_sparse_lowmin,264.0,emulated: 1 complete discharge in 50,,7.0,,True
+CX2_35,capacity_sparse,1.0,emulated: 1 complete discharge in 50,,389.0,,True
+CX2_35,field_raw,1.0,emulated: 1 complete discharge in 50,,389.0,,True
+CX2_35,field_selfcal,1.0,emulated: 1 complete discharge in 50,,389.0,,True
+CX2_35,capacity_sparse_lowmin,1.0,emulated: 1 complete discharge in 50,,389.0,,True
+CX2_35,capacity_sparse,11.0,emulated: 1 complete discharge in 50,,379.0,,True
+CX2_35,field_raw,11.0,emulated: 1 complete discharge in 50,,379.0,,True
+CX2_35,field_selfcal,11.0,emulated: 1 complete discharge in 50,,379.0,,True
+CX2_35,capacity_sparse_lowmin,11.0,emulated: 1 complete discharge in 50,,379.0,,True
+CX2_35,capacity_sparse,21.0,emulated: 1 complete discharge in 50,,369.0,,True
+CX2_35,field_raw,21.0,emulated: 1 complete discharge in 50,,369.0,,True
+CX2_35,field_selfcal,21.0,emulated: 1 complete discharge in 50,,369.0,,True
+CX2_35,capacity_sparse_lowmin,21.0,emulated: 1 complete discharge in 50,,369.0,,True
+CX2_35,capacity_sparse,31.0,emulated: 1 complete discharge in 50,,359.0,,True
+CX2_35,field_raw,31.0,emulated: 1 complete discharge in 50,,359.0,,True
+CX2_35,field_selfcal,31.0,emulated: 1 complete discharge in 50,,359.0,,True
+CX2_35,capacity_sparse_lowmin,31.0,emulated: 1 complete discharge in 50,,359.0,,True
+CX2_35,capacity_sparse,41.0,emulated: 1 complete discharge in 50,,349.0,,True
+CX2_35,field_raw,41.0,emulated: 1 complete discharge in 50,,349.0,,True
+CX2_35,field_selfcal,41.0,emulated: 1 complete discharge in 50,,349.0,,True
+CX2_35,capacity_sparse_lowmin,41.0,emulated: 1 complete discharge in 50,,349.0,,True
+CX2_35,capacity_sparse,51.0,emulated: 1 complete discharge in 50,,339.0,,True
+CX2_35,field_raw,51.0,emulated: 1 complete discharge in 50,86.93184576675935,339.0,-252.06815423324065,False
+CX2_35,field_selfcal,51.0,emulated: 1 complete discharge in 50,,339.0,,True
+CX2_35,capacity_sparse_lowmin,51.0,emulated: 1 complete discharge in 50,,339.0,,True
+CX2_35,capacity_sparse,61.0,emulated: 1 complete discharge in 50,,329.0,,True
+CX2_35,field_raw,61.0,emulated: 1 complete discharge in 50,,329.0,,True
+CX2_35,field_selfcal,61.0,emulated: 1 complete discharge in 50,,329.0,,True
+CX2_35,capacity_sparse_lowmin,61.0,emulated: 1 complete discharge in 50,,329.0,,True
+CX2_35,capacity_sparse,71.0,emulated: 1 complete discharge in 50,,319.0,,True
+CX2_35,field_raw,71.0,emulated: 1 complete discharge in 50,108.25615706099325,319.0,-210.74384293900675,False
+CX2_35,field_selfcal,71.0,emulated: 1 complete discharge in 50,,319.0,,True
+CX2_35,capacity_sparse_lowmin,71.0,emulated: 1 complete discharge in 50,,319.0,,True
+CX2_35,capacity_sparse,81.0,emulated: 1 complete discharge in 50,,309.0,,True
+CX2_35,field_raw,81.0,emulated: 1 complete discharge in 50,90.58442590376444,309.0,-218.41557409623556,False
+CX2_35,field_selfcal,81.0,emulated: 1 complete discharge in 50,,309.0,,True
+CX2_35,capacity_sparse_lowmin,81.0,emulated: 1 complete discharge in 50,,309.0,,True
+CX2_35,capacity_sparse,93.0,emulated: 1 complete discharge in 50,,297.0,,True
+CX2_35,field_raw,93.0,emulated: 1 complete discharge in 50,76.25615775900667,297.0,-220.74384224099333,False
+CX2_35,field_selfcal,93.0,emulated: 1 complete discharge in 50,170.28414016578392,297.0,-126.71585983421608,False
+CX2_35,capacity_sparse_lowmin,93.0,emulated: 1 complete discharge in 50,,297.0,,True
+CX2_35,capacity_sparse,103.0,emulated: 1 complete discharge in 50,,287.0,,True
+CX2_35,field_raw,103.0,emulated: 1 complete discharge in 50,74.55387671401388,287.0,-212.44612328598612,False
+CX2_35,field_selfcal,103.0,emulated: 1 complete discharge in 50,173.6095446992104,287.0,-113.3904553007896,False
+CX2_35,capacity_sparse_lowmin,103.0,emulated: 1 complete discharge in 50,,287.0,,True
+CX2_35,capacity_sparse,113.0,emulated: 1 complete discharge in 50,,277.0,,True
+CX2_35,field_raw,113.0,emulated: 1 complete discharge in 50,76.73442961856435,277.0,-200.26557038143565,False
+CX2_35,field_selfcal,113.0,emulated: 1 complete discharge in 50,187.7654206508402,277.0,-89.23457934915979,False
+CX2_35,capacity_sparse_lowmin,113.0,emulated: 1 complete discharge in 50,,277.0,,True
+CX2_35,capacity_sparse,123.0,emulated: 1 complete discharge in 50,,267.0,,True
+CX2_35,field_raw,123.0,emulated: 1 complete discharge in 50,80.68189710195699,267.0,-186.318102898043,False
+CX2_35,field_selfcal,123.0,emulated: 1 complete discharge in 50,205.78828603946988,267.0,-61.21171396053012,False
+CX2_35,capacity_sparse_lowmin,123.0,emulated: 1 complete discharge in 50,,267.0,,True
+CX2_35,capacity_sparse,133.0,emulated: 1 complete discharge in 50,,257.0,,True
+CX2_35,field_raw,133.0,emulated: 1 complete discharge in 50,77.63391637393121,257.0,-179.3660836260688,False
+CX2_35,field_selfcal,133.0,emulated: 1 complete discharge in 50,209.4815871592753,257.0,-47.51841284072469,False
+CX2_35,capacity_sparse_lowmin,133.0,emulated: 1 complete discharge in 50,,257.0,,True
+CX2_35,capacity_sparse,143.0,emulated: 1 complete discharge in 50,,247.0,,True
+CX2_35,field_raw,143.0,emulated: 1 complete discharge in 50,72.62500654623398,247.0,-174.37499345376602,False
+CX2_35,field_selfcal,143.0,emulated: 1 complete discharge in 50,208.6259161356972,247.0,-38.374083864302804,False
+CX2_35,capacity_sparse_lowmin,143.0,emulated: 1 complete discharge in 50,,247.0,,True
+CX2_35,capacity_sparse,153.0,emulated: 1 complete discharge in 50,,237.0,,True
+CX2_35,field_raw,153.0,emulated: 1 complete discharge in 50,89.20311770251391,237.0,-147.7968822974861,False
+CX2_35,field_selfcal,153.0,emulated: 1 complete discharge in 50,250.92293454879353,237.0,13.922934548793535,False
+CX2_35,capacity_sparse_lowmin,153.0,emulated: 1 complete discharge in 50,,237.0,,True
+CX2_35,capacity_sparse,163.0,emulated: 1 complete discharge in 50,,227.0,,True
+CX2_35,field_raw,163.0,emulated: 1 complete discharge in 50,93.920962763038,227.0,-133.079037236962,False
+CX2_35,field_selfcal,163.0,emulated: 1 complete discharge in 50,269.4248351734505,227.0,42.424835173450504,False
+CX2_35,capacity_sparse_lowmin,163.0,emulated: 1 complete discharge in 50,,227.0,,True
+CX2_35,capacity_sparse,173.0,emulated: 1 complete discharge in 50,,217.0,,True
+CX2_35,field_raw,173.0,emulated: 1 complete discharge in 50,89.95875348005586,217.0,-127.04124651994414,False
+CX2_35,field_selfcal,173.0,emulated: 1 complete discharge in 50,269.68015076646316,217.0,52.68015076646316,False
+CX2_35,capacity_sparse_lowmin,173.0,emulated: 1 complete discharge in 50,,217.0,,True
+CX2_35,capacity_sparse,184.0,emulated: 1 complete discharge in 50,,206.0,,True
+CX2_35,field_raw,184.0,emulated: 1 complete discharge in 50,81.71117999546811,206.0,-124.28882000453189,False
+CX2_35,field_selfcal,184.0,emulated: 1 complete discharge in 50,261.9621808849484,206.0,55.962180884948395,False
+CX2_35,capacity_sparse_lowmin,184.0,emulated: 1 complete discharge in 50,,206.0,,True
+CX2_35,capacity_sparse,194.0,emulated: 1 complete discharge in 50,,196.0,,True
+CX2_35,field_raw,194.0,emulated: 1 complete discharge in 50,76.21650566119018,196.0,-119.78349433880982,False
+CX2_35,field_selfcal,194.0,emulated: 1 complete discharge in 50,258.8442401176151,196.0,62.84424011761507,False
+CX2_35,capacity_sparse_lowmin,194.0,emulated: 1 complete discharge in 50,,196.0,,True
+CX2_35,capacity_sparse,204.0,emulated: 1 complete discharge in 50,,186.0,,True
+CX2_35,field_raw,204.0,emulated: 1 complete discharge in 50,65.52335177606506,186.0,-120.47664822393494,False
+CX2_35,field_selfcal,204.0,emulated: 1 complete discharge in 50,245.01942398710037,186.0,59.01942398710037,False
+CX2_35,capacity_sparse_lowmin,204.0,emulated: 1 complete discharge in 50,,186.0,,True
+CX2_35,capacity_sparse,214.0,emulated: 1 complete discharge in 50,,176.0,,True
+CX2_35,field_raw,214.0,emulated: 1 complete discharge in 50,49.77213998924401,176.0,-126.22786001075599,False
+CX2_35,field_selfcal,214.0,emulated: 1 complete discharge in 50,221.1188858539719,176.0,45.1188858539719,False
+CX2_35,capacity_sparse_lowmin,214.0,emulated: 1 complete discharge in 50,,176.0,,True
+CX2_35,capacity_sparse,224.0,emulated: 1 complete discharge in 50,,166.0,,True
+CX2_35,field_raw,224.0,emulated: 1 complete discharge in 50,36.47805192836972,166.0,-129.52194807163028,False
+CX2_35,field_selfcal,224.0,emulated: 1 complete discharge in 50,202.58821150116034,166.0,36.588211501160345,False
+CX2_35,capacity_sparse_lowmin,224.0,emulated: 1 complete discharge in 50,,166.0,,True
+CX2_35,capacity_sparse,234.0,emulated: 1 complete discharge in 50,,156.0,,True
+CX2_35,field_raw,234.0,emulated: 1 complete discharge in 50,31.087065226817913,156.0,-124.91293477318209,False
+CX2_35,field_selfcal,234.0,emulated: 1 complete discharge in 50,200.39768777439065,156.0,44.39768777439065,False
+CX2_35,capacity_sparse_lowmin,234.0,emulated: 1 complete discharge in 50,,156.0,,True
+CX2_35,capacity_sparse,244.0,emulated: 1 complete discharge in 50,,146.0,,True
+CX2_35,field_raw,244.0,emulated: 1 complete discharge in 50,23.800601380541366,146.0,-122.19939861945863,False
+CX2_35,field_selfcal,244.0,emulated: 1 complete discharge in 50,194.41241229793394,146.0,48.41241229793394,False
+CX2_35,capacity_sparse_lowmin,244.0,emulated: 1 complete discharge in 50,,146.0,,True
+CX2_35,capacity_sparse,254.0,emulated: 1 complete discharge in 50,,136.0,,True
+CX2_35,field_raw,254.0,emulated: 1 complete discharge in 50,12.05067171356228,136.0,-123.94932828643772,False
+CX2_35,field_selfcal,254.0,emulated: 1 complete discharge in 50,179.37277634706163,136.0,43.37277634706163,False
+CX2_35,capacity_sparse_lowmin,254.0,emulated: 1 complete discharge in 50,,136.0,,True
+CX2_35,capacity_sparse,264.0,emulated: 1 complete discharge in 50,,126.0,,True
+CX2_35,field_raw,264.0,emulated: 1 complete discharge in 50,4.527205011359285,126.0,-121.47279498864071,False
+CX2_35,field_selfcal,264.0,emulated: 1 complete discharge in 50,175.15428948352894,126.0,49.15428948352894,False
+CX2_35,capacity_sparse_lowmin,264.0,emulated: 1 complete discharge in 50,,126.0,,True
+CX2_35,capacity_sparse,274.0,emulated: 1 complete discharge in 50,,116.0,,True
+CX2_35,field_raw,274.0,emulated: 1 complete discharge in 50,0.0,116.0,-116.0,True
+CX2_35,field_selfcal,274.0,emulated: 1 complete discharge in 50,168.12201386644665,116.0,52.12201386644665,False
+CX2_35,capacity_sparse_lowmin,274.0,emulated: 1 complete discharge in 50,,116.0,,True
+CX2_35,capacity_sparse,284.0,emulated: 1 complete discharge in 50,,106.0,,True
+CX2_35,field_raw,284.0,emulated: 1 complete discharge in 50,0.0,106.0,-106.0,True
+CX2_35,field_selfcal,284.0,emulated: 1 complete discharge in 50,157.67705755790206,106.0,51.67705755790206,False
+CX2_35,capacity_sparse_lowmin,284.0,emulated: 1 complete discharge in 50,,106.0,,True
+CX2_35,capacity_sparse,294.0,emulated: 1 complete discharge in 50,,96.0,,True
+CX2_35,field_raw,294.0,emulated: 1 complete discharge in 50,0.0,96.0,-96.0,True
+CX2_35,field_selfcal,294.0,emulated: 1 complete discharge in 50,155.09920841407717,96.0,59.09920841407717,False
+CX2_35,capacity_sparse_lowmin,294.0,emulated: 1 complete discharge in 50,,96.0,,True
+CX2_35,capacity_sparse,305.0,emulated: 1 complete discharge in 50,,85.0,,True
+CX2_35,field_raw,305.0,emulated: 1 complete discharge in 50,0.0,85.0,-85.0,True
+CX2_35,field_selfcal,305.0,emulated: 1 complete discharge in 50,156.44011484790326,85.0,71.44011484790326,False
+CX2_35,capacity_sparse_lowmin,305.0,emulated: 1 complete discharge in 50,,85.0,,True
+CX2_35,capacity_sparse,315.0,emulated: 1 complete discharge in 50,,75.0,,True
+CX2_35,field_raw,315.0,emulated: 1 complete discharge in 50,0.0,75.0,-75.0,True
+CX2_35,field_selfcal,315.0,emulated: 1 complete discharge in 50,152.3012139301386,75.0,77.3012139301386,False
+CX2_35,capacity_sparse_lowmin,315.0,emulated: 1 complete discharge in 50,167.0395172103493,75.0,92.03951721034929,False
+CX2_35,capacity_sparse,325.0,emulated: 1 complete discharge in 50,,65.0,,True
+CX2_35,field_raw,325.0,emulated: 1 complete discharge in 50,0.0,65.0,-65.0,True
+CX2_35,field_selfcal,325.0,emulated: 1 complete discharge in 50,151.5926009234808,65.0,86.5926009234808,False
+CX2_35,capacity_sparse_lowmin,325.0,emulated: 1 complete discharge in 50,157.0395172103493,65.0,92.03951721034929,False
+CX2_35,capacity_sparse,335.0,emulated: 1 complete discharge in 50,,55.0,,True
+CX2_35,field_raw,335.0,emulated: 1 complete discharge in 50,0.0,55.0,-55.0,True
+CX2_35,field_selfcal,335.0,emulated: 1 complete discharge in 50,151.78915880370727,55.0,96.78915880370727,False
+CX2_35,capacity_sparse_lowmin,335.0,emulated: 1 complete discharge in 50,147.0395172103493,55.0,92.03951721034929,False
+CX2_35,capacity_sparse,345.0,emulated: 1 complete discharge in 50,,45.0,,True
+CX2_35,field_raw,345.0,emulated: 1 complete discharge in 50,0.0,45.0,-45.0,True
+CX2_35,field_selfcal,345.0,emulated: 1 complete discharge in 50,148.8734817222421,45.0,103.8734817222421,False
+CX2_35,capacity_sparse_lowmin,345.0,emulated: 1 complete discharge in 50,137.0395172103493,45.0,92.03951721034929,False
+CX2_35,capacity_sparse,355.0,emulated: 1 complete discharge in 50,,35.0,,True
+CX2_35,field_raw,355.0,emulated: 1 complete discharge in 50,0.0,35.0,-35.0,True
+CX2_35,field_selfcal,355.0,emulated: 1 complete discharge in 50,146.81194590651637,35.0,111.81194590651637,False
+CX2_35,capacity_sparse_lowmin,355.0,emulated: 1 complete discharge in 50,127.03951721034929,35.0,92.03951721034929,False
+CX2_35,capacity_sparse,365.0,emulated: 1 complete discharge in 50,,25.0,,True
+CX2_35,field_raw,365.0,emulated: 1 complete discharge in 50,0.0,25.0,-25.0,True
+CX2_35,field_selfcal,365.0,emulated: 1 complete discharge in 50,145.74098886947837,25.0,120.74098886947837,False
+CX2_35,capacity_sparse_lowmin,365.0,emulated: 1 complete discharge in 50,140.82782493017504,25.0,115.82782493017504,False
+CX2_35,capacity_sparse,375.0,emulated: 1 complete discharge in 50,,15.0,,True
+CX2_35,field_raw,375.0,emulated: 1 complete discharge in 50,0.0,15.0,-15.0,True
+CX2_35,field_selfcal,375.0,emulated: 1 complete discharge in 50,145.28111479963752,15.0,130.28111479963752,False
+CX2_35,capacity_sparse_lowmin,375.0,emulated: 1 complete discharge in 50,130.82782493017504,15.0,115.82782493017504,False
+CX2_35,capacity_sparse,385.0,emulated: 1 complete discharge in 50,,5.0,,True
+CX2_35,field_raw,385.0,emulated: 1 complete discharge in 50,0.0,5.0,-5.0,True
+CX2_35,field_selfcal,385.0,emulated: 1 complete discharge in 50,143.8018416683924,5.0,138.8018416683924,False
+CX2_35,capacity_sparse_lowmin,385.0,emulated: 1 complete discharge in 50,120.82782493017504,5.0,115.82782493017504,False
+CX2_36,capacity_sparse,1.0,emulated: 1 complete discharge in 50,,179.0,,True
+CX2_36,field_raw,1.0,emulated: 1 complete discharge in 50,,179.0,,True
+CX2_36,field_selfcal,1.0,emulated: 1 complete discharge in 50,,179.0,,True
+CX2_36,capacity_sparse_lowmin,1.0,emulated: 1 complete discharge in 50,,179.0,,True
+CX2_36,capacity_sparse,11.0,emulated: 1 complete discharge in 50,,169.0,,True
+CX2_36,field_raw,11.0,emulated: 1 complete discharge in 50,,169.0,,True
+CX2_36,field_selfcal,11.0,emulated: 1 complete discharge in 50,,169.0,,True
+CX2_36,capacity_sparse_lowmin,11.0,emulated: 1 complete discharge in 50,,169.0,,True
+CX2_36,capacity_sparse,21.0,emulated: 1 complete discharge in 50,,159.0,,True
+CX2_36,field_raw,21.0,emulated: 1 complete discharge in 50,,159.0,,True
+CX2_36,field_selfcal,21.0,emulated: 1 complete discharge in 50,,159.0,,True
+CX2_36,capacity_sparse_lowmin,21.0,emulated: 1 complete discharge in 50,,159.0,,True
+CX2_36,capacity_sparse,31.0,emulated: 1 complete discharge in 50,,149.0,,True
+CX2_36,field_raw,31.0,emulated: 1 complete discharge in 50,,149.0,,True
+CX2_36,field_selfcal,31.0,emulated: 1 complete discharge in 50,,149.0,,True
+CX2_36,capacity_sparse_lowmin,31.0,emulated: 1 complete discharge in 50,,149.0,,True
+CX2_36,capacity_sparse,41.0,emulated: 1 complete discharge in 50,,139.0,,True
+CX2_36,field_raw,41.0,emulated: 1 complete discharge in 50,,139.0,,True
+CX2_36,field_selfcal,41.0,emulated: 1 complete discharge in 50,,139.0,,True
+CX2_36,capacity_sparse_lowmin,41.0,emulated: 1 complete discharge in 50,,139.0,,True
+CX2_36,capacity_sparse,51.0,emulated: 1 complete discharge in 50,,129.0,,True
+CX2_36,field_raw,51.0,emulated: 1 complete discharge in 50,28.665840529288616,129.0,-100.33415947071138,False
+CX2_36,field_selfcal,51.0,emulated: 1 complete discharge in 50,,129.0,,True
+CX2_36,capacity_sparse_lowmin,51.0,emulated: 1 complete discharge in 50,,129.0,,True
+CX2_36,capacity_sparse,61.0,emulated: 1 complete discharge in 50,,119.0,,True
+CX2_36,field_raw,61.0,emulated: 1 complete discharge in 50,52.757580872525395,119.0,-66.2424191274746,False
+CX2_36,field_selfcal,61.0,emulated: 1 complete discharge in 50,,119.0,,True
+CX2_36,capacity_sparse_lowmin,61.0,emulated: 1 complete discharge in 50,,119.0,,True
+CX2_36,capacity_sparse,71.0,emulated: 1 complete discharge in 50,,109.0,,True
+CX2_36,field_raw,71.0,emulated: 1 complete discharge in 50,13.624269276192777,109.0,-95.37573072380722,False
+CX2_36,field_selfcal,71.0,emulated: 1 complete discharge in 50,,109.0,,True
+CX2_36,capacity_sparse_lowmin,71.0,emulated: 1 complete discharge in 50,,109.0,,True
+CX2_36,capacity_sparse,81.0,emulated: 1 complete discharge in 50,,99.0,,True
+CX2_36,field_raw,81.0,emulated: 1 complete discharge in 50,2.1015045481895953,99.0,-96.8984954518104,False
+CX2_36,field_selfcal,81.0,emulated: 1 complete discharge in 50,128.257159743052,99.0,29.257159743052,False
+CX2_36,capacity_sparse_lowmin,81.0,emulated: 1 complete discharge in 50,,99.0,,True
+CX2_36,capacity_sparse,91.0,emulated: 1 complete discharge in 50,,89.0,,True
+CX2_36,field_raw,91.0,emulated: 1 complete discharge in 50,0.0,89.0,-89.0,True
+CX2_36,field_selfcal,91.0,emulated: 1 complete discharge in 50,123.95995659042069,89.0,34.95995659042069,False
+CX2_36,capacity_sparse_lowmin,91.0,emulated: 1 complete discharge in 50,,89.0,,True
+CX2_36,capacity_sparse,102.0,emulated: 1 complete discharge in 50,,78.0,,True
+CX2_36,field_raw,102.0,emulated: 1 complete discharge in 50,0.0,78.0,-78.0,True
+CX2_36,field_selfcal,102.0,emulated: 1 complete discharge in 50,105.18226490585769,78.0,27.182264905857693,False
+CX2_36,capacity_sparse_lowmin,102.0,emulated: 1 complete discharge in 50,,78.0,,True
+CX2_36,capacity_sparse,112.0,emulated: 1 complete discharge in 50,,68.0,,True
+CX2_36,field_raw,112.0,emulated: 1 complete discharge in 50,0.0,68.0,-68.0,True
+CX2_36,field_selfcal,112.0,emulated: 1 complete discharge in 50,97.55278274572407,68.0,29.552782745724073,False
+CX2_36,capacity_sparse_lowmin,112.0,emulated: 1 complete discharge in 50,,68.0,,True
+CX2_36,capacity_sparse,122.0,emulated: 1 complete discharge in 50,,58.0,,True
+CX2_36,field_raw,122.0,emulated: 1 complete discharge in 50,0.0,58.0,-58.0,True
+CX2_36,field_selfcal,122.0,emulated: 1 complete discharge in 50,94.17024838735765,58.0,36.170248387357645,False
+CX2_36,capacity_sparse_lowmin,122.0,emulated: 1 complete discharge in 50,,58.0,,True
+CX2_36,capacity_sparse,132.0,emulated: 1 complete discharge in 50,,48.0,,True
+CX2_36,field_raw,132.0,emulated: 1 complete discharge in 50,0.0,48.0,-48.0,True
+CX2_36,field_selfcal,132.0,emulated: 1 complete discharge in 50,122.20259215755715,48.0,74.20259215755715,False
+CX2_36,capacity_sparse_lowmin,132.0,emulated: 1 complete discharge in 50,,48.0,,True
+CX2_36,capacity_sparse,142.0,emulated: 1 complete discharge in 50,,38.0,,True
+CX2_36,field_raw,142.0,emulated: 1 complete discharge in 50,0.0,38.0,-38.0,True
+CX2_36,field_selfcal,142.0,emulated: 1 complete discharge in 50,110.2432075783992,38.0,72.2432075783992,False
+CX2_36,capacity_sparse_lowmin,142.0,emulated: 1 complete discharge in 50,,38.0,,True
+CX2_36,capacity_sparse,152.0,emulated: 1 complete discharge in 50,,28.0,,True
+CX2_36,field_raw,152.0,emulated: 1 complete discharge in 50,0.0,28.0,-28.0,True
+CX2_36,field_selfcal,152.0,emulated: 1 complete discharge in 50,96.49574714559267,28.0,68.49574714559267,False
+CX2_36,capacity_sparse_lowmin,152.0,emulated: 1 complete discharge in 50,,28.0,,True
+CX2_36,capacity_sparse,162.0,emulated: 1 complete discharge in 50,,18.0,,True
+CX2_36,field_raw,162.0,emulated: 1 complete discharge in 50,0.0,18.0,-18.0,True
+CX2_36,field_selfcal,162.0,emulated: 1 complete discharge in 50,80.23841880050779,18.0,62.23841880050779,False
+CX2_36,capacity_sparse_lowmin,162.0,emulated: 1 complete discharge in 50,,18.0,,True
+CX2_36,capacity_sparse,172.0,emulated: 1 complete discharge in 50,,8.0,,True
+CX2_36,field_raw,172.0,emulated: 1 complete discharge in 50,0.0,8.0,-8.0,True
+CX2_36,field_selfcal,172.0,emulated: 1 complete discharge in 50,110.36617685940905,8.0,102.36617685940905,False
+CX2_36,capacity_sparse_lowmin,172.0,emulated: 1 complete discharge in 50,,8.0,,True
+CX2_37,capacity_sparse,1.0,emulated: 1 complete discharge in 50,,226.0,,True
+CX2_37,field_raw,1.0,emulated: 1 complete discharge in 50,,226.0,,True
+CX2_37,field_selfcal,1.0,emulated: 1 complete discharge in 50,,226.0,,True
+CX2_37,capacity_sparse_lowmin,1.0,emulated: 1 complete discharge in 50,,226.0,,True
+CX2_37,capacity_sparse,11.0,emulated: 1 complete discharge in 50,,216.0,,True
+CX2_37,field_raw,11.0,emulated: 1 complete discharge in 50,,216.0,,True
+CX2_37,field_selfcal,11.0,emulated: 1 complete discharge in 50,,216.0,,True
+CX2_37,capacity_sparse_lowmin,11.0,emulated: 1 complete discharge in 50,,216.0,,True
+CX2_37,capacity_sparse,21.0,emulated: 1 complete discharge in 50,,206.0,,True
+CX2_37,field_raw,21.0,emulated: 1 complete discharge in 50,,206.0,,True
+CX2_37,field_selfcal,21.0,emulated: 1 complete discharge in 50,,206.0,,True
+CX2_37,capacity_sparse_lowmin,21.0,emulated: 1 complete discharge in 50,,206.0,,True
+CX2_37,capacity_sparse,31.0,emulated: 1 complete discharge in 50,,196.0,,True
+CX2_37,field_raw,31.0,emulated: 1 complete discharge in 50,35.55369539604432,196.0,-160.4463046039557,False
+CX2_37,field_selfcal,31.0,emulated: 1 complete discharge in 50,,196.0,,True
+CX2_37,capacity_sparse_lowmin,31.0,emulated: 1 complete discharge in 50,,196.0,,True
+CX2_37,capacity_sparse,41.0,emulated: 1 complete discharge in 50,,186.0,,True
+CX2_37,field_raw,41.0,emulated: 1 complete discharge in 50,39.308339940305615,186.0,-146.69166005969439,False
+CX2_37,field_selfcal,41.0,emulated: 1 complete discharge in 50,,186.0,,True
+CX2_37,capacity_sparse_lowmin,41.0,emulated: 1 complete discharge in 50,,186.0,,True
+CX2_37,capacity_sparse,51.0,emulated: 1 complete discharge in 50,,176.0,,True
+CX2_37,field_raw,51.0,emulated: 1 complete discharge in 50,31.92017427911344,176.0,-144.07982572088656,False
+CX2_37,field_selfcal,51.0,emulated: 1 complete discharge in 50,90.71665441959334,176.0,-85.28334558040666,False
+CX2_37,capacity_sparse_lowmin,51.0,emulated: 1 complete discharge in 50,,176.0,,True
+CX2_37,capacity_sparse,61.0,emulated: 1 complete discharge in 50,,166.0,,True
+CX2_37,field_raw,61.0,emulated: 1 complete discharge in 50,47.289079163170825,166.0,-118.71092083682917,False
+CX2_37,field_selfcal,61.0,emulated: 1 complete discharge in 50,,166.0,,True
+CX2_37,capacity_sparse_lowmin,61.0,emulated: 1 complete discharge in 50,,166.0,,True
+CX2_37,capacity_sparse,71.0,emulated: 1 complete discharge in 50,,156.0,,True
+CX2_37,field_raw,71.0,emulated: 1 complete discharge in 50,33.733127682111174,156.0,-122.26687231788883,False
+CX2_37,field_selfcal,71.0,emulated: 1 complete discharge in 50,,156.0,,True
+CX2_37,capacity_sparse_lowmin,71.0,emulated: 1 complete discharge in 50,,156.0,,True
+CX2_37,capacity_sparse,81.0,emulated: 1 complete discharge in 50,,146.0,,True
+CX2_37,field_raw,81.0,emulated: 1 complete discharge in 50,20.936198647281415,146.0,-125.06380135271858,False
+CX2_37,field_selfcal,81.0,emulated: 1 complete discharge in 50,132.68687290821325,146.0,-13.313127091786754,False
+CX2_37,capacity_sparse_lowmin,81.0,emulated: 1 complete discharge in 50,,146.0,,True
+CX2_37,capacity_sparse,91.0,emulated: 1 complete discharge in 50,,136.0,,True
+CX2_37,field_raw,91.0,emulated: 1 complete discharge in 50,10.802113167312186,136.0,-125.19788683268781,False
+CX2_37,field_selfcal,91.0,emulated: 1 complete discharge in 50,119.1539652218784,136.0,-16.846034778121606,False
+CX2_37,capacity_sparse_lowmin,91.0,emulated: 1 complete discharge in 50,,136.0,,True
+CX2_37,capacity_sparse,102.0,emulated: 1 complete discharge in 50,,125.0,,True
+CX2_37,field_raw,102.0,emulated: 1 complete discharge in 50,0.0,125.0,-125.0,True
+CX2_37,field_selfcal,102.0,emulated: 1 complete discharge in 50,103.76176053881903,125.0,-21.238239461180967,False
+CX2_37,capacity_sparse_lowmin,102.0,emulated: 1 complete discharge in 50,,125.0,,True
+CX2_37,capacity_sparse,112.0,emulated: 1 complete discharge in 50,,115.0,,True
+CX2_37,field_raw,112.0,emulated: 1 complete discharge in 50,0.0,115.0,-115.0,True
+CX2_37,field_selfcal,112.0,emulated: 1 complete discharge in 50,105.82814514026177,115.0,-9.171854859738232,False
+CX2_37,capacity_sparse_lowmin,112.0,emulated: 1 complete discharge in 50,,115.0,,True
+CX2_37,capacity_sparse,122.0,emulated: 1 complete discharge in 50,,105.0,,True
+CX2_37,field_raw,122.0,emulated: 1 complete discharge in 50,0.0,105.0,-105.0,True
+CX2_37,field_selfcal,122.0,emulated: 1 complete discharge in 50,103.33853655413168,105.0,-1.6614634458683213,False
+CX2_37,capacity_sparse_lowmin,122.0,emulated: 1 complete discharge in 50,,105.0,,True
+CX2_37,capacity_sparse,132.0,emulated: 1 complete discharge in 50,,95.0,,True
+CX2_37,field_raw,132.0,emulated: 1 complete discharge in 50,0.0,95.0,-95.0,True
+CX2_37,field_selfcal,132.0,emulated: 1 complete discharge in 50,108.88646411851863,95.0,13.886464118518631,False
+CX2_37,capacity_sparse_lowmin,132.0,emulated: 1 complete discharge in 50,,95.0,,True
+CX2_37,capacity_sparse,142.0,emulated: 1 complete discharge in 50,,85.0,,True
+CX2_37,field_raw,142.0,emulated: 1 complete discharge in 50,0.0,85.0,-85.0,True
+CX2_37,field_selfcal,142.0,emulated: 1 complete discharge in 50,99.84199546036297,85.0,14.841995460362966,False
+CX2_37,capacity_sparse_lowmin,142.0,emulated: 1 complete discharge in 50,,85.0,,True
+CX2_37,capacity_sparse,152.0,emulated: 1 complete discharge in 50,,75.0,,True
+CX2_37,field_raw,152.0,emulated: 1 complete discharge in 50,0.0,75.0,-75.0,True
+CX2_37,field_selfcal,152.0,emulated: 1 complete discharge in 50,100.09758933106545,75.0,25.09758933106545,False
+CX2_37,capacity_sparse_lowmin,152.0,emulated: 1 complete discharge in 50,,75.0,,True
+CX2_37,capacity_sparse,162.0,emulated: 1 complete discharge in 50,,65.0,,True
+CX2_37,field_raw,162.0,emulated: 1 complete discharge in 50,0.0,65.0,-65.0,True
+CX2_37,field_selfcal,162.0,emulated: 1 complete discharge in 50,103.59569595093302,65.0,38.59569595093302,False
+CX2_37,capacity_sparse_lowmin,162.0,emulated: 1 complete discharge in 50,,65.0,,True
+CX2_37,capacity_sparse,172.0,emulated: 1 complete discharge in 50,,55.0,,True
+CX2_37,field_raw,172.0,emulated: 1 complete discharge in 50,0.0,55.0,-55.0,True
+CX2_37,field_selfcal,172.0,emulated: 1 complete discharge in 50,114.26324162828683,55.0,59.263241628286835,False
+CX2_37,capacity_sparse_lowmin,172.0,emulated: 1 complete discharge in 50,,55.0,,True
+CX2_37,capacity_sparse,182.0,emulated: 1 complete discharge in 50,,45.0,,True
+CX2_37,field_raw,182.0,emulated: 1 complete discharge in 50,0.0,45.0,-45.0,True
+CX2_37,field_selfcal,182.0,emulated: 1 complete discharge in 50,113.65768346807124,45.0,68.65768346807124,False
+CX2_37,capacity_sparse_lowmin,182.0,emulated: 1 complete discharge in 50,,45.0,,True
+CX2_37,capacity_sparse,192.0,emulated: 1 complete discharge in 50,,35.0,,True
+CX2_37,field_raw,192.0,emulated: 1 complete discharge in 50,0.0,35.0,-35.0,True
+CX2_37,field_selfcal,192.0,emulated: 1 complete discharge in 50,103.31216716232137,35.0,68.31216716232137,False
+CX2_37,capacity_sparse_lowmin,192.0,emulated: 1 complete discharge in 50,,35.0,,True
+CX2_37,capacity_sparse,202.0,emulated: 1 complete discharge in 50,,25.0,,True
+CX2_37,field_raw,202.0,emulated: 1 complete discharge in 50,0.0,25.0,-25.0,True
+CX2_37,field_selfcal,202.0,emulated: 1 complete discharge in 50,104.86952051675667,25.0,79.86952051675667,False
+CX2_37,capacity_sparse_lowmin,202.0,emulated: 1 complete discharge in 50,,25.0,,True
+CX2_37,capacity_sparse,212.0,emulated: 1 complete discharge in 50,,15.0,,True
+CX2_37,field_raw,212.0,emulated: 1 complete discharge in 50,0.0,15.0,-15.0,True
+CX2_37,field_selfcal,212.0,emulated: 1 complete discharge in 50,120.65196646869481,15.0,105.65196646869481,False
+CX2_37,capacity_sparse_lowmin,212.0,emulated: 1 complete discharge in 50,,15.0,,True
+CX2_37,capacity_sparse,222.0,emulated: 1 complete discharge in 50,,5.0,,True
+CX2_37,field_raw,222.0,emulated: 1 complete discharge in 50,0.0,5.0,-5.0,True
+CX2_37,field_selfcal,222.0,emulated: 1 complete discharge in 50,130.26951977044376,5.0,125.26951977044376,False
+CX2_37,capacity_sparse_lowmin,222.0,emulated: 1 complete discharge in 50,,5.0,,True
+CX2_38,capacity_sparse,1.0,emulated: 1 complete discharge in 50,,184.0,,True
+CX2_38,field_raw,1.0,emulated: 1 complete discharge in 50,,184.0,,True
+CX2_38,field_selfcal,1.0,emulated: 1 complete discharge in 50,,184.0,,True
+CX2_38,capacity_sparse_lowmin,1.0,emulated: 1 complete discharge in 50,,184.0,,True
+CX2_38,capacity_sparse,11.0,emulated: 1 complete discharge in 50,,174.0,,True
+CX2_38,field_raw,11.0,emulated: 1 complete discharge in 50,,174.0,,True
+CX2_38,field_selfcal,11.0,emulated: 1 complete discharge in 50,,174.0,,True
+CX2_38,capacity_sparse_lowmin,11.0,emulated: 1 complete discharge in 50,,174.0,,True
+CX2_38,capacity_sparse,21.0,emulated: 1 complete discharge in 50,,164.0,,True
+CX2_38,field_raw,21.0,emulated: 1 complete discharge in 50,,164.0,,True
+CX2_38,field_selfcal,21.0,emulated: 1 complete discharge in 50,,164.0,,True
+CX2_38,capacity_sparse_lowmin,21.0,emulated: 1 complete discharge in 50,,164.0,,True
+CX2_38,capacity_sparse,31.0,emulated: 1 complete discharge in 50,,154.0,,True
+CX2_38,field_raw,31.0,emulated: 1 complete discharge in 50,20.564996186704832,154.0,-133.43500381329517,False
+CX2_38,field_selfcal,31.0,emulated: 1 complete discharge in 50,,154.0,,True
+CX2_38,capacity_sparse_lowmin,31.0,emulated: 1 complete discharge in 50,,154.0,,True
+CX2_38,capacity_sparse,41.0,emulated: 1 complete discharge in 50,,144.0,,True
+CX2_38,field_raw,41.0,emulated: 1 complete discharge in 50,27.235753603417393,144.0,-116.7642463965826,False
+CX2_38,field_selfcal,41.0,emulated: 1 complete discharge in 50,,144.0,,True
+CX2_38,capacity_sparse_lowmin,41.0,emulated: 1 complete discharge in 50,,144.0,,True
+CX2_38,capacity_sparse,51.0,emulated: 1 complete discharge in 50,,134.0,,True
+CX2_38,field_raw,51.0,emulated: 1 complete discharge in 50,18.91662244503003,134.0,-115.08337755496997,False
+CX2_38,field_selfcal,51.0,emulated: 1 complete discharge in 50,78.9286492257506,134.0,-55.071350774249396,False
+CX2_38,capacity_sparse_lowmin,51.0,emulated: 1 complete discharge in 50,,134.0,,True
+CX2_38,capacity_sparse,61.0,emulated: 1 complete discharge in 50,,124.0,,True
+CX2_38,field_raw,61.0,emulated: 1 complete discharge in 50,40.24812436514193,124.0,-83.75187563485807,False
+CX2_38,field_selfcal,61.0,emulated: 1 complete discharge in 50,,124.0,,True
+CX2_38,capacity_sparse_lowmin,61.0,emulated: 1 complete discharge in 50,,124.0,,True
+CX2_38,capacity_sparse,71.0,emulated: 1 complete discharge in 50,,114.0,,True
+CX2_38,field_raw,71.0,emulated: 1 complete discharge in 50,25.900855388515595,114.0,-88.0991446114844,False
+CX2_38,field_selfcal,71.0,emulated: 1 complete discharge in 50,116.66764582564113,114.0,2.667645825641131,False
+CX2_38,capacity_sparse_lowmin,71.0,emulated: 1 complete discharge in 50,,114.0,,True
+CX2_38,capacity_sparse,81.0,emulated: 1 complete discharge in 50,,104.0,,True
+CX2_38,field_raw,81.0,emulated: 1 complete discharge in 50,17.55730192727522,104.0,-86.44269807272478,False
+CX2_38,field_selfcal,81.0,emulated: 1 complete discharge in 50,110.49540905943712,104.0,6.495409059437122,False
+CX2_38,capacity_sparse_lowmin,81.0,emulated: 1 complete discharge in 50,,104.0,,True
+CX2_38,capacity_sparse,91.0,emulated: 1 complete discharge in 50,,94.0,,True
+CX2_38,field_raw,91.0,emulated: 1 complete discharge in 50,8.40957602502263,94.0,-85.59042397497737,False
+CX2_38,field_selfcal,91.0,emulated: 1 complete discharge in 50,102.58108039767001,94.0,8.581080397670007,False
+CX2_38,capacity_sparse_lowmin,91.0,emulated: 1 complete discharge in 50,,94.0,,True
+CX2_38,capacity_sparse,102.0,emulated: 1 complete discharge in 50,,83.0,,True
+CX2_38,field_raw,102.0,emulated: 1 complete discharge in 50,0.0,83.0,-83.0,True
+CX2_38,field_selfcal,102.0,emulated: 1 complete discharge in 50,94.30752087133979,83.0,11.30752087133979,False
+CX2_38,capacity_sparse_lowmin,102.0,emulated: 1 complete discharge in 50,,83.0,,True
+CX2_38,capacity_sparse,112.0,emulated: 1 complete discharge in 50,,73.0,,True
+CX2_38,field_raw,112.0,emulated: 1 complete discharge in 50,0.0,73.0,-73.0,True
+CX2_38,field_selfcal,112.0,emulated: 1 complete discharge in 50,92.00973111724028,73.0,19.00973111724028,False
+CX2_38,capacity_sparse_lowmin,112.0,emulated: 1 complete discharge in 50,,73.0,,True
+CX2_38,capacity_sparse,122.0,emulated: 1 complete discharge in 50,,63.0,,True
+CX2_38,field_raw,122.0,emulated: 1 complete discharge in 50,0.0,63.0,-63.0,True
+CX2_38,field_selfcal,122.0,emulated: 1 complete discharge in 50,86.02034393095664,63.0,23.020343930956642,False
+CX2_38,capacity_sparse_lowmin,122.0,emulated: 1 complete discharge in 50,,63.0,,True
+CX2_38,capacity_sparse,132.0,emulated: 1 complete discharge in 50,,53.0,,True
+CX2_38,field_raw,132.0,emulated: 1 complete discharge in 50,0.0,53.0,-53.0,True
+CX2_38,field_selfcal,132.0,emulated: 1 complete discharge in 50,86.87872830642797,53.0,33.87872830642797,False
+CX2_38,capacity_sparse_lowmin,132.0,emulated: 1 complete discharge in 50,,53.0,,True
+CX2_38,capacity_sparse,142.0,emulated: 1 complete discharge in 50,,43.0,,True
+CX2_38,field_raw,142.0,emulated: 1 complete discharge in 50,0.0,43.0,-43.0,True
+CX2_38,field_selfcal,142.0,emulated: 1 complete discharge in 50,79.23608525683656,43.0,36.23608525683656,False
+CX2_38,capacity_sparse_lowmin,142.0,emulated: 1 complete discharge in 50,,43.0,,True
+CX2_38,capacity_sparse,152.0,emulated: 1 complete discharge in 50,,33.0,,True
+CX2_38,field_raw,152.0,emulated: 1 complete discharge in 50,0.0,33.0,-33.0,True
+CX2_38,field_selfcal,152.0,emulated: 1 complete discharge in 50,82.81058802575637,33.0,49.810588025756374,False
+CX2_38,capacity_sparse_lowmin,152.0,emulated: 1 complete discharge in 50,,33.0,,True
+CX2_38,capacity_sparse,162.0,emulated: 1 complete discharge in 50,,23.0,,True
+CX2_38,field_raw,162.0,emulated: 1 complete discharge in 50,0.0,23.0,-23.0,True
+CX2_38,field_selfcal,162.0,emulated: 1 complete discharge in 50,83.93318386368378,23.0,60.93318386368378,False
+CX2_38,capacity_sparse_lowmin,162.0,emulated: 1 complete discharge in 50,,23.0,,True
+CX2_38,capacity_sparse,172.0,emulated: 1 complete discharge in 50,,13.0,,True
+CX2_38,field_raw,172.0,emulated: 1 complete discharge in 50,0.0,13.0,-13.0,True
+CX2_38,field_selfcal,172.0,emulated: 1 complete discharge in 50,94.0402762811949,13.0,81.0402762811949,False
+CX2_38,capacity_sparse_lowmin,172.0,emulated: 1 complete discharge in 50,,13.0,,True
+CX2_38,capacity_sparse,182.0,emulated: 1 complete discharge in 50,,3.0,,True
+CX2_38,field_raw,182.0,emulated: 1 complete discharge in 50,0.0,3.0,-3.0,True
+CX2_38,field_selfcal,182.0,emulated: 1 complete discharge in 50,96.984765615208,3.0,93.984765615208,False
+CX2_38,capacity_sparse_lowmin,182.0,emulated: 1 complete discharge in 50,,3.0,,True

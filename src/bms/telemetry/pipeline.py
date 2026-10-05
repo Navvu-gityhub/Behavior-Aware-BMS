@@ -369,7 +369,9 @@ def score_telemetry_frame(
         rul_estimate = replace(rul_estimate, refusal=(
             f"{rul_estimate.refusal}. Remaining life is extrapolated from "
             f"complete discharges, and only {len(cycles)} of this log's "
-            f"{len(measurements)} discharges were complete"))
+            f"{len(measurements)} discharges were complete. Extrapolating the "
+            f"partial-discharge SOH instead was tested and is not accurate enough "
+            f"to report (reports/metrics/calce_field_rul/)"))
     if cycles.empty:
         refusals.append(
             "No complete discharge cycle found, so no capacity measurement is "
