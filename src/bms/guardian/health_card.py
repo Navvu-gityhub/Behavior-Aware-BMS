@@ -25,6 +25,7 @@ import pandas as pd
 
 from src.bms.guardian.guardian import GENERAL_GUIDANCE, _heat_advice
 from src.bms.health.error_bands import describe_rul_band, soh_band
+from src.bms.health.evidence import evidence_from_result, resistance_health
 from src.bms.health.field_soh import state_from_soh
 from src.bms.rul.fade_extrapolation import DEFAULT_EOL_THRESHOLD
 
@@ -37,7 +38,8 @@ HOT_C = 40.0
 # the PREDICTED value - the only one a user sees.
 
 
-def render_health_card(result, battery_label: str | None = None) -> str:
+def render_health_card(result, battery_label: str | None = None,
+                       rated_capacity_known: bool | None = None) -> str:
     """Plain-text report card for one battery from one pipeline run."""
     label = battery_label or (
         str(result.telemetry["cell_id"].iloc[0])
@@ -45,13 +47,21 @@ def render_health_card(result, battery_label: str | None = None) -> str:
         else result.source)
     lines = [f"BATTERY HEALTH REPORT - {label}", "=" * 60, ""]
 
+    if rated_capacity_known is None:
+        rated_capacity_known = getattr(result, "rated_capacity_ah", None) is not None
+    evidence = evidence_from_result(result, rated_capacity_known)
+    lines.append("0. EVIDENCE - what these results rest on")
+    lines.extend(evidence.render())
+    lines.append("")
+
     soh = result.field_soh
     bol = result.soh_reference == "beginning_of_life"
     lines.append("1. HOW HEALTHY IT IS")
     if soh is not None and soh.available:
-        what = "state of health" if bol else "capacity relative to the start of this log"
+        what = "capacity health" if bol else "capacity relative to the start of this log"
         band = soh_band(soh.window_mode)
-        lines.append(f"   {soh.soh:.1%} {what}  [MEASURED]")
+        cap = evidence.output("capacity health")
+        lines.append(f"   {soh.soh:.1%} {what}  [MEASURED, {cap.confidence} confidence]")
         lines.append(
             f"   Validation error: 90% of readings within +/-{band * 100:.1f} "
             f"points of the lab's capacity test.")
@@ -60,6 +70,10 @@ def render_health_card(result, battery_label: str | None = None) -> str:
             f"{soh.n_accepted} of {soh.n_discharges} discharges usable, "
             f"latest at discharge {soh.at_cycle}.")
         if np.isfinite(soh.resistance_growth):
+            res = evidence.output("resistance health")
+            lines.append(
+                f"   {resistance_health(soh):.1%} resistance health  [MEASURED, "
+                f"{res.confidence} confidence] - resistance as new / resistance now")
             lines.append(
                 f"   Internal resistance: {soh.resistance_reference_ohm * 1000:.0f} -> "
                 f"{soh.resistance_now_ohm * 1000:.0f} mOhm "

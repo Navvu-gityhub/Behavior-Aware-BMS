@@ -95,7 +95,8 @@ def _calce(path: Path, upto: int | None) -> int:
         reference_is_beginning_of_life=True,
     )
     print()
-    print(render_health_card(result, battery_label=f"{cell} (CALCE)"))
+    print(render_health_card(result, battery_label=f"{cell} (CALCE)",
+                             rated_capacity_known=CALCE_RATED_AH.get(cell[:3]) is not None))
     _check_against_lab(cell, upto, result, lab_resistance)
     return 0
 

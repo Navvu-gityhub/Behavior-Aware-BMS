@@ -28,7 +28,7 @@ def _card(**kwargs) -> str:
 
 def test_measured_soh_is_labelled_measured():
     card = _card(reference_is_beginning_of_life=True)
-    assert "state of health  [MEASURED]" in card
+    assert "capacity health  [MEASURED" in card
     assert "State: " in card
 
 

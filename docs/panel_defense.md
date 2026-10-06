@@ -4,6 +4,8 @@ Every answer below is checked against what the repository actually contains
 (October 2026; updated after the gap-filling work that followed this review). Where something was not done, the answer
 says so. Numbers trace to files under `reports/metrics/`.
 
+For a one-page view of every claim and its evidence, see `docs/validation_matrix.md`.
+
 Answers are written to be said out loud. Short where the honest answer is
 short.
 

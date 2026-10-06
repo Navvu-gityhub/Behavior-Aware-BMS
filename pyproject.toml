@@ -220,6 +220,8 @@ files = [
     # Field SOH and the report card, likewise written against the gate.
     "src/bms/health/field_soh.py",
     "src/bms/guardian/health_card.py",
+    "src/bms/health/evidence.py",
+    "src/bms/health/error_bands.py",
 ]
 
 [[tool.mypy.overrides]]
