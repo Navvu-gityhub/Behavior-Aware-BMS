@@ -1,4 +1,4 @@
-﻿"""Pin every figure quoted in the documentation to the artifact it came from.
+"""Pin every figure quoted in the documentation to the artifact it came from.
 
 This project's whole argument is that a claim must not drift away from its
 evidence. The prose was the one place that rule was enforced by re-reading
@@ -82,6 +82,15 @@ def _csv(rel: str) -> pd.DataFrame:
         pytest.fail(f"tracked artifact is missing: reports/metrics/{rel}")
     return pd.read_csv(path)
 
+
+
+def xds(rel: str, column: str, **match: str) -> float:
+    """One cell of a cross-dataset table, selected by exact column matches."""
+    df = _csv(f"cross_dataset/{rel}")
+    for k, v in match.items():
+        df = df[df[k].astype(str) == v]
+    assert len(df) == 1, f"cross_dataset/{rel} {match}: {len(df)} rows"
+    return float(df[column].iloc[0])
 
 def signal(rel: str, target: str = "soh") -> float:
     """Noise ceiling for `target` from a benchmark signal report."""
@@ -634,6 +643,59 @@ CLAIMS: tuple[Claim, ...] = (
         ),
         tol=0.0,
     ),
+    # -- cross-dataset validation (scripts/run_cross_dataset_study.py) ----
+    Claim(
+        id="xds-nasa-shipped",
+        value=9.23,
+        extract=lambda: pct(xds("A_shipped.csv", "median_cell_mae", dataset="NASA")),
+        source="cross_dataset/A_shipped.csv[NASA].median_cell_mae",
+        quoted_in=(("docs/validation_matrix.md", "row 24", r"\*\*9\.2%\*\*"),),
+        tol=0.05,
+    ),
+    Claim(
+        id="xds-nasa-43c",
+        value=1.73,
+        extract=lambda: pct(xds("A_nasa_by_cohort.csv", "median_cell_mae", cohort="43C_4.0A")),
+        source="cross_dataset/A_nasa_by_cohort.csv[43C_4.0A]",
+        quoted_in=(("docs/validation_matrix.md", "row 24", r"43 °C: \*\*1\.7%\*\*"),),
+        tol=0.05,
+    ),
+    Claim(
+        id="xds-gate-nasa-high",
+        value=4.51,
+        extract=lambda: pct(xds("D_consistency_gate.csv", "median_cell_median_error",
+                                dataset="NASA", side="u <= 0.01 (HIGH/MEDIUM)")),
+        source="cross_dataset/D_consistency_gate.csv[NASA, u<=0.01]",
+        quoted_in=(("docs/validation_matrix.md", "row 25", r"\*\*4\.5%\*\*"),),
+        tol=0.05,
+    ),
+    Claim(
+        id="xds-gate-nasa-low",
+        value=13.24,
+        extract=lambda: pct(xds("D_consistency_gate.csv", "median_cell_median_error",
+                                dataset="NASA", side="u > 0.01 (LOW)")),
+        source="cross_dataset/D_consistency_gate.csv[NASA, u>0.01]",
+        quoted_in=(("docs/validation_matrix.md", "row 25", r"\*\*13\.2%\*\*"),),
+        tol=0.05,
+    ),
+    Claim(
+        id="xds-hgb-oxford-in-domain",
+        value=0.67,
+        extract=lambda: pct(xds("B_transfer.csv", "median_cell_mae", source="Oxford",
+                                target="Oxford (leave-one-cell-out)", model="hgb")),
+        source="cross_dataset/B_transfer.csv[Oxford LOCO hgb]",
+        quoted_in=(("docs/validation_matrix.md", "row 26", r"0\.7% inside Oxford"),),
+        tol=0.05,
+    ),
+    Claim(
+        id="xds-hgb-oxford-to-nasa",
+        value=6.69,
+        extract=lambda: pct(xds("B_transfer.csv", "median_cell_mae", source="Oxford",
+                                target="NASA", model="hgb")),
+        source="cross_dataset/B_transfer.csv[Oxford->NASA hgb]",
+        quoted_in=(("docs/validation_matrix.md", "row 26", r"6\.7% on NASA"),),
+        tol=0.05,
+    ),
 )
 
 
@@ -691,6 +753,9 @@ def test_every_referenced_artifact_is_tracked() -> None:
             "coverage_sweep.csv",
             "coverage_sweep_full_discharge.csv",
             "detection_summary.md",
+            "cross_dataset/A_shipped.csv",
+            "cross_dataset/B_transfer.csv",
+            "cross_dataset/D_consistency_gate.csv",
         )
         if not (METRICS / rel).exists()
     ]

@@ -1,0 +1,13 @@
+source,target,side,rows,median_abs_error,p90_abs_error
+CALCE,NASA,in domain,1745,0.0344,0.1187
+CALCE,NASA,out of domain,212,0.0815,0.1465
+CALCE,Oxford,in domain,511,0.0629,0.0904
+CALCE,Oxford,out of domain,0,,
+NASA,CALCE,in domain,36608,0.0359,0.0966
+NASA,CALCE,out of domain,10029,0.0442,0.0921
+NASA,Oxford,in domain,511,0.0754,0.1276
+NASA,Oxford,out of domain,0,,
+Oxford,CALCE,in domain,18905,0.0318,0.08
+Oxford,CALCE,out of domain,27732,0.0488,0.1467
+Oxford,NASA,in domain,761,0.0304,0.1107
+Oxford,NASA,out of domain,1196,0.0542,0.1501

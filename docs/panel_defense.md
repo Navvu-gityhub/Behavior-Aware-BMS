@@ -205,7 +205,7 @@ That about a third of the apparent skill was protocol memorisation, and that the
 No. Its 95% interval runs from −2.80 to 0.86, so on some held-out protocols it is worse than predicting the average. And a baseline that only knows the cycle count reaches 0.406.
 
 **50. Does it generalise to a new real-world battery?**
-For the shipped SOH method, there is now direct evidence: unchanged, it measured all 8 cells of an independent dataset (Oxford, NMC/LCO pouch, a different maker and format, at 40 °C) at 3.0% median error. For the fitted ML models, no: they didn't transfer even within NASA, and we don't claim they do.
+Tested on three datasets. Unchanged, the SOH method gives 1.7% on CALCE and 3.0% on Oxford (40 °C), but 9.2% on NASA, where it fails in the cold (4 °C, 22 °C cohorts) and works at 43 °C (1.7%). Its own confidence label, fixed on CALCE, flags those failures: 4.5% error when it says HIGH/MEDIUM vs 13.2% when it says LOW. Fitted ML models look excellent inside one dataset (0.7%) but degrade to 5.5–6.7% on another, so we don't ship them.
 
 **51. What would you need before claiming that?**
 What we did for the SOH method: an independent dataset with a different chemistry, maker, format and temperature, with nothing re-tuned (3.0%, 8 of 8 cells). Still needed: LFP, packs, field data from real vehicles, and more than one drive-cycle discharge.

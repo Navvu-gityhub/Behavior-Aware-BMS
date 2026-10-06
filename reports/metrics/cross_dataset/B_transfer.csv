@@ -1,0 +1,28 @@
+source,target,model,median_cell_mae,share_scored
+CALCE,CALCE (leave-one-cell-out),identity,0.0168,1.0
+CALCE,NASA,identity,0.0923,0.94
+CALCE,Oxford,identity,0.0299,1.0
+CALCE,CALCE (leave-one-cell-out),affine,0.0477,1.0
+CALCE,NASA,affine,0.0538,0.94
+CALCE,Oxford,affine,0.0631,1.0
+CALCE,CALCE (leave-one-cell-out),hgb,0.0121,1.0
+CALCE,NASA,hgb,0.047,1.0
+CALCE,Oxford,hgb,0.0547,1.0
+NASA,NASA (leave-one-cell-out),identity,0.0923,1.0
+NASA,CALCE,identity,0.0168,0.99
+NASA,Oxford,identity,0.0299,1.0
+NASA,NASA (leave-one-cell-out),affine,0.034,1.0
+NASA,CALCE,affine,0.0365,0.99
+NASA,Oxford,affine,0.059,1.0
+NASA,NASA (leave-one-cell-out),hgb,0.0351,1.0
+NASA,CALCE,hgb,0.0313,1.0
+NASA,Oxford,hgb,0.0717,1.0
+Oxford,Oxford (leave-one-cell-out),identity,0.0299,1.0
+Oxford,CALCE,identity,0.0168,0.99
+Oxford,NASA,identity,0.0923,0.94
+Oxford,Oxford (leave-one-cell-out),affine,0.0107,1.0
+Oxford,CALCE,affine,0.05,0.99
+Oxford,NASA,affine,0.1353,0.94
+Oxford,Oxford (leave-one-cell-out),hgb,0.0067,1.0
+Oxford,CALCE,hgb,0.0391,1.0
+Oxford,NASA,hgb,0.0669,1.0

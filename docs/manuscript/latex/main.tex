@@ -689,6 +689,30 @@ Precision is low: the median miss is 385 cycles, against characterisations 100
 cycles apart. At 90\% the estimator mostly refused, because its 30-point
 history requirement is met only after the cells have crossed 90\%.
 
+\subsection{A third dataset, temperature, and knowing when to refuse}
+\label{sec:res-xds}
+
+The NASA PCoE files (18650 cells, ambient 4--44~$^\circ$C) were read from
+their original MATLAB form and scored the same way
+(\texttt{run\_cross\_dataset\_study.py}). Unchanged, the estimator was poor on
+NASA overall: median per-cell error 9.2\% over 27 cells. It depended on
+temperature: 1.7\% in the 43~$^\circ$C cohort, 12--14\% at 4 and
+22~$^\circ$C. The step resistance captures only the ohmic part of the
+overpotential; at low temperature the charge-transfer and diffusion parts,
+which grow with age, move the curve through the window.
+
+The consistency uncertainty of Section~\ref{sec:methods}, with its tolerance
+fixed on CALCE, was applied unchanged. On NASA, estimates it labelled HIGH or
+MEDIUM had a median per-cell error of 4.5\%; those it labelled LOW, 13.2\%
+(within three SOH points: 49\% versus 12\%). The failure on unseen conditions
+was thus largely signalled by the estimator itself.
+
+For contrast, a gradient-boosted model on three window features, the setting
+where fitting looks best, reached 0.7\% under leave-one-cell-out within
+Oxford and 1.2\% within CALCE, but 6.7\% when moved from Oxford to NASA and
+5.5\% from CALCE to Oxford. Validation inside one dataset overstated
+transferable accuracy four- to tenfold.
+
 \subsection{System integration and refusals}
 \label{sec:res-system}
 
@@ -752,6 +776,9 @@ because every estimate is relative to the cell's own first discharges.
 \label{sec:limits}
 
 \begin{itemize}
+\item \emph{Temperature.} On NASA cells at 4 and 22~$^\circ$C the estimator
+erred by 12--14\%; its low-confidence label marked most of these readings, but
+a temperature-aware correction is future work.
 \item \emph{Two cathode families, single cells, one real drive cycle.} Packs add
 cell-to-cell imbalance, thermal gradients and balancing currents. Dynamic drive
 cycles would challenge both the window read and the step-resistance estimate.
@@ -840,6 +867,7 @@ Section & Artifact (\texttt{reports/metrics/}) & Script (\texttt{scripts/}) \\
 \ref{sec:res-rul} & \texttt{calce\_rul\_horizon\_early\_ref/}, \texttt{error\_bands.csv} & \texttt{run\_rul\_horizon\_study.py}, \texttt{build\_error\_bands.py} \\
 \ref{sec:res-sparse} & \texttt{calce\_field\_rul/} & \texttt{run\_field\_rul\_study.py} \\
 \ref{sec:res-suff} & \texttt{calce\_sufficiency/} & \texttt{run\_sufficiency\_study.py} \\
+\ref{sec:res-xds} & \texttt{cross\_dataset/} & \texttt{run\_cross\_dataset\_study.py} \
 \ref{sec:res-oxford} & \texttt{oxford/} & \texttt{run\_oxford\_study.py}, \texttt{run\_oxford\_drive\_cycle.py} \\
 Figs.~\ref{fig:track}--\ref{fig:rul} & \texttt{reports/figures/results\_*.png} & \texttt{export\_results.py} \\
 \bottomrule

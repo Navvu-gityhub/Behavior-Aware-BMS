@@ -1,0 +1,4 @@
+dataset,cells_total,cells_scored,rows_scored,share_rows_scored,median_cell_mae
+CALCE,17,17,46358,0.99,0.0168
+NASA,29,27,1835,0.94,0.0923
+Oxford,8,8,511,1.0,0.0299

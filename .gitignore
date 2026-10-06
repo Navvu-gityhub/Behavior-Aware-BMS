@@ -121,4 +121,5 @@ build/
 # Cached curve frames: regenerable from data/raw, large, per-cell
 data/interim/calce_curves/
 data/interim/calce_telemetry/
+data/interim/cross_dataset_checks.parquet
 dashboard.html
