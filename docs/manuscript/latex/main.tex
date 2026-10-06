@@ -39,26 +39,25 @@ evidence suffices}
 
 \begin{abstract}
 A battery management system (BMS) measures terminal voltage, current and
-temperature; whether a software layer above it can convert these into a
-trustworthy state of health (SOH) is usually answered by fitting a model. On 31
+temperature; whether software above it can turn these into a trustworthy
+state of health (SOH) is usually answered by fitting a model. On 31
 NASA cells in nine protocol cohorts, twelve published methods all lost skill
-under leave-one-cohort-out validation, with overlapping intervals,
-motivating estimators that fit nothing across cells. We estimate SOH as the
-ratio of charge delivered within a fixed voltage window to the same quantity on
-the cell's own first discharges, correcting ohmic sag with a resistance
-identified from the voltage step at each load onset. From voltage, current and
-time alone, on 22 CALCE lithium cobalt oxide cells, the median per-cell error
-was 1.7\% (95\% CI 1.4--4.3\%) on 17 cells, with five refused for stated
-physical causes. The same step resistance tracked the cycler's measured
-resistance on 19 of 20 cells (median Spearman 0.86). For partial cycling, a
-window learned from each cell's early discharges achieved 3.2--3.4\% error,
-while windows on the discharge knee were refused by a steepness criterion.
-Remaining useful life extrapolated from each cell's own fade was within
-$\pm$20 cycles 73\% of the time in the last 25 cycles before 90\% capacity;
-predictions under 25 cycles were not exceeded in 95\% of cases. Evidence
-sufficiency was measured rather than assumed: the number of observed
-discharges did not predict accuracy, whereas the trend-removed consistency of
-readings did (1.3\% versus 5.1\% median error). Each output is
+under leave-one-cohort-out validation, motivating estimators that fit nothing
+across cells. We estimate SOH as the ratio of charge delivered within a fixed
+voltage window to the same quantity on the cell's own first discharges,
+correcting ohmic sag with a resistance identified from the voltage step at each
+load onset. From voltage, current and time alone, on 22 CALCE lithium cobalt
+oxide cells, median per-cell error was 1.7\% (95\% CI 1.4--4.3\%) on 17 cells,
+five refused for stated causes; the step resistance tracked the cycler's
+resistance on 19 of 20 cells. Unchanged, the estimator
+measured all eight cells of an independent dataset (Oxford; NMC/LCO pouch cells
+at 40~$^\circ$C) at 3.0\% median error, or 2.3\% with a window learned from
+each cell's early discharges, and a real drive-cycle discharge read within
+1.4\% of a constant-current one. Remaining useful life
+extrapolated from each cell's own fade was within $\pm$20 cycles 73\% of the
+time in the last 25 cycles before 90\% capacity, and predictions near end of
+life were rarely exceeded (95\% CALCE; 97\% Oxford at 80\%). Discharge count did
+not predict accuracy; the trend-removed consistency of readings did (1.3\% versus 5.1\% median error). Each output is
 validated, banded by its measured error, or refused.
 \end{abstract}
 
@@ -67,7 +66,7 @@ validated, banded by its measured error, or refused.
 \item Load-step resistance tracks laboratory resistance on 19 of 20 cells
 \item Partial-discharge SOH at 3.2--3.4\%; windows on the discharge knee are refused
 \item Consistency of readings, not their count, predicts estimate accuracy
-\item Twelve fitted models lose skill when the test protocol changes
+\item Unchanged on a second dataset (NMC/LCO pouch, 40 C): 3.0\% on all 8 cells
 \end{highlights}
 
 \begin{keyword}
@@ -93,7 +92,7 @@ replaced.
 
 The dominant way to build that layer is to fit a model. Features are
 extracted from cycling data and a regressor is trained to predict SOH
-\citeneeded{reviews of data-driven SOH estimation}, with feature sets ranging
+\citep{berecibar2016,waag2014}, with feature sets ranging
 from usage aggregates to discharge-curve descriptors such as the
 capacity--voltage difference between cycles \citep{severson2019}. Skill is
 commonly reported under leave-one-cell-out validation, in which a held-out
@@ -129,50 +128,64 @@ by a reference capacity that used the future (Section~\ref{sec:res-rul}).
 \item Evidence sufficiency measured rather than asserted: confidence follows the
 consistency of readings, which predicts error, not the number of discharges,
 which does not (Section~\ref{sec:res-suff}).
+\item External validation without re-tuning on a second dataset of a
+different chemistry, manufacturer, format and temperature, including the first
+test on a real drive-cycle discharge and the first scoring of remaining life at
+the 80\% automotive end-of-life convention (Section~\ref{sec:res-oxford}).
 \item Negative results retained: fitted models across protocols
 (Section~\ref{sec:res-bench}) and four routes to RUL from sparse complete
 discharges (Section~\ref{sec:res-sparse}).
 \end{enumerate}
 
 \subsection{Scope}
-All validation is on single cells of one lithium cobalt oxide (LCO) family at
-constant current. The paper makes no claim about packs, other chemistries or
-dynamic drive cycles, does not correct temperature-dependent capacity (the
-CALCE cycling records carry no temperature channel), and validates end of life
-at 90\% rather than the 80\% automotive convention, because the CALCE
-trajectories end near 81\%. A bench rig validates data acquisition, not health
+Development and primary validation use single LCO cells at constant current
+(CALCE). External validation uses NMC/LCO blend pouch cells at 40~$^\circ$C
+(Oxford), which also supply one real drive-cycle discharge and trajectories
+that cross 80\%. The paper makes no claim about packs, lithium iron phosphate,
+or temperature-dependent capacity correction. A bench rig validates data acquisition, not health
 estimation.
 
 %% ===========================================================================
 \section{Related work}
 \label{sec:related}
 
-\noindent\textcolor{red}{[To be written from a documented survey. Every claim
-below needs a verified reference.]}
+\paragraph{SOH estimation and its validation}
+Reviews of SOH estimation and of on-board monitoring methods
+\citep{berecibar2016,waag2014} distinguish direct measurement, model-based and
+data-driven approaches. Data-driven estimators trained on cycling features are
+widespread \citep{severson2019}. How they are validated changes what they
+appear to achieve: group-wise splitting by cell reduces reported skill
+substantially \citep{maher2025}, and a large gap between random and cell-wise
+splits has been reported on NASA data \citep{le2026}. We extend the hold-out
+from the cell to the test protocol.
 
-\paragraph{Data-driven SOH and validation practice}
-Feature-based regressors and sequence models dominate
-\citeneeded{reviews}. The split used for validation changes reported skill
-\citep{maher2025,le2026}.
+\paragraph{Discharge-curve analysis}
+Differential voltage analysis \citep{bloom2005} and incremental capacity
+analysis, including on-board use \citep{weng2013}, read degradation from the
+shape of the voltage--charge curve, and its features can be mapped to
+degradation modes \citep{dubarry2012,birkl2017}. Ageing mechanisms and their
+effect on such curves are reviewed by \citet{vetter2005} and
+\citet{barre2013}. Estimators using partial charging curves have also been
+reported \citep{tian2021}. The window estimator here belongs to this
+curve-based family. It differs in using no cross-cell fitting, an online
+resistance correction from the load step, gates that refuse rather than
+extrapolate, and validation from raw telemetry.
 
-\paragraph{Discharge-curve and partial-segment estimators}
-Capacity--voltage difference features \citep{severson2019}, incremental
-capacity and differential voltage analysis \citeneeded{ICA/DVA methods}, and
-estimators built on partial charge or discharge segments
-\citeneeded{partial-segment SOH methods}. The present estimator belongs to the
-last family. The distinctions to establish against it are: no cross-cell
-fitting; an online resistance correction from the load step; gates that refuse
-rather than extrapolate; and validation from raw telemetry rather than cycler
-summaries.
+\paragraph{Online resistance and parameter identification}
+Recursive estimation of cell parameters within the BMS, including internal
+resistance, is established \citep{plett2004}; monitoring of resistance is part
+of the methods reviewed by \citet{waag2014}. Here a step-based apparent
+resistance serves both as the ohmic correction and as a reported health
+output, validated against the laboratory instrument.
 
-\paragraph{Online resistance identification}
-Pulse- and step-based resistance estimation in BMS
-\citeneeded{online resistance identification}. Here it serves both as a
-correction and as a reported output.
+\paragraph{Prognostics}
+Remaining-useful-life methods and their uncertainty are reviewed by
+\citet{hu2020}. We report RUL error indexed by the prediction a user sees, and
+record which routes to RUL failed.
 
-\paragraph{Prognostics and uncertainty}
-RUL estimation and its uncertainty \citeneeded{RUL reviews; prognostic
-uncertainty}.
+\noindent\textcolor{red}{[Before submission: read each cited work in full and
+confirm that it supports the sentence citing it; extend with a documented
+survey of partial-segment SOH estimators.]}
 
 %% ===========================================================================
 \section{Data}
@@ -200,6 +213,16 @@ which would interleave overlapping segments.
 varied loads and cut-offs) \citep{saha2007}, used only for the benchmark of
 Section~\ref{sec:res-bench}: 31 cells after admissibility screening, 2{,}585
 cycle-level rows, nine cohorts.
+
+\paragraph{Oxford Battery Degradation Dataset~1}
+Eight Kokam SLPB533459H4 pouch cells (740~mAh, NMC/LCO blend cathode) aged at
+40~$^\circ$C under a constant-current--constant-voltage charge and an Artemis
+urban drive-cycle discharge \citep{howey2017oxford,birkl2017thesis}. Every 100
+ageing cycles a characterisation records a 1C discharge and a C/18 pseudo-OCV
+discharge with voltage, charge and temperature; 519 characterisations in all.
+The cells fade to 62--80\% of their initial capacity. A separate file holds one
+drive-cycle discharge of Cell~1 at beginning of life, sampled at 1~Hz. It is
+used only for external validation; nothing was tuned on it.
 
 \paragraph{Bench rig}
 An ESP8266 microcontroller with an INA219 current/voltage monitor and an LM35
@@ -613,6 +636,59 @@ reference;
 \item \emph{low}: inconsistent, reported with the measured 22-point band.
 \end{itemize}
 
+\subsection{External validation: a second chemistry, manufacturer and temperature}
+\label{sec:res-oxford}
+
+The estimator was applied to the Oxford cells without re-tuning. Arms,
+reference and scoring were fixed before the run. The reference is each cell's
+first characterisation, the only beginning-of-life measurement, and truth is
+1C capacity relative to it. Because each characterisation block begins under
+load, no rest-to-load step exists, so the 1C window is uncorrected.
+
+\begin{table}[t]
+\centering
+\caption{External validation on eight Oxford cells: median and worst per-cell
+mean absolute SOH error over all characterisations after the reference.}
+\label{tab:oxford}
+\begin{tabular}{lccc}
+\toprule
+Window & Cells & Median & Worst \\
+\midrule
+Fixed 3.90--3.60 V, 1C discharge & 8/8 & 3.0\% & 4.0\% \\
+Fixed 3.90--3.60 V, C/18 pseudo-OCV discharge & 8/8 & 3.2\% & 3.4\% \\
+Learned window, 1C discharge & 8/8 & 2.3\% & 3.6\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Table~\ref{tab:oxford} shows that all eight cells were measured. The
+near-equilibrium C/18 window was not more accurate than the 1C window. On this
+blend cathode, the residual error therefore stems from the curve changing shape
+with age rather than from ohmic sag, consistent with the approximation stated
+in Section~\ref{sec:methods}.
+
+\paragraph{A real drive-cycle discharge}
+The drive-cycle discharge of Cell~1 has current between $-5.0$ and $+1.6$~A.
+Resistance from its own 1{,}575 current steps of at least 0.2~A gave a median
+of 21~m$\Omega$ (interquartile 19--24). The discharge is itself partial:
+it stops at ${\sim}$65\% depth, so the fixed window is not covered and is not
+read. A coverage window (4.08--3.78~V) was chosen from the corrected curve's
+span alone, before any comparison was computed. In it, the drive-cycle reading,
+corrected per sample and fitted monotonically, was 0.2625~Ah, against 0.2661~Ah
+from the same cell's 1C constant-current discharge, a difference of 1.4\%.
+Both lay ${\sim}$13\% below the C/18 reading in that window. The rate effect
+cancels in a ratio of like with like, but would bias one that mixed rates. This
+is a single discharge and demonstrates the mechanism, not a population error.
+
+\paragraph{Remaining life at 80\%}
+The Oxford trajectories cross the 80\% convention, which CALCE does not, so the
+shipped RUL estimator was scored there unchanged. When it predicted fewer than
+500 cycles to 80\%, the cell lasted at least that long in 97\% of cases (36
+estimates, 5 cells), replicating the conservative behaviour seen on CALCE.
+Precision is low: the median miss is 385 cycles, against characterisations 100
+cycles apart. At 90\% the estimator mostly refused, because its 30-point
+history requirement is met only after the cells have crossed 90\%.
+
 \subsection{System integration and refusals}
 \label{sec:res-system}
 
@@ -676,7 +752,7 @@ because every estimate is relative to the cell's own first discharges.
 \label{sec:limits}
 
 \begin{itemize}
-\item \emph{One chemistry family, single cells, constant current.} Packs add
+\item \emph{Two cathode families, single cells, one real drive cycle.} Packs add
 cell-to-cell imbalance, thermal gradients and balancing currents. Dynamic drive
 cycles would challenge both the window read and the step-resistance estimate.
 The flat plateau of lithium iron phosphate would challenge the window method
@@ -685,7 +761,8 @@ directly.
 \item \emph{No temperature correction}, since CALCE cycling carries no
 temperature channel. A cold cell would read low SOH and high resistance without
 having aged.
-\item \emph{End of life at 90\% only.}
+\item \emph{End of life:} validated at 90\% on CALCE; at 80\% on Oxford only
+as a conservative bound, with low precision.
 \item \emph{Apparent resistance.} $R_\mathrm{step}$ depends on the logger's
 sample interval; it is comparable within a record, not across loggers.
 \item \emph{Drift with age.} Window charge does not scale exactly with capacity,
@@ -706,6 +783,9 @@ delivered:
 cells;
 \item partial-discharge capacity health at 3.2--3.4\% on two cells, with a
 physical rule that refuses the knee;
+\item unchanged, 3.0\% on all eight cells of an independent NMC/LCO dataset at
+40~$^\circ$C, and a drive-cycle discharge read within 1.4\% of a
+constant-current one;
 \item a remaining-life estimate that, near end of life, behaves as a safe lower
 bound.
 \end{itemize}
@@ -760,6 +840,7 @@ Section & Artifact (\texttt{reports/metrics/}) & Script (\texttt{scripts/}) \\
 \ref{sec:res-rul} & \texttt{calce\_rul\_horizon\_early\_ref/}, \texttt{error\_bands.csv} & \texttt{run\_rul\_horizon\_study.py}, \texttt{build\_error\_bands.py} \\
 \ref{sec:res-sparse} & \texttt{calce\_field\_rul/} & \texttt{run\_field\_rul\_study.py} \\
 \ref{sec:res-suff} & \texttt{calce\_sufficiency/} & \texttt{run\_sufficiency\_study.py} \\
+\ref{sec:res-oxford} & \texttt{oxford/} & \texttt{run\_oxford\_study.py}, \texttt{run\_oxford\_drive\_cycle.py} \\
 Figs.~\ref{fig:track}--\ref{fig:rul} & \texttt{reports/figures/results\_*.png} & \texttt{export\_results.py} \\
 \bottomrule
 \end{tabular}

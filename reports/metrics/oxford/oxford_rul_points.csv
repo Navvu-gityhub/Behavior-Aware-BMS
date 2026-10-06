@@ -1,0 +1,437 @@
+cell_id,threshold,cycle,rul_true,rul_pred,refusal,error
+Cell1,0.9,0.0,2200.0,,fewer than 30 cycles of history,
+Cell1,0.9,100.0,2100.0,,fewer than 30 cycles of history,
+Cell1,0.9,200.0,2000.0,,fewer than 30 cycles of history,
+Cell1,0.9,300.0,1900.0,,fewer than 30 cycles of history,
+Cell1,0.9,400.0,1800.0,,fewer than 30 cycles of history,
+Cell1,0.9,500.0,1700.0,,fewer than 30 cycles of history,
+Cell1,0.9,600.0,1600.0,,fewer than 30 cycles of history,
+Cell1,0.9,700.0,1500.0,,fewer than 30 cycles of history,
+Cell1,0.9,800.0,1400.0,,fewer than 30 cycles of history,
+Cell1,0.9,900.0,1300.0,,fewer than 30 cycles of history,
+Cell1,0.9,1000.0,1200.0,,fewer than 30 cycles of history,
+Cell1,0.9,1100.0,1100.0,,fewer than 30 cycles of history,
+Cell1,0.9,1200.0,1000.0,,fewer than 30 cycles of history,
+Cell1,0.9,1300.0,900.0,,fewer than 30 cycles of history,
+Cell1,0.9,1400.0,800.0,,fewer than 30 cycles of history,
+Cell1,0.9,1600.0,600.0,,fewer than 30 cycles of history,
+Cell1,0.9,1800.0,400.0,,fewer than 30 cycles of history,
+Cell1,0.9,1900.0,300.0,,fewer than 30 cycles of history,
+Cell1,0.9,2000.0,200.0,,fewer than 30 cycles of history,
+Cell1,0.9,2100.0,100.0,,fewer than 30 cycles of history,
+Cell1,0.8,0.0,5800.0,,fewer than 30 cycles of history,
+Cell1,0.8,100.0,5700.0,,fewer than 30 cycles of history,
+Cell1,0.8,200.0,5600.0,,fewer than 30 cycles of history,
+Cell1,0.8,300.0,5500.0,,fewer than 30 cycles of history,
+Cell1,0.8,400.0,5400.0,,fewer than 30 cycles of history,
+Cell1,0.8,500.0,5300.0,,fewer than 30 cycles of history,
+Cell1,0.8,600.0,5200.0,,fewer than 30 cycles of history,
+Cell1,0.8,700.0,5100.0,,fewer than 30 cycles of history,
+Cell1,0.8,800.0,5000.0,,fewer than 30 cycles of history,
+Cell1,0.8,900.0,4900.0,,fewer than 30 cycles of history,
+Cell1,0.8,1000.0,4800.0,,fewer than 30 cycles of history,
+Cell1,0.8,1100.0,4700.0,,fewer than 30 cycles of history,
+Cell1,0.8,1200.0,4600.0,,fewer than 30 cycles of history,
+Cell1,0.8,1300.0,4500.0,,fewer than 30 cycles of history,
+Cell1,0.8,1400.0,4400.0,,fewer than 30 cycles of history,
+Cell1,0.8,1600.0,4200.0,,fewer than 30 cycles of history,
+Cell1,0.8,1800.0,4000.0,,fewer than 30 cycles of history,
+Cell1,0.8,1900.0,3900.0,,fewer than 30 cycles of history,
+Cell1,0.8,2000.0,3800.0,,fewer than 30 cycles of history,
+Cell1,0.8,2100.0,3700.0,,fewer than 30 cycles of history,
+Cell1,0.8,2200.0,3600.0,,fewer than 30 cycles of history,
+Cell1,0.8,2300.0,3500.0,,fewer than 30 cycles of history,
+Cell1,0.8,2400.0,3400.0,,fewer than 30 cycles of history,
+Cell1,0.8,2500.0,3300.0,,fewer than 30 cycles of history,
+Cell1,0.8,2600.0,3200.0,,fewer than 30 cycles of history,
+Cell1,0.8,2700.0,3100.0,,fewer than 30 cycles of history,
+Cell1,0.8,2800.0,3000.0,,fewer than 30 cycles of history,
+Cell1,0.8,2900.0,2900.0,,fewer than 30 cycles of history,
+Cell1,0.8,3000.0,2800.0,,fewer than 30 cycles of history,
+Cell1,0.8,3100.0,2700.0,1859.0183634177993,,-840.9816365822007
+Cell1,0.8,3200.0,2600.0,1754.338924772108,,-845.6610752278921
+Cell1,0.8,3300.0,2500.0,1668.6252432170959,,-831.3747567829041
+Cell1,0.8,3500.0,2300.0,1507.567657523542,,-792.432342476458
+Cell1,0.8,3600.0,2200.0,1436.3189888272846,,-763.6810111727154
+Cell1,0.8,3700.0,2100.0,1360.6739344152238,,-739.3260655847762
+Cell1,0.8,3800.0,2000.0,1260.9730541967347,,-739.0269458032653
+Cell1,0.8,3900.0,1900.0,1178.1295291979523,,-721.8704708020477
+Cell1,0.8,4000.0,1800.0,1094.6880959250475,,-705.3119040749525
+Cell1,0.8,4100.0,1700.0,1005.3872520489103,,-694.6127479510897
+Cell1,0.8,4200.0,1600.0,928.584468247449,,-671.415531752551
+Cell1,0.8,4300.0,1500.0,854.9098386703472,,-645.0901613296528
+Cell1,0.8,4400.0,1400.0,775.6851665504482,,-624.3148334495518
+Cell1,0.8,4500.0,1300.0,699.2803237256194,,-600.7196762743806
+Cell1,0.8,4600.0,1200.0,624.0724617351088,,-575.9275382648912
+Cell1,0.8,4800.0,1000.0,457.66125151427786,,-542.3387484857221
+Cell1,0.8,5000.0,800.0,295.90775060050146,,-504.09224939949854
+Cell1,0.8,5100.0,700.0,236.7313270854811,,-463.2686729145189
+Cell1,0.8,5200.0,600.0,162.3247324954773,,-437.6752675045227
+Cell1,0.8,5300.0,500.0,73.68892545004655,,-426.31107454995345
+Cell1,0.8,5400.0,400.0,0.0,fitted trend places end of life at or before now,-400.0
+Cell1,0.8,5500.0,300.0,0.0,fitted trend places end of life at or before now,-300.0
+Cell1,0.8,5600.0,200.0,0.0,fitted trend places end of life at or before now,-200.0
+Cell1,0.8,5700.0,100.0,0.0,fitted trend places end of life at or before now,-100.0
+Cell2,0.9,0.0,2300.0,,fewer than 30 cycles of history,
+Cell2,0.9,100.0,2200.0,,fewer than 30 cycles of history,
+Cell2,0.9,200.0,2100.0,,fewer than 30 cycles of history,
+Cell2,0.9,300.0,2000.0,,fewer than 30 cycles of history,
+Cell2,0.9,400.0,1900.0,,fewer than 30 cycles of history,
+Cell2,0.9,500.0,1800.0,,fewer than 30 cycles of history,
+Cell2,0.9,600.0,1700.0,,fewer than 30 cycles of history,
+Cell2,0.9,700.0,1600.0,,fewer than 30 cycles of history,
+Cell2,0.9,800.0,1500.0,,fewer than 30 cycles of history,
+Cell2,0.9,900.0,1400.0,,fewer than 30 cycles of history,
+Cell2,0.9,1000.0,1300.0,,fewer than 30 cycles of history,
+Cell2,0.9,1100.0,1200.0,,fewer than 30 cycles of history,
+Cell2,0.9,1200.0,1100.0,,fewer than 30 cycles of history,
+Cell2,0.9,1300.0,1000.0,,fewer than 30 cycles of history,
+Cell2,0.9,1400.0,900.0,,fewer than 30 cycles of history,
+Cell2,0.9,1600.0,700.0,,fewer than 30 cycles of history,
+Cell2,0.9,1800.0,500.0,,fewer than 30 cycles of history,
+Cell2,0.9,1900.0,400.0,,fewer than 30 cycles of history,
+Cell2,0.9,2000.0,300.0,,fewer than 30 cycles of history,
+Cell2,0.9,2100.0,200.0,,fewer than 30 cycles of history,
+Cell2,0.9,2200.0,100.0,,fewer than 30 cycles of history,
+Cell2,0.8,0.0,5000.0,,fewer than 30 cycles of history,
+Cell2,0.8,100.0,4900.0,,fewer than 30 cycles of history,
+Cell2,0.8,200.0,4800.0,,fewer than 30 cycles of history,
+Cell2,0.8,300.0,4700.0,,fewer than 30 cycles of history,
+Cell2,0.8,400.0,4600.0,,fewer than 30 cycles of history,
+Cell2,0.8,500.0,4500.0,,fewer than 30 cycles of history,
+Cell2,0.8,600.0,4400.0,,fewer than 30 cycles of history,
+Cell2,0.8,700.0,4300.0,,fewer than 30 cycles of history,
+Cell2,0.8,800.0,4200.0,,fewer than 30 cycles of history,
+Cell2,0.8,900.0,4100.0,,fewer than 30 cycles of history,
+Cell2,0.8,1000.0,4000.0,,fewer than 30 cycles of history,
+Cell2,0.8,1100.0,3900.0,,fewer than 30 cycles of history,
+Cell2,0.8,1200.0,3800.0,,fewer than 30 cycles of history,
+Cell2,0.8,1300.0,3700.0,,fewer than 30 cycles of history,
+Cell2,0.8,1400.0,3600.0,,fewer than 30 cycles of history,
+Cell2,0.8,1600.0,3400.0,,fewer than 30 cycles of history,
+Cell2,0.8,1800.0,3200.0,,fewer than 30 cycles of history,
+Cell2,0.8,1900.0,3100.0,,fewer than 30 cycles of history,
+Cell2,0.8,2000.0,3000.0,,fewer than 30 cycles of history,
+Cell2,0.8,2100.0,2900.0,,fewer than 30 cycles of history,
+Cell2,0.8,2200.0,2800.0,,fewer than 30 cycles of history,
+Cell2,0.8,2300.0,2700.0,,fewer than 30 cycles of history,
+Cell2,0.8,2400.0,2600.0,,fewer than 30 cycles of history,
+Cell2,0.8,2500.0,2500.0,,fewer than 30 cycles of history,
+Cell2,0.8,2600.0,2400.0,,fewer than 30 cycles of history,
+Cell2,0.8,2700.0,2300.0,,fewer than 30 cycles of history,
+Cell2,0.8,2800.0,2200.0,,fewer than 30 cycles of history,
+Cell2,0.8,2900.0,2100.0,,fewer than 30 cycles of history,
+Cell2,0.8,3000.0,2000.0,,fewer than 30 cycles of history,
+Cell2,0.8,3100.0,1900.0,1984.27772553644,,84.2777255364399
+Cell2,0.8,3200.0,1800.0,1861.7891308034195,,61.78913080341954
+Cell2,0.8,3300.0,1700.0,1763.177431535878,,63.177431535877986
+Cell2,0.8,3500.0,1500.0,1585.926672563167,,85.9266725631669
+Cell2,0.8,3600.0,1400.0,1496.4266020130372,,96.42660201303715
+Cell2,0.8,3700.0,1300.0,1406.8114114080745,,106.81141140807449
+Cell2,0.8,3800.0,1200.0,1294.0984916955222,,94.09849169552217
+Cell2,0.8,3900.0,1100.0,1203.9510948627485,,103.9510948627485
+Cell2,0.8,4000.0,1000.0,1118.3647680297572,,118.36476802975722
+Cell2,0.8,4100.0,900.0,1022.8888135274938,,122.88881352749377
+Cell2,0.8,4200.0,800.0,939.1790447549192,,139.17904475491923
+Cell2,0.8,4300.0,700.0,858.010485404142,,158.01048540414195
+Cell2,0.8,4400.0,600.0,768.4842178610143,,168.48421786101426
+Cell2,0.8,4500.0,500.0,685.0081210812868,,185.00812108128684
+Cell2,0.8,4600.0,400.0,604.4394916546516,,204.43949165465165
+Cell2,0.8,4800.0,200.0,432.225787375648,,232.225787375648
+Cell3,0.9,0.0,2600.0,,fewer than 30 cycles of history,
+Cell3,0.9,100.0,2500.0,,fewer than 30 cycles of history,
+Cell3,0.9,200.0,2400.0,,fewer than 30 cycles of history,
+Cell3,0.9,300.0,2300.0,,fewer than 30 cycles of history,
+Cell3,0.9,400.0,2200.0,,fewer than 30 cycles of history,
+Cell3,0.9,500.0,2100.0,,fewer than 30 cycles of history,
+Cell3,0.9,600.0,2000.0,,fewer than 30 cycles of history,
+Cell3,0.9,700.0,1900.0,,fewer than 30 cycles of history,
+Cell3,0.9,800.0,1800.0,,fewer than 30 cycles of history,
+Cell3,0.9,900.0,1700.0,,fewer than 30 cycles of history,
+Cell3,0.9,1000.0,1600.0,,fewer than 30 cycles of history,
+Cell3,0.9,1100.0,1500.0,,fewer than 30 cycles of history,
+Cell3,0.9,1200.0,1400.0,,fewer than 30 cycles of history,
+Cell3,0.9,1300.0,1300.0,,fewer than 30 cycles of history,
+Cell3,0.9,1400.0,1200.0,,fewer than 30 cycles of history,
+Cell3,0.9,1600.0,1000.0,,fewer than 30 cycles of history,
+Cell3,0.9,1800.0,800.0,,fewer than 30 cycles of history,
+Cell3,0.9,1900.0,700.0,,fewer than 30 cycles of history,
+Cell3,0.9,2000.0,600.0,,fewer than 30 cycles of history,
+Cell3,0.9,2100.0,500.0,,fewer than 30 cycles of history,
+Cell3,0.9,2200.0,400.0,,fewer than 30 cycles of history,
+Cell3,0.9,2300.0,300.0,,fewer than 30 cycles of history,
+Cell3,0.9,2400.0,200.0,,fewer than 30 cycles of history,
+Cell3,0.9,2500.0,100.0,,fewer than 30 cycles of history,
+Cell3,0.8,0.0,6300.0,,fewer than 30 cycles of history,
+Cell3,0.8,100.0,6200.0,,fewer than 30 cycles of history,
+Cell3,0.8,200.0,6100.0,,fewer than 30 cycles of history,
+Cell3,0.8,300.0,6000.0,,fewer than 30 cycles of history,
+Cell3,0.8,400.0,5900.0,,fewer than 30 cycles of history,
+Cell3,0.8,500.0,5800.0,,fewer than 30 cycles of history,
+Cell3,0.8,600.0,5700.0,,fewer than 30 cycles of history,
+Cell3,0.8,700.0,5600.0,,fewer than 30 cycles of history,
+Cell3,0.8,800.0,5500.0,,fewer than 30 cycles of history,
+Cell3,0.8,900.0,5400.0,,fewer than 30 cycles of history,
+Cell3,0.8,1000.0,5300.0,,fewer than 30 cycles of history,
+Cell3,0.8,1100.0,5200.0,,fewer than 30 cycles of history,
+Cell3,0.8,1200.0,5100.0,,fewer than 30 cycles of history,
+Cell3,0.8,1300.0,5000.0,,fewer than 30 cycles of history,
+Cell3,0.8,1400.0,4900.0,,fewer than 30 cycles of history,
+Cell3,0.8,1600.0,4700.0,,fewer than 30 cycles of history,
+Cell3,0.8,1800.0,4500.0,,fewer than 30 cycles of history,
+Cell3,0.8,1900.0,4400.0,,fewer than 30 cycles of history,
+Cell3,0.8,2000.0,4300.0,,fewer than 30 cycles of history,
+Cell3,0.8,2100.0,4200.0,,fewer than 30 cycles of history,
+Cell3,0.8,2200.0,4100.0,,fewer than 30 cycles of history,
+Cell3,0.8,2300.0,4000.0,,fewer than 30 cycles of history,
+Cell3,0.8,2400.0,3900.0,,fewer than 30 cycles of history,
+Cell3,0.8,2500.0,3800.0,,fewer than 30 cycles of history,
+Cell3,0.8,2600.0,3700.0,,fewer than 30 cycles of history,
+Cell3,0.8,2700.0,3600.0,,fewer than 30 cycles of history,
+Cell3,0.8,2800.0,3500.0,,fewer than 30 cycles of history,
+Cell3,0.8,2900.0,3400.0,,fewer than 30 cycles of history,
+Cell3,0.8,3000.0,3300.0,,fewer than 30 cycles of history,
+Cell3,0.8,3100.0,3200.0,2671.4981809013416,,-528.5018190986584
+Cell3,0.8,3200.0,3100.0,2538.7860096516097,,-561.2139903483903
+Cell3,0.8,3500.0,2800.0,2286.4528758524893,,-513.5471241475107
+Cell3,0.8,3600.0,2700.0,2224.1417327071586,,-475.85826729284145
+Cell3,0.8,3700.0,2600.0,2113.7304543519003,,-486.26954564809967
+Cell3,0.8,3800.0,2500.0,1952.9231462294902,,-547.0768537705098
+Cell3,0.8,3900.0,2400.0,1833.8916246136232,,-566.1083753863768
+Cell3,0.8,4000.0,2300.0,1735.7234611915392,,-564.2765388084608
+Cell3,0.8,4100.0,2200.0,1637.4111947499096,,-562.5888052500904
+Cell3,0.8,4200.0,2100.0,1549.9227187034194,,-550.0772812965806
+Cell3,0.8,4300.0,2000.0,1462.4985588368954,,-537.5014411631046
+Cell3,0.8,4400.0,1900.0,1369.788927958618,,-530.2110720413821
+Cell3,0.8,4500.0,1800.0,1283.6181941492496,,-516.3818058507504
+Cell3,0.8,4600.0,1700.0,1200.5958485491528,,-499.40415145084717
+Cell3,0.8,4800.0,1500.0,1026.4330738769659,,-473.56692612303414
+Cell3,0.8,5000.0,1300.0,853.0467107330278,,-446.9532892669722
+Cell3,0.8,5100.0,1200.0,779.9575548684597,,-420.04244513154026
+Cell3,0.8,5200.0,1100.0,689.6069971552943,,-410.39300284470573
+Cell3,0.8,5300.0,1000.0,583.1329958545193,,-416.8670041454807
+Cell3,0.8,5400.0,900.0,481.9475620319581,,-418.0524379680419
+Cell3,0.8,5500.0,800.0,386.87049355469753,,-413.12950644530247
+Cell3,0.8,5600.0,700.0,306.26886330146044,,-393.73113669853956
+Cell3,0.8,5700.0,600.0,224.057269606702,,-375.942730393298
+Cell3,0.8,5800.0,500.0,138.05276986879835,,-361.94723013120165
+Cell3,0.8,5900.0,400.0,58.04315051603044,,-341.95684948396956
+Cell3,0.8,6000.0,300.0,0.0,fitted trend places end of life at or before now,-300.0
+Cell3,0.8,6100.0,200.0,0.0,fitted trend places end of life at or before now,-200.0
+Cell3,0.8,6200.0,100.0,0.0,fitted trend places end of life at or before now,-100.0
+Cell4,0.9,0.0,1800.0,,fewer than 30 cycles of history,
+Cell4,0.9,100.0,1700.0,,fewer than 30 cycles of history,
+Cell4,0.9,200.0,1600.0,,fewer than 30 cycles of history,
+Cell4,0.9,300.0,1500.0,,fewer than 30 cycles of history,
+Cell4,0.9,400.0,1400.0,,fewer than 30 cycles of history,
+Cell4,0.9,500.0,1300.0,,fewer than 30 cycles of history,
+Cell4,0.9,600.0,1200.0,,fewer than 30 cycles of history,
+Cell4,0.9,700.0,1100.0,,fewer than 30 cycles of history,
+Cell4,0.9,800.0,1000.0,,fewer than 30 cycles of history,
+Cell4,0.9,900.0,900.0,,fewer than 30 cycles of history,
+Cell4,0.9,1000.0,800.0,,fewer than 30 cycles of history,
+Cell4,0.9,1100.0,700.0,,fewer than 30 cycles of history,
+Cell4,0.9,1200.0,600.0,,fewer than 30 cycles of history,
+Cell4,0.9,1300.0,500.0,,fewer than 30 cycles of history,
+Cell4,0.9,1400.0,400.0,,fewer than 30 cycles of history,
+Cell4,0.9,1600.0,200.0,,fewer than 30 cycles of history,
+Cell4,0.8,0.0,5100.0,,fewer than 30 cycles of history,
+Cell4,0.8,100.0,5000.0,,fewer than 30 cycles of history,
+Cell4,0.8,200.0,4900.0,,fewer than 30 cycles of history,
+Cell4,0.8,300.0,4800.0,,fewer than 30 cycles of history,
+Cell4,0.8,400.0,4700.0,,fewer than 30 cycles of history,
+Cell4,0.8,500.0,4600.0,,fewer than 30 cycles of history,
+Cell4,0.8,600.0,4500.0,,fewer than 30 cycles of history,
+Cell4,0.8,700.0,4400.0,,fewer than 30 cycles of history,
+Cell4,0.8,800.0,4300.0,,fewer than 30 cycles of history,
+Cell4,0.8,900.0,4200.0,,fewer than 30 cycles of history,
+Cell4,0.8,1000.0,4100.0,,fewer than 30 cycles of history,
+Cell4,0.8,1100.0,4000.0,,fewer than 30 cycles of history,
+Cell4,0.8,1200.0,3900.0,,fewer than 30 cycles of history,
+Cell4,0.8,1300.0,3800.0,,fewer than 30 cycles of history,
+Cell4,0.8,1400.0,3700.0,,fewer than 30 cycles of history,
+Cell4,0.8,1600.0,3500.0,,fewer than 30 cycles of history,
+Cell4,0.8,1800.0,3300.0,,fewer than 30 cycles of history,
+Cell4,0.8,1900.0,3200.0,,fewer than 30 cycles of history,
+Cell4,0.8,2000.0,3100.0,,fewer than 30 cycles of history,
+Cell4,0.8,2100.0,3000.0,,fewer than 30 cycles of history,
+Cell4,0.8,2200.0,2900.0,,fewer than 30 cycles of history,
+Cell4,0.8,2300.0,2800.0,,fewer than 30 cycles of history,
+Cell4,0.8,2400.0,2700.0,,fewer than 30 cycles of history,
+Cell4,0.8,2500.0,2600.0,,fewer than 30 cycles of history,
+Cell4,0.8,2600.0,2500.0,,fewer than 30 cycles of history,
+Cell4,0.8,2700.0,2400.0,,fewer than 30 cycles of history,
+Cell4,0.8,2800.0,2300.0,,fewer than 30 cycles of history,
+Cell4,0.8,2900.0,2200.0,,fewer than 30 cycles of history,
+Cell4,0.8,3000.0,2100.0,,fewer than 30 cycles of history,
+Cell4,0.8,3100.0,2000.0,993.5549801346488,,-1006.4450198653512
+Cell4,0.8,3200.0,1900.0,898.1035651235561,,-1001.8964348764439
+Cell4,0.8,3300.0,1800.0,817.0608333249402,,-982.9391666750598
+Cell4,0.8,3500.0,1600.0,650.6537358406931,,-949.3462641593069
+Cell4,0.8,3600.0,1500.0,578.0695228399145,,-921.9304771600855
+Cell4,0.8,3700.0,1400.0,503.09209618741625,,-896.9079038125838
+Cell4,0.8,3800.0,1300.0,408.2110556703037,,-891.7889443296963
+Cell4,0.8,3900.0,1200.0,323.32211977738007,,-876.6778802226199
+Cell4,0.8,4000.0,1100.0,239.6456890862837,,-860.3543109137163
+Cell4,0.8,4100.0,1000.0,152.55115892552658,,-847.4488410744734
+Cell4,0.8,4200.0,900.0,76.10478467349003,,-823.89521532651
+Cell4,0.8,4300.0,800.0,2.6758084252960543,,-797.324191574704
+Cell4,0.8,4400.0,700.0,0.0,fitted trend places end of life at or before now,-700.0
+Cell4,0.8,4500.0,600.0,0.0,fitted trend places end of life at or before now,-600.0
+Cell4,0.8,4600.0,500.0,0.0,fitted trend places end of life at or before now,-500.0
+Cell4,0.8,4800.0,300.0,0.0,fitted trend places end of life at or before now,-300.0
+Cell4,0.8,5000.0,100.0,0.0,fitted trend places end of life at or before now,-100.0
+Cell5,0.9,0.0,2200.0,,fewer than 30 cycles of history,
+Cell5,0.9,100.0,2100.0,,fewer than 30 cycles of history,
+Cell5,0.9,200.0,2000.0,,fewer than 30 cycles of history,
+Cell5,0.9,300.0,1900.0,,fewer than 30 cycles of history,
+Cell5,0.9,400.0,1800.0,,fewer than 30 cycles of history,
+Cell5,0.9,500.0,1700.0,,fewer than 30 cycles of history,
+Cell5,0.9,600.0,1600.0,,fewer than 30 cycles of history,
+Cell5,0.9,700.0,1500.0,,fewer than 30 cycles of history,
+Cell5,0.9,800.0,1400.0,,fewer than 30 cycles of history,
+Cell5,0.9,900.0,1300.0,,fewer than 30 cycles of history,
+Cell5,0.9,1000.0,1200.0,,fewer than 30 cycles of history,
+Cell5,0.9,1100.0,1100.0,,fewer than 30 cycles of history,
+Cell5,0.9,1200.0,1000.0,,fewer than 30 cycles of history,
+Cell5,0.9,1300.0,900.0,,fewer than 30 cycles of history,
+Cell5,0.9,1400.0,800.0,,fewer than 30 cycles of history,
+Cell5,0.9,1600.0,600.0,,fewer than 30 cycles of history,
+Cell5,0.9,1800.0,400.0,,fewer than 30 cycles of history,
+Cell5,0.9,1900.0,300.0,,fewer than 30 cycles of history,
+Cell5,0.9,2000.0,200.0,,fewer than 30 cycles of history,
+Cell5,0.9,2100.0,100.0,,fewer than 30 cycles of history,
+Cell6,0.9,0.0,2200.0,,fewer than 30 cycles of history,
+Cell6,0.9,100.0,2100.0,,fewer than 30 cycles of history,
+Cell6,0.9,200.0,2000.0,,fewer than 30 cycles of history,
+Cell6,0.9,300.0,1900.0,,fewer than 30 cycles of history,
+Cell6,0.9,400.0,1800.0,,fewer than 30 cycles of history,
+Cell6,0.9,500.0,1700.0,,fewer than 30 cycles of history,
+Cell6,0.9,600.0,1600.0,,fewer than 30 cycles of history,
+Cell6,0.9,700.0,1500.0,,fewer than 30 cycles of history,
+Cell6,0.9,800.0,1400.0,,fewer than 30 cycles of history,
+Cell6,0.9,900.0,1300.0,,fewer than 30 cycles of history,
+Cell6,0.9,1000.0,1200.0,,fewer than 30 cycles of history,
+Cell6,0.9,1100.0,1100.0,,fewer than 30 cycles of history,
+Cell6,0.9,1200.0,1000.0,,fewer than 30 cycles of history,
+Cell6,0.9,1300.0,900.0,,fewer than 30 cycles of history,
+Cell6,0.9,1400.0,800.0,,fewer than 30 cycles of history,
+Cell6,0.9,1600.0,600.0,,fewer than 30 cycles of history,
+Cell6,0.9,1800.0,400.0,,fewer than 30 cycles of history,
+Cell6,0.9,1900.0,300.0,,fewer than 30 cycles of history,
+Cell6,0.9,2000.0,200.0,,fewer than 30 cycles of history,
+Cell6,0.9,2100.0,100.0,,fewer than 30 cycles of history,
+Cell7,0.9,0.0,3200.0,,fewer than 30 cycles of history,
+Cell7,0.9,100.0,3100.0,,fewer than 30 cycles of history,
+Cell7,0.9,200.0,3000.0,,fewer than 30 cycles of history,
+Cell7,0.9,300.0,2900.0,,fewer than 30 cycles of history,
+Cell7,0.9,400.0,2800.0,,fewer than 30 cycles of history,
+Cell7,0.9,500.0,2700.0,,fewer than 30 cycles of history,
+Cell7,0.9,600.0,2600.0,,fewer than 30 cycles of history,
+Cell7,0.9,700.0,2500.0,,fewer than 30 cycles of history,
+Cell7,0.9,800.0,2400.0,,fewer than 30 cycles of history,
+Cell7,0.9,900.0,2300.0,,fewer than 30 cycles of history,
+Cell7,0.9,1000.0,2200.0,,fewer than 30 cycles of history,
+Cell7,0.9,1100.0,2100.0,,fewer than 30 cycles of history,
+Cell7,0.9,1200.0,2000.0,,fewer than 30 cycles of history,
+Cell7,0.9,1300.0,1900.0,,fewer than 30 cycles of history,
+Cell7,0.9,1400.0,1800.0,,fewer than 30 cycles of history,
+Cell7,0.9,1600.0,1600.0,,fewer than 30 cycles of history,
+Cell7,0.9,1800.0,1400.0,,fewer than 30 cycles of history,
+Cell7,0.9,1900.0,1300.0,,fewer than 30 cycles of history,
+Cell7,0.9,2000.0,1200.0,,fewer than 30 cycles of history,
+Cell7,0.9,2100.0,1100.0,,fewer than 30 cycles of history,
+Cell7,0.9,2200.0,1000.0,,fewer than 30 cycles of history,
+Cell7,0.9,2300.0,900.0,,fewer than 30 cycles of history,
+Cell7,0.9,2400.0,800.0,,fewer than 30 cycles of history,
+Cell7,0.9,2500.0,700.0,,fewer than 30 cycles of history,
+Cell7,0.9,2600.0,600.0,,fewer than 30 cycles of history,
+Cell7,0.9,2700.0,500.0,,fewer than 30 cycles of history,
+Cell7,0.9,2800.0,400.0,,fewer than 30 cycles of history,
+Cell7,0.9,2900.0,300.0,,fewer than 30 cycles of history,
+Cell7,0.9,3000.0,200.0,,fewer than 30 cycles of history,
+Cell7,0.9,3100.0,100.0,118.86144237170492,,18.861442371704925
+Cell8,0.9,0.0,2900.0,,fewer than 30 cycles of history,
+Cell8,0.9,100.0,2800.0,,fewer than 30 cycles of history,
+Cell8,0.9,300.0,2600.0,,fewer than 30 cycles of history,
+Cell8,0.9,400.0,2500.0,,fewer than 30 cycles of history,
+Cell8,0.9,500.0,2400.0,,fewer than 30 cycles of history,
+Cell8,0.9,600.0,2300.0,,fewer than 30 cycles of history,
+Cell8,0.9,700.0,2200.0,,fewer than 30 cycles of history,
+Cell8,0.9,800.0,2100.0,,fewer than 30 cycles of history,
+Cell8,0.9,900.0,2000.0,,fewer than 30 cycles of history,
+Cell8,0.9,1000.0,1900.0,,fewer than 30 cycles of history,
+Cell8,0.9,1100.0,1800.0,,fewer than 30 cycles of history,
+Cell8,0.9,1200.0,1700.0,,fewer than 30 cycles of history,
+Cell8,0.9,1300.0,1600.0,,fewer than 30 cycles of history,
+Cell8,0.9,1400.0,1500.0,,fewer than 30 cycles of history,
+Cell8,0.9,1600.0,1300.0,,fewer than 30 cycles of history,
+Cell8,0.9,1800.0,1100.0,,fewer than 30 cycles of history,
+Cell8,0.9,1900.0,1000.0,,fewer than 30 cycles of history,
+Cell8,0.9,2000.0,900.0,,fewer than 30 cycles of history,
+Cell8,0.9,2100.0,800.0,,fewer than 30 cycles of history,
+Cell8,0.9,2200.0,700.0,,fewer than 30 cycles of history,
+Cell8,0.9,2300.0,600.0,,fewer than 30 cycles of history,
+Cell8,0.9,2400.0,500.0,,fewer than 30 cycles of history,
+Cell8,0.9,2500.0,400.0,,fewer than 30 cycles of history,
+Cell8,0.9,2600.0,300.0,,fewer than 30 cycles of history,
+Cell8,0.9,2700.0,200.0,,fewer than 30 cycles of history,
+Cell8,0.9,2800.0,100.0,,fewer than 30 cycles of history,
+Cell8,0.8,0.0,6400.0,,fewer than 30 cycles of history,
+Cell8,0.8,100.0,6300.0,,fewer than 30 cycles of history,
+Cell8,0.8,300.0,6100.0,,fewer than 30 cycles of history,
+Cell8,0.8,400.0,6000.0,,fewer than 30 cycles of history,
+Cell8,0.8,500.0,5900.0,,fewer than 30 cycles of history,
+Cell8,0.8,600.0,5800.0,,fewer than 30 cycles of history,
+Cell8,0.8,700.0,5700.0,,fewer than 30 cycles of history,
+Cell8,0.8,800.0,5600.0,,fewer than 30 cycles of history,
+Cell8,0.8,900.0,5500.0,,fewer than 30 cycles of history,
+Cell8,0.8,1000.0,5400.0,,fewer than 30 cycles of history,
+Cell8,0.8,1100.0,5300.0,,fewer than 30 cycles of history,
+Cell8,0.8,1200.0,5200.0,,fewer than 30 cycles of history,
+Cell8,0.8,1300.0,5100.0,,fewer than 30 cycles of history,
+Cell8,0.8,1400.0,5000.0,,fewer than 30 cycles of history,
+Cell8,0.8,1600.0,4800.0,,fewer than 30 cycles of history,
+Cell8,0.8,1800.0,4600.0,,fewer than 30 cycles of history,
+Cell8,0.8,1900.0,4500.0,,fewer than 30 cycles of history,
+Cell8,0.8,2000.0,4400.0,,fewer than 30 cycles of history,
+Cell8,0.8,2100.0,4300.0,,fewer than 30 cycles of history,
+Cell8,0.8,2200.0,4200.0,,fewer than 30 cycles of history,
+Cell8,0.8,2300.0,4100.0,,fewer than 30 cycles of history,
+Cell8,0.8,2400.0,4000.0,,fewer than 30 cycles of history,
+Cell8,0.8,2500.0,3900.0,,fewer than 30 cycles of history,
+Cell8,0.8,2600.0,3800.0,,fewer than 30 cycles of history,
+Cell8,0.8,2700.0,3700.0,,fewer than 30 cycles of history,
+Cell8,0.8,2800.0,3600.0,,fewer than 30 cycles of history,
+Cell8,0.8,2900.0,3500.0,,fewer than 30 cycles of history,
+Cell8,0.8,3000.0,3400.0,,fewer than 30 cycles of history,
+Cell8,0.8,3100.0,3300.0,,fewer than 30 cycles of history,
+Cell8,0.8,3200.0,3200.0,3471.432651992578,,271.43265199257803
+Cell8,0.8,3300.0,3100.0,3314.547083338558,,214.54708333855797
+Cell8,0.8,3500.0,2900.0,3095.739214150636,,195.73921415063614
+Cell8,0.8,3600.0,2800.0,2963.3281797079717,,163.32817970797169
+Cell8,0.8,3700.0,2700.0,2831.7122219144485,,131.7122219144485
+Cell8,0.8,3800.0,2600.0,2664.6290214798364,,64.62902147983641
+Cell8,0.8,3900.0,2500.0,2531.009387260605,,31.009387260604854
+Cell8,0.8,4000.0,2400.0,2400.178708788797,,0.1787087887969392
+Cell8,0.8,4100.0,2300.0,2262.0557260794185,,-37.94427392058151
+Cell8,0.8,4200.0,2200.0,2143.2918723335224,,-56.708127666477594
+Cell8,0.8,4300.0,2100.0,2027.2613408023717,,-72.7386591976283
+Cell8,0.8,4400.0,2000.0,1903.117909661757,,-96.88209033824296
+Cell8,0.8,4500.0,1900.0,1792.0798847026645,,-107.92011529733554
+Cell8,0.8,4600.0,1800.0,1688.0583232708395,,-111.94167672916046
+Cell8,0.8,4800.0,1600.0,1494.2738989463132,,-105.72610105368676
+Cell8,0.8,5000.0,1400.0,1302.8023106928094,,-97.19768930719056
+Cell8,0.8,5100.0,1300.0,1216.3960782773984,,-83.60392172260163
+Cell8,0.8,5200.0,1200.0,1107.4840574032487,,-92.5159425967513
+Cell8,0.8,5300.0,1100.0,980.7695727693481,,-119.23042723065191
+Cell8,0.8,5400.0,1000.0,860.4821648301113,,-139.5178351698887
+Cell8,0.8,5500.0,900.0,744.5256375749459,,-155.4743624250541
+Cell8,0.8,5600.0,800.0,647.935559293056,,-152.06444070694397
+Cell8,0.8,5700.0,700.0,551.1597338155598,,-148.84026618444022
+Cell8,0.8,5800.0,600.0,448.6560244001812,,-151.3439755998188
+Cell8,0.8,5900.0,500.0,354.136441252911,,-145.86355874708897
+Cell8,0.8,6000.0,400.0,261.71420249326,,-138.28579750673998
+Cell8,0.8,6100.0,300.0,167.53699267817228,,-132.46300732182772
+Cell8,0.8,6200.0,200.0,72.75360252709743,,-127.24639747290257
+Cell8,0.8,6300.0,100.0,0.0,fitted trend places end of life at or before now,-100.0

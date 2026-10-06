@@ -1,5 +1,7 @@
 # Measuring lithium-ion cell health from voltage, current and time: a validated software layer over the battery management system, and when its evidence suffices
 
+> **The LaTeX version (`docs/manuscript/latex/main.tex`) is now canonical.** It adds the Oxford external validation, the drive-cycle test, RUL at 80% and 11 verified references. This Markdown draft is kept for reference.
+
 **Target venue:** to be decided (candidates: *Journal of Energy Storage*; *Reliability Engineering & System Safety*)
 **Status:** DRAFT. Not submittable until the gaps below are closed.
 **Author:** Naveen Vaidyanathan

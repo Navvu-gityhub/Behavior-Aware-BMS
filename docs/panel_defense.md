@@ -50,7 +50,7 @@ A software layer on top of a BMS, doing health estimation and monitoring. It is 
 A measured finding: under leave-one-cohort-out, every method we tested lost skill, and model ranking was not statistically resolvable, while data-conditioning decisions changed error by 5×. Plus a field-realisable SOH method validated on real cells, including real partial cycling, with physically motivated gates that refuse bad readings.
 
 **5. Engineering contribution?**
-One shared pipeline for three data sources (CAN, serial rig, datasets); refusals carried as values all the way to the user; a checksummed serial protocol with firmware for three microcontroller families; 948 tests and an 11-job CI.
+One shared pipeline for three data sources (CAN, serial rig, datasets); refusals carried as values all the way to the user; a checksummed serial protocol with firmware for three microcontroller families; 964 tests and an 11-job CI.
 
 **6. How is this different from a dashboard of voltage, current and temperature?**
 Those three are raw inputs. BEACON segments the discharges, integrates current into charge, estimates internal resistance, computes SOH and RUL, scores them against lab truth, and refuses when a reading is untrustworthy. A dashboard of raw values does none of that.
@@ -69,22 +69,25 @@ Everything the running system shows is calculation- or rule-derived. SOH is a ra
 
 **11. Claims you can prove today?**
 - SOH 1.7% median error, 17 of 22 CALCE cells, from voltage, current and time only.
+- Unchanged, 3.0% on all 8 cells of a second dataset (Oxford: different chemistry, maker, format, 40 °C); 2.3% with a learned window.
 - SOH 3.2–3.4% from real partial cycling (2 cells).
-- RUL 73% within ±20 cycles in the last 25 cycles before 90%.
+- Resistance from the load step tracks the lab instrument on 19 of 20 cells.
+- RUL 73% within ±20 cycles in the last 25 cycles before 90%; near end of life, predictions were rarely exceeded (95% CALCE, 97% Oxford at 80%).
+- Readings' consistency predicts SOH error (1.3% vs 5.1%); discharge count does not.
 - No benchmark method kept its skill under LOCO.
-- The rig decodes 83/83 frames at 1.000 s.
-- The pipeline refuses missing channels.
+- The rig decodes 83/83 frames at 1.000 s; injected faults are rejected or refused.
 
-All reproducible from the repo.
+All reproducible from the repo; see `docs/validation_matrix.md`.
 
 **12. Limitations?**
-- Single cells of one LCO family; no packs and no other chemistry.
-- Constant-current discharges only; no dynamic drive profiles.
-- RUL is only useful near end of life.
-- 80% end of life is not validated.
+- Single cells only; no packs.
+- Two cathode families (LCO, NMC/LCO blend); no LFP.
+- One real drive-cycle discharge only; the rest is constant current.
+- RUL is only useful near end of life; at 80% it is a conservative bound with low precision.
 - The rig has never measured a discharge.
-- The partial-discharge result rests on 2 cells per band.
-- The API stores nothing to disk.
+- Partial-discharge SOH rests on 2 cells per band.
+- RUL for partial-only logs is refused (four methods tested, none accurate enough).
+- API persistence is opt-in (`BEACON_STATE_FILE`); the default is in memory.
 
 **13. Why lithium-ion?**
 It is the chemistry used in EVs and the one the public ageing datasets (NASA, CALCE) cover.
@@ -202,10 +205,10 @@ That about a third of the apparent skill was protocol memorisation, and that the
 No. Its 95% interval runs from −2.80 to 0.86, so on some held-out protocols it is worse than predicting the average. And a baseline that only knows the cycle count reaches 0.406.
 
 **50. Does it generalise to a new real-world battery?**
-No evidence that it does. We don't claim it.
+For the shipped SOH method, there is now direct evidence: unchanged, it measured all 8 cells of an independent dataset (Oxford, NMC/LCO pouch, a different maker and format, at 40 °C) at 3.0% median error. For the fitted ML models, no: they didn't transfer even within NASA, and we don't claim they do.
 
 **51. What would you need before claiming that?**
-Training on several labs, chemistries and cell makers; testing on a held-out lab or chemistry; intervals that exclude zero; and a test on field data from real use.
+What we did for the SOH method: an independent dataset with a different chemistry, maker, format and temperature, with nothing re-tuned (3.0%, 8 of 8 cells). Still needed: LFP, packs, field data from real vehicles, and more than one drive-cycle discharge.
 
 ---
 
@@ -434,7 +437,7 @@ No. In the committed captures, the INA219 and the LM35 were never working at the
 No.
 
 **120. Under load?**
-No.
+No load on the rig. But the method has now been tested on one real dynamic discharge: an Artemis urban drive cycle on an Oxford cell (current −5 to +1.6 A). Read in a window that discharge covers, it came within 1.4% of the same cell's steady 1C discharge.
 
 **121. What load?**
 None was applied.
@@ -677,7 +680,7 @@ The CALCE trajectories end near 81%, so the conventional 80% is crossed by only 
 No. 80% is the automotive convention.
 
 **192. What if the application uses 80%?**
-The code accepts it as a parameter, but that result is unvalidated. With a near-linear fade, error grows with distance to the threshold, so expect worse accuracy.
+It's tested now, on Oxford, whose cells fade to 62–80%. The unchanged estimator, when it predicted under 500 cycles to 80%, was not exceeded 97% of the time: a safe bound. But it's imprecise (median miss 385 cycles), so we present 80% as a conservative bound, not an accurate prediction.
 
 **193. How do you calculate RUL?**
 Take this cell's SOH history up to now, smooth it with an 11-cycle rolling median, fit a straight line to the full history, and solve for where it crosses 0.90. It needs at least 30 points. It refuses a flat or rising trend, and any estimate that reaches more than twice as far ahead as its own history.
@@ -1978,10 +1981,10 @@ No.
 The outputs don't mention mechanisms. The report card states the evidence limits.
 
 **579. Brand-new battery from another maker tomorrow — will it work?**
-The ML models: no claim. The SOH method: it should, if the new cell's own early discharges cross a plateau window and its record starts near new. Otherwise it refuses. That's untested on another manufacturer.
+The SOH method was tested on exactly this case: a different manufacturer (Kokam), format (pouch) and chemistry (NMC/LCO), at 40 °C, with nothing re-tuned. It measured all 8 cells at 3.0% median error. It still needs that cell's own first discharges as its reference, and LFP remains untested.
 
 **580. If yes, what evidence?**
-Only indirect: no fitted cross-cell parameters, and it held across 7 CALCE protocols and two cell families.
+The Oxford external validation (`reports/metrics/oxford/`): 8 of 8 cells at 3.0%, no parameter changed from the CALCE setup.
 
 **581. If no, what's the practical value?**
 It refuses rather than misleads, and it becomes useful once that cell has enough of its own history.

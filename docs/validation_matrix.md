@@ -30,7 +30,10 @@ All figures trace to files under `reports/metrics/`.
 | 17c | Reference size (5 vs 10 discharges) | CALCE field study | Cycler capacity | Median per-cell MAE | 1.681% vs 1.665%: no meaningful difference, kept at 5 | **Tested, unchanged** | `calce_sufficiency/`, `calce_field_soh/` |
 | 18 | Health from a capture of a real rig discharge | — | Direct capacity measurement | SOH error | No discharge has been recorded yet | **Not tested** | — |
 | 19 | Cross-dataset (train NASA, test CALCE) | — | — | — | Not runnable: the NASA features need temperature, which CALCE cycling files lack | **Not tested** | — |
-| 20 | Packs, other chemistries (LFP, NMC), dynamic drive cycles | — | — | — | No data | **Not tested** | — |
+| 21 | **External validation**: capacity health on a second chemistry, manufacturer, format and temperature, unchanged | Oxford Battery Degradation Dataset 1: 8 Kokam NMC/LCO pouch cells, 40 °C, 519 checks | 1C capacity at each check | Per-cell MAE, median | Fixed window **3.0%** (8 of 8 cells); learned window **2.3%**; C/18 window 3.2% | **Validated** | `oxford/` |
+| 22 | Reading the window on a **real drive-cycle** discharge | Oxford Cell 1, Artemis urban cycle, 1 Hz, −5.0 to +1.6 A | Same cell's 1C discharge, same window | Ratio | 0.2625 vs 0.2661 Ah: **1.4%** apart; both ~13% below C/18 (rate effect) | **Shown, 1 discharge** | `oxford/drive_cycle_report.md` |
+| 23 | Remaining life at the **80% convention** | Oxford, 5 cells crossing 80% | Observed 80% crossing | Lasted at least as predicted | Predicted under 500 cycles: **97%**; median miss 385 cycles | **Conservative bound replicated; precision low** | `oxford/` |
+| 20 | Packs, LFP, large-scale dynamic drive-cycle validation | — | — | — | No data | **Not tested** | — |
 
 ## How to read it
 
@@ -44,6 +47,7 @@ All figures trace to files under `reports/metrics/`.
 
 ## Scope in one line
 
-Single lithium-ion cells of one LCO family, at constant current. Within that
-scope: capacity health, resistance health and near-end-of-life remaining life
+Single lithium-ion cells: LCO (CALCE) for development, NMC/LCO pouch at
+40 °C (Oxford) for external validation, mostly constant current with one real
+drive cycle. Within that scope: capacity health, resistance health and near-end-of-life remaining life
 are validated against lab measurements. Outside it, nothing is claimed.
