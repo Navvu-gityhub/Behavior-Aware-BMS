@@ -167,6 +167,13 @@ class FieldSOH:
     # log, not across loggers. NaN when no clean step was seen.
     resistance_reference_ohm: float = float("nan")
     resistance_now_ohm: float = float("nan")
+    # Standard error of this estimate from the readings' own consistency -
+    # see CONSISTENCY below. NaN when there are too few readings to judge.
+    uncertainty: float = float("nan")
+
+    @property
+    def consistent(self) -> bool:
+        return bool(np.isfinite(self.uncertainty) and self.uncertainty <= CONSISTENCY_TOLERANCE)
 
     @property
     def resistance_growth(self) -> float:
@@ -419,6 +426,7 @@ def current_field_soh(
 
     latest = beyond_reference.tail(REPORT_CYCLES)
     r_ref, r_now = _resistance(accepted, latest, reference_cycles)
+    u = consistency_uncertainty(accepted, reference_cycles)
     return FieldSOH(
         soh=float(latest["soh_window_accepted"].median()),
         at_cycle=int(latest["cycle"].iloc[-1]),
@@ -428,6 +436,7 @@ def current_field_soh(
         window=str(spec),
         resistance_reference_ohm=r_ref,
         resistance_now_ohm=r_now,
+        uncertainty=u,
     )
 
 
@@ -617,13 +626,62 @@ def learned_field_soh(
                      f"window; more are needed"), table
     latest = beyond.tail(REPORT_CYCLES)
     r_ref, r_now = _resistance(accepted, latest, reference_cycles)
+    u = consistency_uncertainty(accepted, reference_cycles)
     return FieldSOH(
         soh=float(latest["soh_window_accepted"].median()),
         at_cycle=int(latest["cycle"].iloc[-1]),
         n_accepted=int(len(accepted)), n_discharges=n, compensated=True,
         window=label, window_mode="learned",
         resistance_reference_ohm=r_ref, resistance_now_ohm=r_now,
+        uncertainty=u,
     ), table
+
+
+# CONSISTENCY: WHEN IS THERE ENOUGH EVIDENCE?
+# --------------------------------------------
+# Not "has the estimate stopped changing" - a healthy estimate keeps moving,
+# because the cell keeps ageing. The question is whether the readings agree
+# with each other once that trend is removed. Two terms:
+#
+#   reference SE  standard error of the beginning-of-life median, relative
+#   recent SE     scatter of the last RECENT_READINGS readings around their
+#                 own straight line, as the standard error of the reported
+#                 median of REPORT_CYCLES
+#
+# combined as u = sqrt(ref^2 + recent^2), with 1.2533 * MAD / sqrt(n) as the
+# standard error of a median. Measured on CALCE (scripts/run_sufficiency_
+# study.py, tolerance fixed before it ran): readings with u <= 0.01 had a
+# median error of 1.3% against the lab; u > 0.01, 5.1% (90th percentile 22%).
+# The same study found that the NUMBER of readings does not predict accuracy
+# - error grows with age, not shrinks with count - so confidence follows
+# consistency, not a discharge count.
+CONSISTENCY_TOLERANCE = 0.01
+RECENT_READINGS = 10
+
+
+def _se_median(values: np.ndarray) -> float:
+    values = values[np.isfinite(values)]
+    if len(values) < 2:
+        return float("nan")
+    return float(1.2533 * np.median(np.abs(values - np.median(values))) / np.sqrt(len(values)))
+
+
+def consistency_uncertainty(accepted: pd.DataFrame, reference_cycles: int) -> float:
+    """Standard error of the reported SOH from the readings' own scatter."""
+    charge = accepted["window_charge_ah"].to_numpy(float)
+    soh = accepted["soh_window_accepted"].to_numpy(float)
+    if len(charge) <= reference_cycles:
+        return float("nan")
+    ref = charge[:reference_cycles]
+    ref_se = _se_median(ref) / float(np.median(ref)) if reference_cycles > 1 else 0.0
+    recent = soh[reference_cycles:][-RECENT_READINGS:]
+    if len(recent) < 4:
+        return float("nan")
+    idx = np.arange(len(recent))
+    resid = recent - np.polyval(np.polyfit(idx, recent, 1), idx)
+    recent_se = 1.2533 * float(np.median(np.abs(resid - np.median(resid)))) / np.sqrt(REPORT_CYCLES)
+    ref_se = 0.0 if not np.isfinite(ref_se) else ref_se
+    return float(np.sqrt(ref_se ** 2 + recent_se ** 2))
 
 
 def _resistance(accepted: pd.DataFrame, latest: pd.DataFrame,

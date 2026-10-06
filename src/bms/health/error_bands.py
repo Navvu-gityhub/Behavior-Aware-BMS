@@ -27,6 +27,10 @@ from dataclasses import dataclass
 # 90th-percentile absolute SOH error (fraction), median across cells.
 SOH_P90_ABS_FIXED = 0.0343     # 17 cells, field method, 3.90-3.60 V
 SOH_P90_ABS_LEARNED = 0.0493   # 2 cells, top-of-charge partial cycling
+# When the readings are INCONSISTENT (field_soh.CONSISTENCY_TOLERANCE
+# exceeded), from reports/metrics/calce_sufficiency/: 2,168 scored points,
+# 13 cells, median 5.1% - about 4x the consistent case.
+SOH_P90_ABS_INCONSISTENT = 0.2186
 
 
 @dataclass(frozen=True)
@@ -52,8 +56,10 @@ RUL_BANDS: tuple[RulBand, ...] = (
 )
 
 
-def soh_band(window_mode: str) -> float:
+def soh_band(window_mode: str, consistent: bool = True) -> float:
     """90%-of-readings half-width for an SOH estimate, as a fraction."""
+    if not consistent:
+        return SOH_P90_ABS_INCONSISTENT
     return SOH_P90_ABS_LEARNED if window_mode == "learned" else SOH_P90_ABS_FIXED
 
 

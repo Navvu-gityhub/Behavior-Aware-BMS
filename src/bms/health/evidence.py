@@ -17,11 +17,15 @@ CONFIDENCE RULES
 These are conventions stated in code, not fitted values. Each maps to the
 validation that backs it:
 
-  capacity health    HIGH    fixed window, reference at beginning of life,
-                             >= 30 usable discharges (the validated setup:
-                             1.7% median error, 17 CALCE cells)
-                     MEDIUM  learned window (2 validation cells), or fewer
-                             usable discharges, or a start-of-log reference
+  capacity health    HIGH    readings consistent (standard error <= 1 point),
+                             fixed window, reference at beginning of life
+                     MEDIUM  consistent, but a learned window (2 validation
+                             cells) or a start-of-log reference
+                     LOW     readings inconsistent: validation error was ~4x
+                             larger in this state (1.3% vs 5.1% median)
+                     The NUMBER of discharges is deliberately not a rule:
+                     measured, error grows with age rather than shrinking
+                     with count (reports/metrics/calce_sufficiency/).
   resistance health  HIGH    >= 30 discharges with a clean load step
                      MEDIUM  fewer
                      (tracked the cycler's resistance on 19 of 20 cells)
@@ -143,15 +147,18 @@ def _capacity_status(soh, bol: bool) -> OutputStatus:
     name = "capacity health"
     if soh is None or not soh.available:
         return OutputStatus(name, False, reason=soh.refusal if soh is not None else "not computed")
-    high = soh.window_mode == "fixed" and bol and soh.n_accepted >= SUFFICIENT_DISCHARGES
+    if not soh.consistent:
+        u = soh.uncertainty
+        detail = f"+/-{u * 100:.1f} points" if math.isfinite(u) else "too few recent readings to judge"
+        return OutputStatus(name, True, LOW,
+                            f"readings inconsistent ({detail}); in validation, error was "
+                            f"about 4x larger in this state - keep observing")
     why = []
     if soh.window_mode != "fixed":
         why.append("window learned from this cell's usage (2 validation cells)")
     if not bol:
         why.append("reference may not be the cell as new")
-    if soh.n_accepted < SUFFICIENT_DISCHARGES:
-        why.append(f"{soh.n_accepted} usable discharges (< {SUFFICIENT_DISCHARGES})")
-    return OutputStatus(name, True, HIGH if high else MEDIUM, "; ".join(why))
+    return OutputStatus(name, True, HIGH if not why else MEDIUM, "; ".join(why))
 
 
 def _resistance_status(soh) -> OutputStatus:

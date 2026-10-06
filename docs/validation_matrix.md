@@ -26,6 +26,8 @@ All figures trace to files under `reports/metrics/`.
 | 15 | Sensor **accuracy** on the rig | — | A reference meter | Measurement error | Not measured | **Not tested** | — |
 | 16 | **Fault handling**: corruption, NaN, impossible value, time reversal, missing channel | Injected into a real capture | Expected rejection or refusal | Pass/fail | All rejected or refused; 999 V on a declared cell found and fixed | **Validated** | `tests/test_serial_telemetry.py`, `scripts/panel_demo.py` |
 | 17 | **Data sufficiency** decisions per output | Synthetic cells with known missing inputs; CALCE | Known missingness | Correct availability per output | Tested | **Validated (tests)** | `tests/test_evidence.py` |
+| 17b | **Evidence sufficiency**: readings' consistency predicts error | CALCE, 19 cells, 11,161 scored points | Lab capacity checks | Error by consistency (standard error ≤ 1 point, fixed before running) | Consistent: median **1.3%**. Inconsistent: **5.1%** (p90 22%). Discharge *count* does not predict error: it grows with age | **Validated**: confidence follows consistency | `calce_sufficiency/` |
+| 17c | Reference size (5 vs 10 discharges) | CALCE field study | Cycler capacity | Median per-cell MAE | 1.681% vs 1.665%: no meaningful difference, kept at 5 | **Tested, unchanged** | `calce_sufficiency/`, `calce_field_soh/` |
 | 18 | Health from a capture of a real rig discharge | — | Direct capacity measurement | SOH error | No discharge has been recorded yet | **Not tested** | — |
 | 19 | Cross-dataset (train NASA, test CALCE) | — | — | — | Not runnable: the NASA features need temperature, which CALCE cycling files lack | **Not tested** | — |
 | 20 | Packs, other chemistries (LFP, NMC), dynamic drive cycles | — | — | — | No data | **Not tested** | — |

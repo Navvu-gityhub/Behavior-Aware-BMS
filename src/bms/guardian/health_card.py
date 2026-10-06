@@ -59,7 +59,7 @@ def render_health_card(result, battery_label: str | None = None,
     lines.append("1. HOW HEALTHY IT IS")
     if soh is not None and soh.available:
         what = "capacity health" if bol else "capacity relative to the start of this log"
-        band = soh_band(soh.window_mode)
+        band = soh_band(soh.window_mode, consistent=soh.consistent or not np.isfinite(soh.uncertainty))
         cap = evidence.output("capacity health")
         lines.append(f"   {soh.soh:.1%} {what}  [MEASURED, {cap.confidence} confidence]")
         lines.append(

@@ -1987,7 +1987,7 @@ Only indirect: no fitted cross-cell parameters, and it held across 7 CALCE proto
 It refuses rather than misleads, and it becomes useful once that cell has enough of its own history.
 
 **582. Minimum data before an SOH estimate?**
-At least 6 discharges that cross the window: 5 to form the reference, plus 1 to measure. The reference must be formed within 20 equivalent full cycles, and with ohmic correction at least one clean rest-to-load step. A learned window needs 10 early discharges. RUL needs 30 complete discharges.
+It's decided per output, not by one number. Capacity health needs voltage, current and time, then at least 6 discharges across the window: 5 form the as-new reference and 1 is measured against it. That 6 is a hard minimum by construction. Confidence then follows the readings' **consistency**, not their count. Measured on CALCE (`calce_sufficiency/`): when the readings agree to within 1 point (standard error, after removing the ageing trend), median error was 1.3%; when they didn't, 5.1%. The number of discharges did *not* predict accuracy, because error grows with age. So BEACON reports LOW confidence and a wide band until the readings are consistent, however many discharges it has. RUL needs 30 complete discharges, and is refused for partial-only logs (Q54).
 
 **583. What happens in the first few cycles?**
 SOH: "not available — only N discharges crossed the window; 5 are needed". RUL: "fewer than 30 cycles of history".

@@ -65,3 +65,13 @@ def test_description_never_reports_a_negative_lower_bound():
     assert "between 0 and" in describe_rul_band(10) or "between 11" in describe_rul_band(10)
     text = describe_rul_band(30)          # q05 is -14, so 30 - 14 = 16
     assert "between 16 and 159" in text
+
+
+def test_inconsistent_band_matches_the_sufficiency_study():
+    from src.bms.health.error_bands import SOH_P90_ABS_INCONSISTENT
+
+    points = pd.read_csv(ARTIFACT.parent / "calce_sufficiency" / "sufficiency_points.csv")
+    points = points[(points["ref_size"] == 5) & points["uncertainty"].notna()]
+    beyond = points[points["uncertainty"] > 0.01]
+    assert SOH_P90_ABS_INCONSISTENT == pytest.approx(beyond["abs_error"].quantile(0.9), abs=5e-5)
+    assert soh_band("fixed", consistent=False) > soh_band("fixed")

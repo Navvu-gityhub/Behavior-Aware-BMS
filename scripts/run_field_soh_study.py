@@ -172,7 +172,7 @@ def _score(table: pd.DataFrame, truth_cell: pd.DataFrame, discharges: pd.DataFra
     }
 
 
-def run_cell(source, truth: pd.DataFrame) -> list[dict]:
+def run_cell(source, truth: pd.DataFrame, reference_cycles: int = 5) -> list[dict]:
     started = time.time()
     cell = source.cell_id
     cached = CACHE / f"{cell}.parquet"
@@ -209,8 +209,10 @@ def run_cell(source, truth: pd.DataFrame) -> list[dict]:
             arms["step_r"] = (stepped, step_op)
             arms["step_r_partial"] = (_truncate(stepped), step_op)
         for arm, (frame, op) in arms.items():
-            table = window_soh_table(frame, spec=spec, overpotential=op) if len(frame) else pd.DataFrame()
-            table = apply_field_gates(table, discharges)
+            table = (window_soh_table(frame, spec=spec, overpotential=op,
+                                      reference_cycles=reference_cycles)
+                     if len(frame) else pd.DataFrame())
+            table = apply_field_gates(table, discharges, reference_cycles)
             rows.append({"cell_id": cell, "cohort": source.cohort, "arm": arm,
                          "window": str(spec), "primary": spec == PRIMARY,
                          **_score(table, truth_cell, discharges)})
@@ -250,6 +252,8 @@ def main() -> int:
     parser.add_argument("--out", type=Path, default=DEFAULT_OUT)
     parser.add_argument("--restart", action="store_true")
     parser.add_argument("--cells", nargs="*", default=None)
+    parser.add_argument("--reference-cycles", type=int, default=5,
+                        help="discharges forming the beginning-of-life reference")
     args = parser.parse_args()
 
     args.out.mkdir(parents=True, exist_ok=True)
@@ -278,7 +282,7 @@ def main() -> int:
         if source.cell_id in finished:
             continue
         try:
-            rows = run_cell(source, truth)
+            rows = run_cell(source, truth, args.reference_cycles)
         except Exception as exc:  # recorded, not swallowed: a failed cell is a result
             rows = [{"cell_id": source.cell_id, "cohort": source.cohort, "arm": "all",
                      "window": "", "n_scored": 0, "refused": True,
