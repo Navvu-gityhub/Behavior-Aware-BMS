@@ -99,7 +99,14 @@ The core package \texttt{src/bms} is divided into packages with one responsibili
 	\label{tab:packages}
 \end{table}
 
-Outside the package, \texttt{mern/} holds the Express gateway and React client, \texttt{firmware/beacon\_rig/} the Arduino sketch, \texttt{scripts/} the study and demo scripts, \texttt{tests/} the test modules, and \texttt{docs/adr/} fourteen architecture decision records, including those that record reversed decisions.
+Outside the package, the repository holds the following.
+\begin{itemize}
+	\item \texttt{mern/}: the Express gateway and React client.
+	\item \texttt{firmware/beacon\_rig/}: the Arduino sketch.
+	\item \texttt{scripts/}: the study and demo scripts.
+	\item \texttt{tests/}: the test modules.
+	\item \texttt{docs/adr/}: fourteen architecture decision records, including those that record reversed decisions.
+\end{itemize}
 
 \section{TELEMETRY ACQUISITION: THREE TRANSPORTS, ONE FRAME}
 \label{sec:impl-transports}
@@ -343,7 +350,14 @@ The service tier has three components (Table~\ref{tab:services}). The gateway ha
 	\label{tab:services}
 \end{table}
 
-The principal endpoints include \texttt{GET /healthz} (service liveness), \texttt{POST /pipeline/simulate}, \texttt{GET /batteries}, \texttt{GET /batteries/\{id\}}, \texttt{GET /batteries/\{id\}/timeline}, and the telemetry routes for CAN replay, serial replay, coverage, the twin and the thermal view. The \texttt{/healthz} endpoint is explicitly service liveness and not battery health: in a battery-monitoring system the naming collision is a real hazard and is called out at its definition. The container health check polls it.
+The principal endpoints are listed below, together with the telemetry routes for CAN replay, serial replay, coverage, the twin and the thermal view.
+\begin{itemize}
+	\item \texttt{GET /healthz}: service liveness.
+	\item \texttt{POST /pipeline/simulate}: run the pipeline on a simulated input.
+	\item \texttt{GET /batteries} and \texttt{GET /batteries/\{id\}}: the battery list and one battery.
+	\item \texttt{GET /batteries/\{id\}/timeline}: the per-battery timeline.
+\end{itemize}
+The \texttt{/healthz} endpoint is explicitly service liveness and not battery health: in a battery-monitoring system the naming collision is a real hazard and is called out at its definition. The container health check polls it.
 
 The React client has five views (Table~\ref{tab:views}). A Guardian explanation is rendered inside the CAN replay view and not as its own tab, because it is only meaningful next to the run it explains. Refusals are rendered as results and not as errors.
 
@@ -398,7 +412,7 @@ The Docker image is multi-stage on a slim Python 3.12 base, with the compiler co
 
 \begin{verbatim}
 python main.py                     # end-to-end run
-python scripts/run_serial_demo.py  # emulated rig, no hardware
+python scripts/run_serial_demo.py  # emulated rig
 python -m pytest tests/ -q         # the test suite
 docker compose up                  # API, gateway, client
 \end{verbatim}

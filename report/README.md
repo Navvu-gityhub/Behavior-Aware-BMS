@@ -1,8 +1,6 @@
 # B.Tech project report (Amrita template)
 
-Compile `main.tex` on Overleaf (pdflatex). Before compiling, place in this folder:
-- `amritareport.cls` (the Amrita class file from your template)
-- `Amrita_Logo.png`, `Amrita_Full_Logo.png`
+Compile `main.tex` with pdflatex (twice). `amritareport.cls` and the logos are the mentor's template files and are included.
 
-Fill the placeholders in `main.tex`: roll number, supervisor, HOD, acknowledgement, other team members.
+Still to fill in `main.tex`: roll number, supervisor name and designation, acknowledgement, other team members.
 Chapters are in `chapters/`; figures in `images/`.
