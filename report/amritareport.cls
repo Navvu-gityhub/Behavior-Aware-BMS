@@ -220,7 +220,7 @@
   \ifnum\value{numcandidates}=1
     \renewcommand{\@candidatelist}{%
       {\large\bfseries #1\par}{\large\bfseries (#2)\par}}%
-    \renewcommand{\@candnamestext}{#1\ (\seqsplit{#2})}%
+    \renewcommand{\@candnamestext}{#1\ (\mbox{#2})}%
     \renewcommand{\@candsigblocks}{%
       \textbf{SIGNATURE}\\[0.5cm]
       \textbf{#1}\\
@@ -231,7 +231,7 @@
   \else
     \g@addto@macro\@candidatelist{%
       \vspace{0.3cm}{\large\bfseries #1\par}{\large\bfseries (#2)\par}}%
-    \g@addto@macro\@candnamestext{, #1\ (\seqsplit{#2})}%
+    \g@addto@macro\@candnamestext{, #1\ (\mbox{#2})}%
     \g@addto@macro\@candsigblocks{%
       \vspace{2.5cm}\\
       \textbf{SIGNATURE}\\[0.5cm]
