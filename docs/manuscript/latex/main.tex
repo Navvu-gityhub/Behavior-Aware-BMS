@@ -33,9 +33,10 @@ evidence suffices}
 \author[inst1]{Naveen Vaidyanathan\corref{cor1}}
 \ead{[EMAIL]}
 \cortext[cor1]{Corresponding author.}
-\affiliation[inst1]{organization={[DEPARTMENT, INSTITUTION]},
-            city={[CITY]},
-            country={[COUNTRY]}}
+\affiliation[inst1]{department={Department of Computer and Communication Engineering},
+            organization={Amrita Vishwa Vidyapeetham},
+            city={Chennai},
+            country={India}}
 
 \begin{abstract}
 A battery management system (BMS) measures terminal voltage, current and
@@ -317,7 +318,7 @@ then lies on the end-of-discharge knee. There, voltage reflects kinetics
 \subsection{RUL from the cell's own fade}
 At cycle $k$, the cell's SOH history up to $k$ is smoothed with an 11-point
 rolling median, a straight line is fitted to the full history, and its crossing
-of 0.90 gives the end-of-life estimate. Estimates are refused in four cases:
+of 0.90 gives the end-of-life estimate. Estimates are refused in three cases:
 with fewer than 30 points; for flat or rising trends; and when the estimate
 reaches more than twice the history length ahead. A cell already past the
 threshold is reported as zero. Linear, square-root and quadratic forms, over
@@ -686,7 +687,9 @@ shipped RUL estimator was scored there unchanged. When it predicted fewer than
 500 cycles to 80\%, the cell lasted at least that long in 97\% of cases (36
 estimates, 5 cells), replicating the conservative behaviour seen on CALCE.
 Precision is low: the median miss is 385 cycles, against characterisations 100
-cycles apart. At 90\% the estimator mostly refused, because its 30-point
+cycles apart. The guarantee also weakens with distance: predictions of 500 to
+1{,}000 cycles were met or exceeded only 79\% of the time (24 estimates, 5
+cells), so the conservative reading applies to near-term predictions. At 90\% the estimator mostly refused, because its 30-point
 history requirement is met only after the cells have crossed 90\%.
 
 \subsection{A third dataset, temperature, and knowing when to refuse}
@@ -789,7 +792,11 @@ directly.
 temperature channel. A cold cell would read low SOH and high resistance without
 having aged.
 \item \emph{End of life:} validated at 90\% on CALCE; at 80\% on Oxford only
-as a conservative bound, with low precision.
+as a conservative bound, with low precision. The conservative direction is a
+property of the 90\% threshold on these cells, not a general guarantee: at an
+85\% threshold the median bias near end of life turns positive (+17.6 cycles
+within 25 cycles of end of life), so the estimate runs late there, and only
+62.8\% of estimates fall within $\pm$20 cycles.
 \item \emph{Apparent resistance.} $R_\mathrm{step}$ depends on the logger's
 sample interval; it is comparable within a record, not across loggers.
 \item \emph{Drift with age.} Window charge does not scale exactly with capacity,
@@ -813,8 +820,8 @@ physical rule that refuses the knee;
 \item unchanged, 3.0\% on all eight cells of an independent NMC/LCO dataset at
 40~$^\circ$C, and a drive-cycle discharge read within 1.4\% of a
 constant-current one;
-\item a remaining-life estimate that, near end of life, behaves as a safe lower
-bound.
+\item a remaining-life estimate that, at the 90\% threshold and near end of
+life, behaves as a safe lower bound (73\% within $\pm$20 cycles on CALCE).
 \end{itemize}
 Each output carries a measured error band and is withheld when its evidence is
 missing or inconsistent. The consistency criterion that makes that decision was
@@ -824,10 +831,14 @@ are refused rather than reported.
 
 %% ===========================================================================
 \section*{CRediT authorship contribution statement}
-\textcolor{red}{[To be completed.]} \textbf{Naveen Vaidyanathan:}
+\textbf{Naveen Vaidyanathan:}
 Conceptualization, Methodology, Software, Validation, Formal analysis,
 Investigation, Data curation, Writing -- original draft, Writing -- review \&
 editing, Visualization.
+
+\section*{Funding}
+\textcolor{red}{[To be completed by the author: funding sources, or a statement
+that this research received no specific grant.]}
 
 \section*{Declaration of competing interest}
 \textcolor{red}{[To be completed by the author.]}
@@ -867,7 +878,7 @@ Section & Artifact (\texttt{reports/metrics/}) & Script (\texttt{scripts/}) \\
 \ref{sec:res-rul} & \texttt{calce\_rul\_horizon\_early\_ref/}, \texttt{error\_bands.csv} & \texttt{run\_rul\_horizon\_study.py}, \texttt{build\_error\_bands.py} \\
 \ref{sec:res-sparse} & \texttt{calce\_field\_rul/} & \texttt{run\_field\_rul\_study.py} \\
 \ref{sec:res-suff} & \texttt{calce\_sufficiency/} & \texttt{run\_sufficiency\_study.py} \\
-\ref{sec:res-xds} & \texttt{cross\_dataset/} & \texttt{run\_cross\_dataset\_study.py} \
+\ref{sec:res-xds} & \texttt{cross\_dataset/} & \texttt{run\_cross\_dataset\_study.py} \\
 \ref{sec:res-oxford} & \texttt{oxford/} & \texttt{run\_oxford\_study.py}, \texttt{run\_oxford\_drive\_cycle.py} \\
 Figs.~\ref{fig:track}--\ref{fig:rul} & \texttt{reports/figures/results\_*.png} & \texttt{export\_results.py} \\
 \bottomrule
