@@ -1,0 +1,29 @@
+\chapter{CONCLUSION AND FUTURE WORK}
+\label{ch:conclusion}
+
+This project asked whether a software layer above a battery management system can turn voltage, current and time into a trustworthy battery health report, and when it should decline to answer. It built BEACON, a three-tier system that ingests telemetry from a CAN bus, a USB serial rig or research datasets, converges all three on one schema, and scores them through one shared pipeline that is served to a React dashboard.
+
+The research answer is that such a layer can measure cell health without any model trained on other cells. On 22 CALCE cells it delivered capacity health at 1.7\% median error (95\% CI 1.4--4.3\%) on 17 cells, with every one of the five refusals explained, and a resistance trend that tracked the laboratory instrument in the same direction on 19 of 20 cells. Partial-discharge capacity health reached 3.2--3.4\% on two cells of real top-of-charge cycling, with a physical rule that refuses windows on the discharge knee. Unchanged, the estimator measured all eight cells of an independent NMC/LCO dataset at 40~$^\circ$C with a 3.0\% median error, and a real drive-cycle discharge read within 1.4\% of a constant-current one. Remaining useful life extrapolated from each cell's own fade was within $\pm$20 cycles 73\% of the time in the last 25 cycles before 90\% capacity, and at that threshold behaved as a safe lower bound.
+
+Equally important are the results that failed. Twelve published fitted methods all lost skill when the held-out unit changed from a cell to a protocol cohort, and no ranking of methods was supportable, which is why the shipped estimators fit nothing across cells. RUL from sparse complete discharges was tested by four methods and refused. The estimator was poor on cold NASA cells (12--14\%), but its own consistency criterion, with a tolerance fixed on CALCE, marked those failures: 4.5\% median error when it said high or medium confidence against 13.2\% when it said low.
+
+On the engineering side, the system refuses to output a number it cannot justify. Nine gates return a refusal as a value instead of an exception, the wire protocol is self-synchronising with record-level and capture-level checks, and 44 test modules and an eight-job CI pipeline pin the documentation to the artifacts that produced it. A physical rig built on a NodeMCU ESP8266 with an INA219 and an LM35 streamed 83 of 83 checksummed frames at a measured 1.000~s cadence. That validates data acquisition. It does not validate health estimation, because no discharge has yet been recorded on the rig.
+
+Each output therefore carries a measured error band and is withheld when its evidence is missing or inconsistent, and the criterion that makes that decision was itself validated against laboratory truth.
+
+\section{LIMITATIONS}
+
+The scope is single cells: LCO for development, an NMC/LCO blend pouch for external validation, mostly at constant current, with one real drive-cycle discharge. Packs, lithium iron phosphate and temperature-dependent capacity correction are not covered. The conventional 80\% end-of-life threshold is not validated on CALCE, and the Oxford results at 80\% are a conservative bound with low precision. The heuristic risk layer is not validated against measured degradation. The bench rig has been run on one cell, at rest, for under 90~s, and its two sensors have not yet operated in the same capture.
+
+\section{FUTURE WORK}
+
+In order of dependency:
+
+\begin{enumerate}
+    \item \textbf{Hardware validation.} Capture a load step and a full constant-current discharge on the rig with all three channels real, compare the resulting capacity with an independent charger/discharger, and measure sensor accuracy against a reference meter. Then repeat on more than one cell.
+    \item \textbf{Protocol hardening.} Replace the XOR checksum with a CRC-8 at the same cost, which detects burst errors and byte transpositions the XOR form cannot.
+    \item \textbf{Removing the remaining silent default.} The serial path no longer assumes a rated capacity, but the CAN and batch paths still do. A per-vehicle registry entry is needed before the CAN path is pointed at a real vehicle.
+    \item \textbf{Temperature-aware correction.} Extend the ohmic correction to the charge-transfer and diffusion terms that dominate at low temperature, so that the cold-cell failure is reduced and not only flagged.
+    \item \textbf{Broader validation.} Test packs, lithium iron phosphate and large-scale dynamic drive cycles, and obtain data that crosses the 80\% end-of-life convention for a validated result there.
+    \item \textbf{Persistence and operations.} Add a database behind the fleet store, structured logging and metrics, a load-test harness, and asynchronous serial ingest with backpressure.
+\end{enumerate}

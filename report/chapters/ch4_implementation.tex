@@ -1,0 +1,408 @@
+\chapter{IMPLEMENTATION AND DEPLOYMENT}
+\label{ch:implementation}
+
+\section{IMPLEMENTATION OVERVIEW}
+
+The previous chapter defined the design: one schema, one scoring function, two estimators that fit nothing across cells, and explicit refusals. This chapter describes how that design was realised. The implementation has three parts:
+
+\begin{itemize}
+    \item \textbf{Part A -- Telemetry and estimation software:} the packages that acquire, validate, segment and score telemetry (Sections~\ref{sec:impl-env} to~\ref{sec:impl-gates}).
+    \item \textbf{Part B -- Hardware bench rig:} the instrumentation design, firmware and physical bring-up that supply real telemetry to the software (Section~\ref{sec:impl-hw}).
+    \item \textbf{Part C -- Service tier and deployment:} the REST API, the gateway, the dashboard, testing, continuous integration and containers (Sections~\ref{sec:impl-api} to~\ref{sec:impl-deploy}).
+\end{itemize}
+
+\section{DEVELOPMENT ENVIRONMENT AND TOOLS}
+\label{sec:impl-env}
+
+The system is written in Python, Node (JavaScript), React and C++ (Arduino firmware), with about 23,000 lines of Python in the core package and 44 test modules. The components that matter for reproducibility are listed in Table~\ref{tab:software}.
+
+\begin{table}[htbp]
+	\caption{Software Components Used}
+	\centering
+	\small
+	\renewcommand{\arraystretch}{1.15}
+	\setlength{\tabcolsep}{4pt}
+	\begin{tabular}{|L{0.27\linewidth}|L{0.57\linewidth}|}
+		\hline
+		\textbf{Software} & \textbf{Role} \\
+		\hline
+		Python ($\ge$3.10) & Core language; CI tests 3.10 (the declared floor) and 3.12 \\
+		\hline
+		pandas, NumPy, scikit-learn & Telemetry frames, numerical work, benchmark estimators and bootstrap analysis \\
+		\hline
+		XGBoost, PyTorch (optional) & Benchmark methods (gradient boosting, LSTM) \\
+		\hline
+		FastAPI, uvicorn & Scoring, telemetry ingest and fleet store as a REST service \\
+		\hline
+		cantools, python-can (optional) & DBC decoding and CAN capture; CI also runs the suite with them uninstalled \\
+		\hline
+		pyserial (optional) & Reading the physical rig's serial port \\
+		\hline
+		Express (Node) & Gateway between the client and the Python service \\
+		\hline
+		React, Vite & Dashboard client \\
+		\hline
+		Arduino C++ / \texttt{arduino-cli} & Rig firmware, compiled for ESP32, ESP8266 and AVR \\
+		\hline
+		pytest, ruff, mypy & Tests, linting and type checking \\
+		\hline
+		Docker, Docker Compose & Multi-stage image and three-service stack \\
+		\hline
+		GitHub Actions & Eight CI jobs, including a reproduction of the headline study \\
+		\hline
+	\end{tabular}
+	\label{tab:software}
+\end{table}
+
+\section{CODE ORGANISATION}
+\label{sec:impl-org}
+
+The core package \texttt{src/bms} is divided into packages with one responsibility each (Table~\ref{tab:packages}).
+
+\begin{table}[htbp]
+	\caption{Organisation of the Core Package}
+	\centering
+	\small
+	\renewcommand{\arraystretch}{1.15}
+	\setlength{\tabcolsep}{4pt}
+	\begin{tabular}{|L{0.22\linewidth}|L{0.64\linewidth}|}
+		\hline
+		\textbf{Package} & \textbf{Responsibility} \\
+		\hline
+		\texttt{telemetry} & CAN capture and replay, serial ingestion and protocol, cycle segmentation, and the shared scoring function \\
+		\hline
+		\texttt{io} & Dataset loaders (NASA, CALCE, Oxford), DBC examples, unified schema \\
+		\hline
+		\texttt{features}, \texttt{preprocessing} & Behaviour features and data conditioning \\
+		\hline
+		\texttt{risk}, \texttt{health} & Rule-based risk score, aging budget and health index (heuristic layer) \\
+		\hline
+		\texttt{rul} & Fade-extrapolation remaining useful life \\
+		\hline
+		\texttt{guardian}, \texttt{digital\_twin} & Human-readable diagnosis and the state-machine twin \\
+		\hline
+		\texttt{explain} & Exact Shapley attribution over the rule scores \\
+		\hline
+		\texttt{uncertainty} & Distribution-free uncertainty (conformal prediction) and coverage under shift \\
+		\hline
+		\texttt{benchmarks} & Published methods run through the project's own validation gate \\
+		\hline
+		\texttt{adaptive} & Governed model promotion across datasets and protocols \\
+		\hline
+		\texttt{detect}, \texttt{physics} & Unsupervised usage segmentation; physics-grounded degradation models \\
+		\hline
+		\texttt{simulation} & Synthetic telemetry for tests and the no-hardware demo \\
+		\hline
+		\texttt{api}, \texttt{dashboard} & FastAPI service and the static HTML dashboard \\
+		\hline
+	\end{tabular}
+	\label{tab:packages}
+\end{table}
+
+Outside the package, \texttt{mern/} holds the Express gateway and React client, \texttt{firmware/beacon\_rig/} the Arduino sketch, \texttt{scripts/} the study and demo scripts, \texttt{tests/} the test modules, and \texttt{docs/adr/} fourteen architecture decision records, including those that record reversed decisions.
+
+\section{TELEMETRY ACQUISITION: THREE TRANSPORTS, ONE FRAME}
+\label{sec:impl-transports}
+
+The three transports converge on one unified telemetry frame with the columns \texttt{cell\_id}, \texttt{test\_time\_s}, \texttt{voltage\_v}, \texttt{current\_a}, \texttt{temperature\_c} and \texttt{soc}.
+
+\begin{itemize}
+    \item \textbf{CAN bus.} Frames are decoded against a DBC definition, and a coverage gate refuses a capture whose required signals are missing.
+    \item \textbf{USB serial.} A line source feeds a parser that classifies each line, verifies its checksum and validates every field against a declared range (Section~\ref{sec:impl-protocol}).
+    \item \textbf{Research datasets.} Loaders read the NASA MATLAB files and the CALCE and Oxford records into the same frame.
+\end{itemize}
+
+\subsection{THE SEAM IS NARROW}
+
+A serial source is a protocol with one method, \texttt{lines()}. A physical port, a recorded text file, a list in a test and the deterministic emulator are interchangeable, so the demo path and the hardware path differ in one constructor call. The emulator deliberately generates \emph{wire-format text} and not record objects. Emitting objects would have been less code but would have proved nothing, because the parser, the checksum, the schema validation and the coverage gate would all be bypassed in exactly the path the tests exercise. The emulator even prints an ESP32 boot banner, so the sentinel filter runs on every test. Recording composes at the same seam: one decorator makes a live port, a replay or the emulator recordable, and the file on disk is exactly the bytes that produced the result.
+
+\section{SERIAL WIRE PROTOCOL}
+\label{sec:impl-protocol}
+
+Each frame is a line of text with a sentinel, a record kind, a JSON body and an optional checksum (Fig.~\ref{fig:frame}). The record kinds are \texttt{HELLO} (the rig declares its channels and rated capacity), \texttt{D} (data) and \texttt{S} (status).
+
+\begin{figure}[htbp]
+    \centering
+    {\footnotesize
+\begin{verbatim}
+BEACON1 D {"t":12.5,"v":3.91,"i":-1.48,"tc":27.4,"soc":82.1}*06
+\end{verbatim}}
+    \caption{A data frame: sentinel \texttt{BEACON1}, kind \texttt{D}, JSON body, and the XOR checksum \texttt{*06}, ending in a newline.}
+    \label{fig:frame}
+\end{figure}
+
+\subsection{FRAMING BY SENTINEL}
+
+Framing is by sentinel and not by length. Every microcontroller prints boot banners and debugging text, so a length-prefixed parser would resynchronise after such noise only by luck. A sentinel parser discards anything not beginning with \texttt{BEACON1} as counted noise and continues, which makes the protocol self-synchronising: it recovers at the next newline after any corruption, with a loss of at most one frame.
+
+\subsection{ERROR DETECTION}
+
+The checksum is an 8-bit XOR over the body (a longitudinal redundancy check). It detects all single-bit errors, but it cannot detect an even number of bit errors in the same bit position, any reordering of bytes, or corruption of the sentinel and kind fields, which lie outside the body. Under a random-corruption model, 0.39\% of corrupted frames would pass. A CRC-8 occupies the same eight bits and detects all bursts up to eight bits and byte transpositions, so it is recorded as the protocol's clearest improvement. It was not adopted for the first bring-up because the XOR form is three lines of C and legible in a serial monitor.
+
+\subsection{CHANNEL UTILISATION}
+
+Table~\ref{tab:channel} gives the measured frame sizes and the derived link performance. At 1~Hz the link is over-provisioned by more than two orders of magnitude, so the verbose JSON codec is the default: it costs 39\% more bandwidth than the compact codec and buys human-legible frames during bring-up.
+
+\begin{table}[htbp]
+	\caption{Frame Size and Link Performance of the JSON Codec}
+	\centering
+	\small
+	\renewcommand{\arraystretch}{1.15}
+	\setlength{\tabcolsep}{4pt}
+	\begin{tabular}{|L{0.5\linewidth}|C{0.3\linewidth}|}
+		\hline
+		\textbf{Quantity} & \textbf{Value} \\
+		\hline
+		Data frame, mean size & 72.4 B \\
+		\hline
+		Bits on the wire per frame & 724 \\
+		\hline
+		Maximum sustainable rate at 115200 baud & 159 frames/s \\
+		\hline
+		Utilisation at 1~Hz, 115200 baud & 0.63\% \\
+		\hline
+		Utilisation at 1~Hz, 9600 baud (as built) & about 7.5\% \\
+		\hline
+	\end{tabular}
+	\label{tab:channel}
+\end{table}
+
+\section{REFUSAL GATES}
+\label{sec:impl-gates}
+
+A request through the serial path passes the following stages. The route validates the request, a line source yields lines (decode errors become counted rejections, not exceptions), the parser classifies each line and verifies its checksum, the serial pipeline applies the gates below and assembles the unified frame, and the shared scoring function runs. A decode-statistics record rides along the whole way so that a capture that silently dropped most of its lines cannot look like a clean one. Every gate returns a result carrying a refusal and not an exception (Table~\ref{tab:gates}).
+
+\begin{table}[htbp]
+	\caption{Gates and What Each Prevents}
+	\centering
+	\small
+	\renewcommand{\arraystretch}{1.15}
+	\setlength{\tabcolsep}{4pt}
+	\begin{tabular}{|L{0.27\linewidth}|L{0.6\linewidth}|}
+		\hline
+		\textbf{Gate} & \textbf{What it prevents} \\
+		\hline
+		Missing required channel & A comparison against \texttt{NaN} is false, so an absent temperature reads as ``not hot'' on every row. This defect shipped once and is why the gate exists. \\
+		\hline
+		Unimplemented schema id & Identical field names meaning different things across a schema change. \\
+		\hline
+		SOC given as a 0--1 fraction & A value that passes the range check but means the wrong thing. Caught per capture, because a fraction lies inside the 0--100 range. \\
+		\hline
+		Reversed current sign & A rig reporting discharge as positive yields no discharge phases and no SOH while appearing to stream perfectly. \\
+		\hline
+		Time running backwards & A brown-out restarts \texttt{millis()} at zero, and coulomb counting would cancel the second session against the first. Sorting would hide it. \\
+		\hline
+		Fewer than 50\% of records parsed & A wrong baud rate or mismatched firmware, as distinct from cable noise. \\
+		\hline
+		No rated capacity declared & C-rate is current divided by rated capacity, and an assumed 2.0~Ah on a 3.4~Ah cell reads 1.7~C while drawing 1~C. \\
+		\hline
+		No complete discharge cycle & Capacity is comparable only across equal depths of discharge, so partial cycles are excluded and not scaled. \\
+		\hline
+		Nothing passed the promotion gate & The adaptive calibrator refuses to predict fade, and no transport routes around this. \\
+		\hline
+	\end{tabular}
+	\label{tab:gates}
+\end{table}
+
+Two properties of this design are load-bearing. First, range checks \emph{reject} rather than clamp: an out-of-range value is evidence that the reading is not what the schema says it is (a disconnected thermistor floats, an unpowered INA219 reads zero), and clamping would produce a value that looks measured and is not. Second, some errors are not expressible per record, so the capture-level checks sit one level above the record-level ones. Refusing is also not the same as withholding everything: segmentation and coulomb counting do not divide by capacity, so the capture is measured and reported and only the behaviour scoring is withheld. The capacity gate was moved to the scoring stage after the first implementation discarded valid cycle measurements.
+
+\section{HARDWARE BENCH RIG}
+\label{sec:impl-hw}
+
+\subsection{REQUIREMENT AND DESIGN CALCULATIONS}
+
+The rig must measure one lithium-ion cell during charge and discharge and supply the five schema channels (terminal voltage, signed current, temperature, state of charge and elapsed time). State of charge is derived, not measured. The binding accuracy requirement is on capacity, with an acceptance criterion of within 5\% of an independent reference.
+
+The hardware design document works the instrumentation from datasheet figures; none of it has been measured on assembled hardware, and the calculations below are therefore design values. Current is measured high-side through a shunt read by an INA219, so that the terminal-voltage measurement is not shifted by the shunt drop. The shunt sizing is a trade between range, resolution and self-heating (Table~\ref{tab:shunt}).
+
+\begin{table}[htbp]
+	\caption{Shunt Sizing for the INA219 (320~mV Full Scale, 10~$\mu$V LSB)}
+	\centering
+	\small
+	\renewcommand{\arraystretch}{1.15}
+	\setlength{\tabcolsep}{4pt}
+	\begin{tabular}{|C{0.13\linewidth}|C{0.15\linewidth}|C{0.15\linewidth}|C{0.17\linewidth}|C{0.2\linewidth}|}
+		\hline
+		\textbf{$R_s$} & \textbf{$I_\mathrm{max}$} & \textbf{$I_\mathrm{LSB}$} & \textbf{Power at 2~A} & \textbf{Verdict} \\
+		\hline
+		0.1~$\Omega$ & 3.2~A & 100~$\mu$A & 0.40~W & Selected for $\le$3~A \\
+		\hline
+		0.05~$\Omega$ & 6.4~A & 200~$\mu$A & 0.20~W & 1C on a 3.4~Ah cell \\
+		\hline
+		0.01~$\Omega$ & 32~A & 1.00~mA & 0.04~W & Wasteful here \\
+		\hline
+	\end{tabular}
+	\label{tab:shunt}
+\end{table}
+
+Three consequences are recorded. Discharge must stay below 3.2~A with the 0.1~$\Omega$ shunt, because saturation is not a graceful failure: the reading clips, coulomb counting under-integrates and capacity reads low with nothing to indicate why. Self-heating shifts the shunt value, and a shunt reading high makes current read low, a systematic capacity error in one direction. The shunt drop is also subtracted from the voltage the INA219 reports on its load side, which is 200~mV (5\% of a 4~V reading) at 2~A, so the bus voltage must be wired to the cell side of the shunt or corrected in firmware.
+
+The error budget carries the component errors through to capacity. Combining the INA219 gain error (about 0.5\%), the shunt tolerance (1\%) and shunt self-heating (about 0.2\%) in quadrature gives about 1.14\% of reading, and because capacity is the integral of current, a gain error on current is a gain error on capacity. The expected capacity accuracy is about 1.2\%, dominated by the shunt tolerance, against the 5\% acceptance criterion. A 0.1\% shunt would roughly halve it. Offset and timing contribute negligibly. These are datasheet-based design figures, and measurement against a reference meter has not been done.
+
+\subsection{AS-BUILT RIG}
+
+The rig that was physically brought up differs from the design document in two components, and that difference is stated here and not hidden (Table~\ref{tab:asbuilt}, Fig.~\ref{fig:rig}).
+
+\begin{table}[htbp]
+	\caption{Design Document Versus As-Built Rig}
+	\centering
+	\small
+	\renewcommand{\arraystretch}{1.15}
+	\setlength{\tabcolsep}{4pt}
+	\begin{tabular}{|L{0.2\linewidth}|L{0.32\linewidth}|L{0.32\linewidth}|}
+		\hline
+		\textbf{Element} & \textbf{Design document} & \textbf{As built} \\
+		\hline
+		Microcontroller & ESP32-WROOM-32 DevKit & NodeMCU ESP8266 (CH340 USB bridge) \\
+		\hline
+		Current and voltage & INA219 on I$^2$C & INA219 \\
+		\hline
+		Temperature & DS18B20 (1-Wire) & LM35 \\
+		\hline
+		Cell & Protected 18650 & HONGLI ICR-18650, single cell \\
+		\hline
+		Serial rate & 115200 baud & 9600 baud (CH340 bridge limitation) \\
+		\hline
+	\end{tabular}
+	\label{tab:asbuilt}
+\end{table}
+
+\begin{figure}[htbp]
+    \centering
+    \resizebox{0.97\linewidth}{!}{%
+    \begin{tikzpicture}[box/.style={draw, rounded corners=2pt, align=center, minimum height=10mm, text width=2.7cm, font=\small},
+                        arr/.style={-{Stealth[length=2.2mm]}, thick}]
+        \node[box] (cell) at (0,0) {18650 cell\\(HONGLI ICR)};
+        \node[box] (ina)  at (4.2,0) {INA219\\(V and I)};
+        \node[box] (mcu)  at (8.4,0) {NodeMCU\\ESP8266};
+        \node[box] (pc)   at (13.6,0) {Host PC\\(parser, scoring)};
+        \node[box] (lm)   at (8.4,-2.4) {LM35\\(temperature)};
+        \draw[arr] (cell) -- (ina);
+        \draw[arr] (ina) -- node[above, font=\scriptsize]{I$^2$C} (mcu);
+        \draw[arr] (mcu) -- node[above, font=\scriptsize]{USB serial} node[below, font=\scriptsize]{9600 baud} (pc);
+        \draw[arr] (lm) -- (mcu);
+    \end{tikzpicture}}
+    \caption{As-built bench rig: measurement chain from the cell to the host.}
+    \label{fig:rig}
+\end{figure}
+
+Protection must be in hardware in series with the cell, never in the monitoring firmware, because a firmware hang must not leave the cell unprotected. The monitoring electronics are powered from USB, not from the cell. The design power budget is about 48~mA typical against 500~mA available from USB, and the firmware keeps the radios disabled, not to save power but because transmit current spikes can brown out a weakly supplied board, which would restart the time base.
+
+\subsection{FIRMWARE}
+
+The firmware is one board-agnostic Arduino sketch. The sensors sit behind four replaceable functions (\texttt{readVoltageV}, \texttt{readCurrentA}, \texttt{readTemperatureC} and \texttt{readSocPercent}), so a board with only some sensors can still run. At boot it probes each sensor, emits a status record naming what failed, and declares in its \texttt{HELLO} only the channels it can actually supply, together with the rated capacity. The host then scores the channels present and refuses the rest by name. The sketch compiles for three targets on every push (Table~\ref{tab:compile}), and a test compares its declared field set, as a set, against the schema.
+
+\begin{table}[htbp]
+	\caption{Firmware Compilation Record (\texttt{arduino-cli}, all warnings enabled)}
+	\centering
+	\small
+	\renewcommand{\arraystretch}{1.15}
+	\setlength{\tabcolsep}{4pt}
+	\begin{tabular}{|L{0.22\linewidth}|C{0.3\linewidth}|C{0.26\linewidth}|}
+		\hline
+		\textbf{Target} & \textbf{Flash used} & \textbf{RAM used} \\
+		\hline
+		Arduino Uno (AVR) & 8,990 B of 32,256 (27\%) & 460 B of 2,048 (22\%) \\
+		\hline
+		NodeMCU v2 (ESP8266) & 240,340 B of 1,048,576 (22\%) & 28,372 B of 80,192 (35\%) \\
+		\hline
+		ESP32 Dev Module & 272,324 B of 1,310,720 (20\%) & 22,140 B of 327,680 (6\%) \\
+		\hline
+	\end{tabular}
+	\label{tab:compile}
+\end{table}
+
+\subsection{BRING-UP PROCEDURE}
+
+Bring-up was done in two stages that must not be combined. Stage~A proves the transport with nothing at risk: no battery and no sensors. Stage~B adds one cell and the sensors, replacing the four read functions one at a time. Doing both at once would make a wiring fault and a protocol fault indistinguishable with a lithium cell connected. Stage~A passes when the accepted fraction is at least 0.99, a \texttt{HELLO} was seen, there are no time reversals, and the C-rate basis names the capacity the sketch declared, and when replaying the saved capture reproduces the live numbers.
+
+A bare board can produce a full report: the stub firmware's synthetic profile scores as complete cycles, so a rig with no sensors attached yields a health index and a remaining life that look like success. The records are well formed and in range, so the software cannot detect this, and the only defence is procedural: any hardware claim must state which of the four read functions were real. The captured file from a board with no sensors is kept in the repository as a labelled counter-example.
+
+\section{SERVICE TIER: REST API, GATEWAY AND DASHBOARD}
+\label{sec:impl-api}
+
+The service tier has three components (Table~\ref{tab:services}). The gateway has exactly one job, translating HTTP calls from the client into calls to the Python service, and every route in it is a thin forward, so a wrong behaviour is fixed in the Python service and not in the gateway.
+
+\begin{table}[htbp]
+	\caption{Services}
+	\centering
+	\small
+	\renewcommand{\arraystretch}{1.15}
+	\setlength{\tabcolsep}{4pt}
+	\begin{tabular}{|L{0.18\linewidth}|L{0.3\linewidth}|L{0.34\linewidth}|}
+		\hline
+		\textbf{Service} & \textbf{Stack} & \textbf{Responsibility} \\
+		\hline
+		\texttt{api} (port 8000) & FastAPI, uvicorn & Scoring, telemetry ingest, fleet store \\
+		\hline
+		\texttt{gateway} (port 5000) & Express & Client-facing aggregation \\
+		\hline
+		\texttt{client} (port 5173) & React, Vite & Fleet table, detail, twin, replay \\
+		\hline
+	\end{tabular}
+	\label{tab:services}
+\end{table}
+
+The principal endpoints include \texttt{GET /healthz} (service liveness), \texttt{POST /pipeline/simulate}, \texttt{GET /batteries}, \texttt{GET /batteries/\{id\}}, \texttt{GET /batteries/\{id\}/timeline}, and the telemetry routes for CAN replay, serial replay, coverage, the twin and the thermal view. The \texttt{/healthz} endpoint is explicitly service liveness and not battery health: in a battery-monitoring system the naming collision is a real hazard and is called out at its definition. The container health check polls it.
+
+The React client has five views (Table~\ref{tab:views}). A Guardian explanation is rendered inside the CAN replay view and not as its own tab, because it is only meaningful next to the run it explains. Refusals are rendered as results and not as errors.
+
+\begin{table}[htbp]
+	\caption{Dashboard Views}
+	\centering
+	\small
+	\renewcommand{\arraystretch}{1.15}
+	\setlength{\tabcolsep}{4pt}
+	\begin{tabular}{|L{0.25\linewidth}|L{0.6\linewidth}|}
+		\hline
+		\textbf{View} & \textbf{Shows} \\
+		\hline
+		Fleet & Fleet table with health, risk and RUL per battery, from a simulated or loaded run \\
+		\hline
+		CAN Replay & Replay of a decoded CAN capture with coverage and the Guardian explanation \\
+		\hline
+		Digital Twin & Twin state and state transitions for a battery \\
+		\hline
+		Thermal & Pack temperature view built only from what was measured \\
+		\hline
+		Transfer Validation & Whether a model may be transferred between datasets, and why not \\
+		\hline
+	\end{tabular}
+	\label{tab:views}
+\end{table}
+
+There are two deliberate absences. There is no database: the fleet store is in memory, and adding a database to the compose file would imply a persistence layer that does not exist, so the compose file says so. Persistence is the next substantial piece of work.
+
+\section{HEALTH REPORT CARD}
+\label{sec:impl-card}
+
+The health report script renders the outputs as a plain-language card for one battery, in five parts: how healthy it is, how long it has left, what the usage is doing to it, what to do, and what the report cannot tell. Every figure carries its validation error band, which is taken from a file of measured bands and pinned by a test, and each output is labelled measured, estimate or heuristic. When ground truth exists, the card is followed by a check against the laboratory, which the card itself was not shown. Section~\ref{sec:res-card} reports a worked example.
+
+\section{TESTING, CONTINUOUS INTEGRATION AND REPRODUCIBILITY}
+\label{sec:impl-test}
+
+There are 44 test modules, and three kinds of test are not the usual kind.
+
+\begin{itemize}
+    \item \textbf{Prose-to-evidence pinning.} A test ties every figure quoted in the documentation to the artifact that produced it, so re-running an experiment and forgetting to update a paragraph fails the build. It caught a stale figure that had already been published.
+    \item \textbf{Cross-artifact structural tests.} The firmware's declared field set is compared as a set against the schema, and the documented schema table must equal the rendered one. Substring assertions had already let a defect through: a renamed field left the schema id untouched, so the sketch kept announcing a version it no longer spoke.
+    \item \textbf{Known-defect pins.} Some tests assert behaviour that is not desirable, with a comment saying so, for example that the risk score is too coarse to see a sevenfold change in average stress. Changing it would silently re-score every published figure, so it is pinned and a future change has to be deliberate.
+\end{itemize}
+
+Continuous integration runs eight jobs: lint and type checking, the test suite on Python 3.10 and 3.12, a job that uninstalls the optional CAN dependency and re-runs the suite, a job that reproduces the headline benchmark end to end, a firmware compile for three targets, the gateway tests, the client build, and the Docker build. The job without the optional dependency exists because ``it is optional'' is otherwise an untested claim. The Python-version matrix exists because testing only the newest version lets a declared floor rot silently.
+
+\section{CONTAINERISATION AND DEPLOYMENT}
+\label{sec:impl-deploy}
+
+The Docker image is multi-stage on a slim Python 3.12 base, with the compiler confined to the build stage, a non-root user, and a health check that polls service liveness. Docker Compose brings up the API, the gateway and the client, with the gateway held until the API reports healthy, and a separate study service writes the result CSVs back to the host. The system runs on a fresh clone with no hardware, no database, no API keys and no dataset download:
+
+\begin{verbatim}
+python main.py                     # end-to-end run
+python scripts/run_serial_demo.py  # emulated rig, no hardware
+python -m pytest tests/ -q         # the test suite
+docker compose up                  # API, gateway, client
+\end{verbatim}
+
+\section{CHAPTER SUMMARY}
+
+This chapter described the realisation of the design: a shared scoring path fed by three transports through a narrow seam, a self-synchronising wire protocol with refusal gates at both record and capture level, a physical rig brought up in two stages, a three-service stack served from containers, and a test and CI strategy aimed at keeping the documentation and the code honest. What this implementation \emph{achieved} is reported in the next chapter.

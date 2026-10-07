@@ -1,0 +1,67 @@
+\chapter{INTRODUCTION}
+
+\section{BACKGROUND}
+
+A battery management system (BMS) protects a lithium-ion pack and estimates its state of charge. It already holds the three measurements from which ageing is visible: terminal voltage, current and temperature \cite{waag2014}. A software layer above it can, in principle, turn those measurements into answers that an operator or driver can act on: how much of its original capacity the battery retains (state of health, SOH), how fast that is changing, how long it has before it should be replaced (remaining useful life, RUL), and what usage is doing to it.
+
+Capacity and resistance are the two quantities through which ageing usually appears. Capacity fades as lithium inventory and active material are lost, and internal resistance grows, which reduces the power the cell can deliver \cite{vetter2005,barre2013}. Reviews of SOH estimation distinguish direct measurement, model-based estimation and data-driven approaches \cite{berecibar2016,waag2014}. A vehicle, however, rarely provides the conditions a laboratory does: discharges are partial, rates vary, and no reference test is available. Any practical health estimator must therefore work from what the vehicle actually records.
+
+\section{MOTIVATION}
+
+The dominant way to build such a software layer is to fit a model. Features are extracted from cycling data and a regressor is trained to predict SOH, with feature sets ranging from usage aggregates to discharge-curve descriptors such as the capacity--voltage difference between cycles \cite{severson2019}. Skill is commonly reported under leave-one-cell-out validation, in which a held-out cell's siblings from the same test protocol remain in the training set, so the test asks whether the model recognises a protocol it has already seen.
+
+A deployed BMS faces a harder question: the next battery comes from conditions the training set never contained. This project began as a battery-degradation study built on fitted models, and measured that question directly. On a benchmark of 31 NASA cells in nine protocol cohorts, every one of twelve published methods lost skill when the held-out unit changed from a cell to a whole protocol cohort, and no method could be distinguished from another (Chapter~\ref{ch:results}). That negative result is the motivation for what follows: if models fitted across cells do not transfer, a health layer for a vehicle has to be built from estimators that fit nothing across cells, and from a pipeline that is honest about when it does not know.
+
+The work is also motivated by engineering practice. A monitoring system that is asked for a number it cannot compute and returns a plausible one is dangerous. A defect of exactly this kind occurred during development: a missing temperature channel was scored as ``temperature is fine'', because a comparison against \texttt{NaN} evaluates to false, so every heat check silently passed for a pack nobody had measured. The design of BEACON takes the opposite stance: the system refuses to produce a number it cannot justify, and says why.
+
+\section{PROBLEM STATEMENT}
+
+The problem addressed in this project is how to build a software layer above a BMS that can measure battery health from the BMS's own signals, namely voltage, current and time, without depending on a model trained on other cells, and that knows when its evidence is insufficient. Three sub-problems follow.
+
+\begin{itemize}
+    \item \textbf{Measurement.} How can SOH, internal resistance and RUL be measured from voltage, current and time alone, including from partial discharges, and how accurately?
+    \item \textbf{Honesty.} How can the system decide, without ground truth, when an estimate should be reported with a stated error band and when it should be refused?
+    \item \textbf{Integration.} How can data from a CAN bus, a serial bench rig and research datasets all be scored through one shared pipeline and served to a dashboard, so that a difference in output is a difference in the telemetry and not in the code?
+\end{itemize}
+
+\section{RESEARCH GAP}
+
+Data-driven SOH estimators are widespread, but how they are validated changes what they appear to achieve. Group-wise splitting by cell changes reported skill substantially \cite{maher2025}, and a large gap between random and cell-wise splits has been reported on NASA data \cite{le2026}. These studies stop at the cell. What remains insufficiently characterised is the next step: whether skill survives a change of \emph{test protocol}, and what a BMS software layer can still measure reliably when it does not.
+
+Curve-based methods, including differential voltage analysis \cite{bloom2005} and incremental capacity analysis, including on-board use \cite{weng2013}, read degradation from the shape of the voltage--charge curve. Online recursive estimation of cell parameters, including resistance, is established \cite{plett2004}. The gap this project addresses is the combination: estimators validated from raw telemetry rather than from laboratory summaries, with an online resistance correction taken from the load step, gates that refuse rather than extrapolate, and a measured criterion for when the evidence suffices, all evaluated on more than one dataset without re-tuning.
+
+\section{OBJECTIVES}
+
+The objectives of the project are:
+
+\begin{enumerate}
+    \item To build an end-to-end telemetry system that ingests data from a CAN bus, a serial bench rig and research datasets, converges them on one schema, and scores them through one shared pipeline.
+    \item To estimate SOH from voltage, current and time alone, with an ohmic correction identified from the load step, and to validate it against laboratory capacity.
+    \item To report resistance as a second validated health quantity, and to estimate RUL from each cell's own fade trend, reported as a user meets it.
+    \item To measure rather than assert when the evidence suffices, so that every output is validated, banded by its measured error, or refused.
+    \item To validate externally, without re-tuning, on a second and third dataset, and to retain negative results.
+    \item To build and bring up a physical data-acquisition rig, and to serve all results through a REST API and a web dashboard.
+\end{enumerate}
+
+\section{KEY CONTRIBUTIONS}
+\label{sec:contributions}
+
+The main contributions of this work are as follows.
+
+\begin{enumerate}
+    \item \textbf{A three-tier telemetry system} (CAN/serial/dataset ingestion, a shared scoring pipeline, and a FastAPI, Express and React service tier) in which every output is labelled measured, estimated or heuristic and carries its error band, or is refused with a reason.
+    \item \textbf{A field-realisable SOH estimator} validated from voltage, current and time alone, in which the ohmic correction uses a resistance identified from the voltage step at each load onset. Relative to no correction, it raises coverage from 12 to 17 of 22 cells and lowers median error from 4.3\% to 1.7\%.
+    \item \textbf{Resistance as a validated second health quantity:} the step resistance tracks the laboratory instrument on 19 of 20 cells.
+    \item \textbf{SOH from partial discharges} via a window learned from the cell's own early discharges, with a physical refusal rule for windows on the discharge knee whose threshold is not tuned.
+    \item \textbf{RUL accuracy reported as a user meets it}, indexed by the prediction, together with a measured correction (88\% to 73\%) caused by a reference capacity that used the future.
+    \item \textbf{Evidence sufficiency measured rather than asserted:} confidence follows the consistency of readings, which predicts error, and not the number of discharges, which does not.
+    \item \textbf{External validation without re-tuning} on a second dataset of a different chemistry, manufacturer, format and temperature, and a documented failure on a third.
+    \item \textbf{A working bench rig and software contract:} a serial wire protocol with checksums and refusal gates, firmware, and a physical bring-up on an ESP8266 board, with fault injection tests.
+    \item \textbf{Negative results retained:} fitted models across protocols and four routes to RUL from sparse complete discharges.
+\end{enumerate}
+
+\section{SCOPE AND ORGANISATION OF THE REPORT}
+
+Development and primary validation use single lithium cobalt oxide (LCO) cells at constant current (CALCE). External validation uses NMC/LCO blend pouch cells at 40~$^\circ$C (Oxford), which also supply one real drive-cycle discharge. A third dataset (NASA) is used for the benchmark and for a cross-dataset test. The project makes no claim about packs, lithium iron phosphate, or temperature-dependent capacity correction. The bench rig validates data acquisition, not health estimation: no discharge has yet been recorded on it.
+
+The remainder of the report is organised as follows. Chapter~\ref{ch:lit} reviews related work. Chapter~\ref{ch:method} presents the system design and the estimation methods. Chapter~\ref{ch:implementation} describes the implementation, the hardware rig and the deployment. Chapter~\ref{ch:results} reports the results and discusses them. Chapter~\ref{ch:conclusion} concludes and lists future work.

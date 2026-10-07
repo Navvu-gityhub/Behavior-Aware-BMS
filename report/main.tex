@@ -1,0 +1,101 @@
+% ============================================================
+%  B.Tech PROJECT REPORT -- BEACON
+%  Built on the structure of the department template
+%  (amritareport.cls). Keep amritareport.cls and the two logo
+%  files in this folder, and the figures in images/.
+%  Chapters live in chapters/*.tex and are pulled in with \input.
+% ============================================================
+\documentclass[12pt,a4paper]{amritareport}
+
+\usepackage{array}
+\usepackage{graphicx}
+\usepackage{amsmath,amssymb}
+\usepackage{url}
+\usepackage{tikz}
+\usetikzlibrary{shapes.geometric, arrows.meta, positioning, fit, calc}
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+\newcolumntype{C}[1]{>{\centering\arraybackslash}p{#1}}
+
+% Notation used throughout the report
+\newcommand{\SOH}{\mathrm{SOH}}
+\newcommand{\Qw}{Q_{\mathrm{w}}}
+
+% ---------- Report details ----------
+\reporttitle{BEACON: A Behavior-Aware Software Layer for Electric-Vehicle Battery Health Monitoring from Voltage, Current and Time}
+
+\degreename{BACHELOR OF TECHNOLOGY IN COMPUTER AND COMMUNICATION ENGINEERING}
+
+\reportdate{October 2026}
+
+\deptaddress{Department of ECE, \\ Amrita School of Engineering,\\ Amrita Vishwa Vidyapeetham, Chennai.}
+
+% For group projects, call \addcandidate once per member.
+% TODO: replace the roll number (and add team members, if any).
+\addcandidate{Naveen Vaidyanathan}{CH.EN.U4CCE23XXX}
+
+% TODO: fill in the supervisor and head of department.
+\supervisor{[SUPERVISOR NAME]}{[DESIGNATION]}
+\hod{[HOD NAME]}{[DESIGNATION]}
+
+\universitylogo{Amrita_Logo.png}
+\universityfulllogo{Amrita_Full_Logo.png}
+
+\begin{document}
+
+\makecoverpage
+
+\pagenumbering{roman}
+\maketitlepage
+\makebonafidecertificate
+\makedeclaration
+\reportabstract{
+A battery management system (BMS) measures terminal voltage, current and temperature, but whether software above it can turn these into a trustworthy state of health (SOH) and remaining useful life (RUL) is usually answered by fitting a model. This project builds BEACON, a three-tier telemetry and health-monitoring system, and tests that question with measured evidence. BEACON ingests data from a CAN bus, a USB serial bench rig or research datasets, converges all three on one schema, and scores them through one shared pipeline that is served over a REST API to a React dashboard. On 31 NASA cells in nine protocol cohorts, twelve published methods all lost skill under leave-one-cohort-out validation, so the system's two working estimators fit nothing across cells. SOH is the ratio of charge delivered within a fixed voltage window to the same quantity on the cell's own first discharges, with ohmic sag corrected by a resistance identified from the voltage step at each load onset. From voltage, current and time alone, on 22 CALCE lithium cobalt oxide cells, the median per-cell error was 1.7\% (95\% CI 1.4--4.3\%) on 17 cells, with five refused for stated causes, and the step resistance tracked the cycler's resistance on 19 of 20 cells. Unchanged, the estimator measured all eight cells of an independent Oxford dataset at 3.0\% median error. RUL extrapolated from each cell's own fade was within $\pm$20 cycles 73\% of the time in the last 25 cycles before 90\% capacity. The system refuses to output a number it cannot justify: every output is validated, banded by its measured error, or refused with a reason. A bench rig built on a NodeMCU ESP8266 with an INA219 and an LM35 streamed 83 of 83 checksummed frames at a measured 1.000~s cadence, which validates data acquisition but not health estimation.
+
+\noindent\textbf{Keywords:} battery management system, state of health, remaining useful life, electric vehicle, internal resistance, telemetry, uncertainty quantification
+}
+
+\acknowledgement{
+% TODO: to be written by the author (guide, department, family, friends).
+[To be completed by the author.]
+}
+
+\frontmattertoc
+
+\begin{abbreviations}
+\textbf{ADR} & - \quad & Architecture Decision Record \\
+\textbf{API} & - \quad & Application Programming Interface \\
+\textbf{BMS} & - \quad & Battery Management System \\
+\textbf{CAN} & - \quad & Controller Area Network \\
+\textbf{CC/CV} & - \quad & Constant Current / Constant Voltage \\
+\textbf{CI} & - \quad & Confidence Interval (or Continuous Integration, by context) \\
+\textbf{DBC} & - \quad & CAN database file describing signal layout \\
+\textbf{EV} & - \quad & Electric Vehicle \\
+\textbf{LCO} & - \quad & Lithium Cobalt Oxide \\
+\textbf{LOBO} & - \quad & Leave-One-Battery (cell)-Out validation \\
+\textbf{LOCO} & - \quad & Leave-One-Cohort-Out validation \\
+\textbf{LRC} & - \quad & Longitudinal Redundancy Check (XOR checksum) \\
+\textbf{MAE} & - \quad & Mean Absolute Error \\
+\textbf{NMC} & - \quad & Lithium Nickel Manganese Cobalt Oxide \\
+\textbf{OCV} & - \quad & Open-Circuit Voltage \\
+\textbf{RUL} & - \quad & Remaining Useful Life \\
+\textbf{SOC} & - \quad & State of Charge \\
+\textbf{SOH} & - \quad & State of Health \\
+\textbf{$R_{\mathrm{step}}$} & - \quad & Apparent resistance identified from the load step \\
+\end{abbreviations}
+
+\startmainmatter
+
+\input{chapters/ch1_introduction}
+\input{chapters/ch2_literature}
+\input{chapters/ch3_methodology}
+\input{chapters/ch4_implementation}
+\input{chapters/ch5_results}
+\input{chapters/ch6_conclusion}
+
+%\addcontentsline{toc}{chapter}{REFERENCES}
+\input{chapters/references}
+
+\appendix
+\input{chapters/appendix}
+
+\end{document}
