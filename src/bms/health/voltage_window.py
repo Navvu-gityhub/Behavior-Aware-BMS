@@ -319,7 +319,30 @@ def window_soh_table(
         .max().rename("cycle_charge_ah").reset_index()
     )
     charges = charges.merge(totals, on=["cell_id", "cycle"], how="left")
+    table = soh_table_from_charges(charges, spec, reference_cycles, min_discharge_fraction)
 
+    if truth is not None:
+        keep = [c for c in ("cell_id", "cycle", "soh") if c in truth.columns]
+        table = table.merge(truth[keep], on=["cell_id", "cycle"], how="left")
+        table["error"] = table["soh_window"] - table["soh"]
+
+    return table
+
+
+def soh_table_from_charges(
+    charges: pd.DataFrame,
+    spec: WindowSpec = WindowSpec(),
+    reference_cycles: int = DEFAULT_REFERENCE_CYCLES,
+    min_discharge_fraction: float = MIN_DISCHARGE_FRACTION,
+) -> pd.DataFrame:
+    """The window SOH table from per-cycle charges already measured.
+
+    `charges` carries cell_id, cycle, window_charge_ah and cycle_charge_ah,
+    one row per discharge. `window_soh_table` measures those from curves and
+    calls this; a stored per-battery profile (health.battery_profile) keeps
+    only those numbers and calls this directly, so both paths share every
+    reference, truncation and plausibility rule.
+    """
     frames: list[pd.DataFrame] = []
     for _cell_id, block in charges.groupby("cell_id", sort=True):
         block = block.sort_values("cycle").copy()
@@ -389,12 +412,6 @@ def window_soh_table(
     table["soh_window_accepted"] = table["soh_window"].where(
         ~(table["implausible"] | table["cell_refused"])
     )
-
-    if truth is not None:
-        keep = [c for c in ("cell_id", "cycle", "soh") if c in truth.columns]
-        table = table.merge(truth[keep], on=["cell_id", "cycle"], how="left")
-        table["error"] = table["soh_window"] - table["soh"]
-
     return table
 
 

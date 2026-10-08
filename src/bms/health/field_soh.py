@@ -499,6 +499,22 @@ def current_field_soh(
     table = field_soh_table(
         telemetry, discharges, cell_id, rest_threshold_a, spec, compensate,
         reference_cycles)
+    return field_soh_from_table(table, n_discharges, spec, compensate, reference_cycles)
+
+
+def field_soh_from_table(
+    table: pd.DataFrame,
+    n_discharges: int,
+    spec: WindowSpec = WindowSpec(),
+    compensate: bool = True,
+    reference_cycles: int = DEFAULT_REFERENCE_CYCLES,
+) -> FieldSOH:
+    """The reported result from a gated per-discharge table.
+
+    Shared by `current_field_soh` (table built from the whole log) and the
+    stored per-battery profile (table rebuilt from its own memory).
+    """
+    empty = FieldSOH(float("nan"), None, 0, n_discharges, compensate, str(spec))
     if table.empty:
         reason = (
             "no discharge was preceded by a clean rest-to-load step, so the "

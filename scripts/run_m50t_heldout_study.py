@@ -54,6 +54,7 @@ from src.bms.health.field_soh import (  # noqa: E402
     anchored_overpotential,
     apply_field_gates,
     curves_from_telemetry,
+    monotonic_time,
     step_overpotential,
 )
 from src.bms.health.voltage_window import WindowSpec, window_soh_table  # noqa: E402
@@ -76,7 +77,9 @@ def load_cell(files: list[Path]) -> pd.DataFrame:
     for f in files:
         d = pd.DataFrame(BioLogic.MPRfile(str(f)).data)
         current = d["I/mA"] if "I/mA" in d else d["control/mA"]
-        t = d["time/s"].to_numpy(float)
+        # Biologic time restarts inside some files (technique changes); join
+        # the segments the same way the field path does for any logger.
+        t = monotonic_time(d["time/s"].to_numpy(float))
         frame = pd.DataFrame({"test_time_s": t - t[0] + offset,
                               "current_a": current.to_numpy(float) / 1000.0,
                               "voltage_v": d["Ewe/V"].to_numpy(float)})
