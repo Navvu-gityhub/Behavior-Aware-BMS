@@ -1,19 +1,19 @@
 \addvspace {10\p@ }
 \addvspace {10\p@ }
 \addvspace {10\p@ }
-\contentsline {figure}{\numberline {3.1}{\ignorespaces Overall system framework: three transports, one unified frame, one scoring function, and the service tier.}}{8}{figure.caption.7}%
-\contentsline {figure}{\numberline {3.2}{\ignorespaces Field SOH estimator: from raw telemetry to a banded or refused output.}}{10}{figure.caption.9}%
+\contentsline {figure}{\numberline {3.1}{\ignorespaces Overall system framework: three transports, one unified frame, one scoring function, and the service tier.}}{14}{figure.caption.12}%
+\contentsline {figure}{\numberline {3.2}{\ignorespaces Field SOH estimator: from raw telemetry to a banded or refused output.}}{17}{figure.caption.15}%
 \addvspace {10\p@ }
-\contentsline {figure}{\numberline {4.1}{\ignorespaces A data frame: sentinel \texttt {BEACON1}, kind \texttt {D}, JSON body, and the XOR checksum \texttt {*06}, ending in a newline.}}{17}{figure.caption.18}%
-\contentsline {figure}{\numberline {4.2}{\ignorespaces As-built bench rig: measurement chain from the cell to the host.}}{21}{figure.caption.23}%
-\contentsline {figure}{\numberline {4.3}{\ignorespaces Overview screen of the BEACON dashboard on a synthetic fleet. The banner marks the values as simulated, and the panel at the bottom shows the measured bench-rig readings, with the health index and remaining life refused because no temperature channel exists.}}{23}{figure.caption.26}%
-\contentsline {figure}{\numberline {4.4}{\ignorespaces Battery health screen: state of health over cycles for one battery, the attribution of its health index to behaviour terms, and its aggregate usage parameters (synthetic fleet).}}{24}{figure.caption.27}%
+\contentsline {figure}{\numberline {4.1}{\ignorespaces A data frame: sentinel \texttt {BEACON1}, kind \texttt {D}, JSON body, and the XOR checksum \texttt {*06}, ending in a newline.}}{27}{figure.caption.26}%
+\contentsline {figure}{\numberline {4.2}{\ignorespaces As-built bench rig: measurement chain from the cell to the host.}}{30}{figure.caption.31}%
+\contentsline {figure}{\numberline {4.3}{\ignorespaces Overview screen of the BEACON dashboard on a synthetic fleet. The banner marks the values as simulated, and the panel at the bottom shows the measured bench-rig readings, with the health index and remaining life refused because no temperature channel exists.}}{33}{figure.caption.34}%
+\contentsline {figure}{\numberline {4.4}{\ignorespaces Battery health screen: state of health over cycles for one battery, the attribution of its health index to behaviour terms, and its aggregate usage parameters (synthetic fleet).}}{34}{figure.caption.35}%
 \addvspace {10\p@ }
-\contentsline {figure}{\numberline {5.1}{\ignorespaces LOBO and LOCO $R^2$ for SOH for every scored method on the 31-cell NASA benchmark (data: \texttt {benchmark\_results.csv}). Skill measured across cells does not carry over to a new protocol.}}{27}{figure.caption.29}%
-\contentsline {figure}{\numberline {5.2}{\ignorespaces SOH from voltage, current and time against every laboratory capacity test. Top: two constant-current cells, fixed window (mean error 0.9 and 1.1 points). Bottom: two cells of real partial cycling, learned window, estimate from partial discharges only (3.4 and 3.2 points).}}{28}{figure.caption.32}%
-\contentsline {figure}{\numberline {5.3}{\ignorespaces Mean absolute SOH error for every measured CALCE cell, field method; the dashed line is the median (1.7\%).}}{29}{figure.caption.33}%
-\contentsline {figure}{\numberline {5.4}{\ignorespaces RUL to 90\% capacity. Left: predicted against actual cycles left in the last 50 cycles. Right: share of estimates within $\pm $20 cycles by actual distance to end of life.}}{30}{figure.caption.36}%
-\contentsline {figure}{\numberline {5.5}{\ignorespaces Stage B capture from the bench rig (83 frames over 82~s, one cell at rest). Voltage moves between 3.984 and 3.992~V in steps of the INA219's 4~mV LSB, and current stays at the $\pm $0.4~mA noise floor.}}{34}{figure.caption.43}%
-\contentsline {figure}{\numberline {5.6}{\ignorespaces Evidence view of the BEACON dashboard for the bench rig: 83 of 83 records accepted, voltage and current as measured, temperature reported as not supplied, and the health index, remaining life and state of health refused because coverage is incomplete.}}{35}{figure.caption.44}%
-\contentsline {figure}{\numberline {5.7}{\ignorespaces Abridged health report card for CS2\_35 at cycle 90, with the laboratory check.}}{35}{figure.caption.45}%
+\contentsline {figure}{\numberline {5.1}{\ignorespaces LOBO and LOCO $R^2$ for SOH for every scored method on the 31-cell NASA benchmark (data: \texttt {benchmark\_results.csv}). Skill measured across cells does not carry over to a new protocol.}}{41}{figure.caption.41}%
+\contentsline {figure}{\numberline {5.2}{\ignorespaces SOH from voltage, current and time against every laboratory capacity test. Top: two constant-current cells, fixed window (mean error 0.9 and 1.1 points). Bottom: two cells of real partial cycling, learned window, estimate from partial discharges only (3.4 and 3.2 points).}}{42}{figure.caption.44}%
+\contentsline {figure}{\numberline {5.3}{\ignorespaces Mean absolute SOH error for every measured CALCE cell, field method; the dashed line is the median (1.7\%).}}{43}{figure.caption.45}%
+\contentsline {figure}{\numberline {5.4}{\ignorespaces RUL to 90\% capacity. Left: predicted against actual cycles left in the last 50 cycles. Right: share of estimates within $\pm $20 cycles by actual distance to end of life.}}{44}{figure.caption.48}%
+\contentsline {figure}{\numberline {5.5}{\ignorespaces Stage B capture from the bench rig (83 frames over 82~s, one cell at rest). Voltage moves between 3.984 and 3.992~V in steps of the INA219's 4~mV LSB, and current stays at the $\pm $0.4~mA noise floor.}}{48}{figure.caption.55}%
+\contentsline {figure}{\numberline {5.6}{\ignorespaces Evidence view of the BEACON dashboard for the bench rig: 83 of 83 records accepted, voltage and current as measured, temperature reported as not supplied, and the health index, remaining life and state of health refused because coverage is incomplete.}}{49}{figure.caption.56}%
+\contentsline {figure}{\numberline {5.7}{\ignorespaces Abridged health report card for CS2\_35 at cycle 90, with the laboratory check.}}{49}{figure.caption.57}%
 \addvspace {10\p@ }

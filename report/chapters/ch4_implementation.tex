@@ -108,7 +108,7 @@ Outside the package, the repository holds the following.
 	\item \texttt{docs/adr/}: fourteen architecture decision records, including those that record reversed decisions.
 \end{itemize}
 
-\section{TELEMETRY ACQUISITION: THREE TRANSPORTS, ONE FRAME}
+\section{TELEMETRY ACQUISITION AND THE UNIFIED FRAME}
 \label{sec:impl-transports}
 
 The three transports converge on one unified telemetry frame with the columns \texttt{cell\_id}, \texttt{test\_time\_s}, \texttt{voltage\_v}, \texttt{current\_a}, \texttt{temperature\_c} and \texttt{soc}.
@@ -119,9 +119,27 @@ The three transports converge on one unified telemetry frame with the columns \t
     \item \textbf{Research datasets.} Loaders read the NASA MATLAB files and the CALCE and Oxford records into the same frame.
 \end{itemize}
 
-\subsection{The Seam Is Narrow}
+\subsection{Interface Between Acquisition and Scoring}
 
 A serial source is a protocol with one method, \texttt{lines()}. A physical port, a recorded text file, a list in a test and the deterministic emulator are interchangeable, so the demo path and the hardware path differ in one constructor call. The emulator deliberately generates \emph{wire-format text} and not record objects. Emitting objects would have been less code but would have proved nothing, because the parser, the checksum, the schema validation and the coverage gate would all be bypassed in exactly the path the tests exercise. The emulator even prints an ESP32 boot banner, so the sentinel filter runs on every test. Recording composes at the same seam: one decorator makes a live port, a replay or the emulator recordable, and the file on disk is exactly the bytes that produced the result.
+
+\section{UNIFIED SCHEMA IMPLEMENTATION}
+
+Each source has its own loader, whose only job is to map that source onto the schema of Section~\ref{sec:schema}. The NASA and CALCE loaders read the laboratory files, the CAN loader decodes frames, and the serial loader parses lines. Every loader corrects the current sign convention of its source before the validator runs, so the pipeline never sees a mixed convention. The derived fields, power, operating mode and state-of-charge band, are recomputed after each preprocessing run and not stored from an earlier one, so a change to a threshold takes effect everywhere at once. A loader that cannot supply a required channel returns a frame that the validator rejects with the name of the missing column, which is preferable to a loader that fills the gap with a plausible constant.
+
+\section{CAN AND DBC ADAPTER}
+
+The CAN adapter decodes raw frames described by a DBC file into the unified schema. It uses an established library, \texttt{cantools}, for the decoding and does not implement the bit extraction itself. This is a deliberate choice: the big-endian bit numbering used in DBC files is a well-known source of subtle errors, and an almost-correct hand-written decoder would produce values that look plausible and are wrong, the failure the project is designed to avoid.
+
+The decoder is general, because it parses any standard DBC file. The bundled example describes the primary battery status message of a Renault Twizy, identifier 0x155, transcribed from the public documentation of the Open Vehicles Monitoring System. Its correctness is checked against an independent source: a test decodes the exact bytes of the worked example in that documentation and asserts that the current and state of charge match the published result, 58.25~A and 69.98\%, so the test does not merely confirm that the code agrees with itself.
+
+\subsection{Vehicle Registry}
+
+The single-file adapter is generalised by a registry in which several vehicles' DBC files can be registered. Given a batch of raw frames, the registry identifies the vehicle by comparing the observed identifiers with the identifiers each vehicle defines, and decodes accordingly. If no registered vehicle matches with confidence, it raises an error and does not choose the closest match, which is the same refusal stance as elsewhere in the system. By default exactly one real vehicle is registered. A synthetic fixture, clearly named as not a real vehicle, can be added in tests to exercise the disambiguation logic and is never part of the default registry, so application code cannot mistake it for real coverage.
+
+\subsection{Limits of the Adapter}
+
+The adapter proves the pattern, a CAN frame becomes decoded signals and then a unified frame, against real vehicle protocol data. It does not prove broad coverage of manufacturers. Most vehicles supported by community projects are decoded by hand-written code and not by a portable DBC file, and manufacturer files are proprietary. The documented message carries current and state of charge but no voltage or temperature, so the validator correctly reports that it cannot be scored on its own. Reading a live bus would be the task of a separate library layered under the decoder and has not been built.
 
 \section{SERIAL WIRE PROTOCOL}
 \label{sec:impl-protocol}
@@ -138,7 +156,7 @@ BEACON1 D {"t":12.5,"v":3.91,"i":-1.48,"tc":27.4,"soc":82.1}*06
     \label{fig:frame}
 \end{figure}
 
-\subsection{Framing by Sentinel}
+\subsection{Frame Delimitation}
 
 Framing is by sentinel and not by length. Every microcontroller prints boot banners and debugging text, so a length-prefixed parser would resynchronise after such noise only by luck. A sentinel parser discards anything not beginning with \texttt{BEACON1} as counted noise and continues, which makes the protocol self-synchronising: it recovers at the next newline after any corruption, with a loss of at most one frame.
 
@@ -379,6 +397,122 @@ Fig.~\ref{fig:uioverview} and Fig.~\ref{fig:uihealth} show the dashboard. Both a
 
 There are two deliberate absences. There is no database: the fleet store is in memory, and adding a database to the compose file would imply a persistence layer that does not exist, so the compose file says so. Persistence is the next substantial piece of work.
 
+\section{DIGITAL TWIN AND FLEET STORE}
+
+The twin is implemented as a domain module with no transport dependency. The API layer is a thin adapter over it, so adding another front end, for example a message broker, means writing a new adapter and leaves the module unchanged. The fleet store holds the latest twin state, the transition history and the telemetry of the most recent run for each battery. It is held in process memory and does not survive a restart, which is stated in the API documentation and shown in the compose file by the absence of a database service.
+
+The twin also carries a field called evidence confidence, which takes one of four values: validated, heuristic, mixed or not applicable. It states whether the causes the Guardian identified for a battery are supported by the calibration work or are hand-chosen thresholds. Temperature exposure is the only cause with a measured, cohort-controlled effect (0.0038~Ah per $^\circ$C), while the current-based causes and the health index itself are marked heuristic. This does not change what the Guardian detects. It changes what the system says about its own certainty, which was previously not visible in the output.
+
+\section{API REFERENCE}
+
+Table~\ref{tab:api} lists the routes of the Python service, grouped by purpose. The interactive documentation generated by FastAPI from the same code is served at \texttt{/docs}, so it cannot drift from the code in the way a hand-written reference can.
+
+\begin{table}[htbp]
+	\caption{Routes of the Python Service}
+	\centering
+	\small
+	\renewcommand{\arraystretch}{1.15}
+	\setlength{\tabcolsep}{4pt}
+	\begin{tabular}{|L{0.4\linewidth}|L{0.4\linewidth}|}
+		\hline
+		\textbf{Route} & \textbf{Purpose} \\
+		\hline
+		\texttt{GET /healthz} & Service liveness, with run and battery counts \\
+		\hline
+		\texttt{POST /pipeline/simulate} & Score a simulated fleet and fold it into the store \\
+		\hline
+		\texttt{GET /batteries} & Twin state of every battery seen \\
+		\hline
+		\texttt{GET /batteries/\{id\}} & Twin, Guardian report, risk, history, evidence confidence \\
+		\hline
+		\texttt{GET /batteries/\{id\}/timeline} & Per-cycle stress, state of charge and temperature \\
+		\hline
+		\texttt{POST /telemetry/replay} & Replay a recorded CAN log through the pipeline \\
+		\hline
+		\texttt{POST /telemetry/serial/replay} & Replay a recorded serial capture \\
+		\hline
+		\texttt{GET /telemetry/coverage} & Report which required signals a DBC file provides \\
+		\hline
+	\end{tabular}
+	\label{tab:api}
+\end{table}
+
+A battery that is in the store but absent from the most recent run has a twin state and a history but no timeline, and a request for its timeline returns a not-found response and not a stale series. Every request body is validated by Pydantic. The duration of a live capture is bounded above by 300~s, the number of emulated cycles lies between 1 and 50, the sampling period lies between 0 and 3600~s and the accepted fraction lies between 0 and 1, so no request can start a capture that never returns.
+
+\section{SECURITY CONSIDERATIONS}
+
+The service is a local bench and analysis tool, and its security review asked a narrow question: can a caller who reaches the service make it do something it should not? The review was carried out against the repository and recorded, with the findings and the decision taken on each. Table~\ref{tab:security} summarises them.
+
+\begin{table}[htbp]
+	\caption{Security Review of the Service}
+	\centering
+	\footnotesize
+	\renewcommand{\arraystretch}{1.1}
+	\setlength{\tabcolsep}{3pt}
+	\begin{tabular}{|L{0.3\linewidth}|L{0.5\linewidth}|}
+		\hline
+		\textbf{Finding} & \textbf{Outcome} \\
+		\hline
+		Request-supplied file paths on replay and coverage routes & Fixed: path must resolve under an allowed root \\
+		\hline
+		Cross-origin policy permissive by default & Made configurable; not presented as a security boundary \\
+		\hline
+		Secrets and language-model integration & Verified absent by search of the repository \\
+		\hline
+		Request validation & Adequate; bounds on durations and counts \\
+		\hline
+		Serial parser under adversarial input & Safe: bad lines counted, values rejected, capture refused below a threshold \\
+		\hline
+		Notebook metadata & Noted; left to the author \\
+		\hline
+	\end{tabular}
+	\label{tab:security}
+\end{table}
+
+The one substantive finding was that three routes opened a filesystem path taken from the request body without any containment. A caller could name a private key or a configuration file, and the per-line rejection reasons returned by the serial path could carry fragments of what was read. The difference between a not-found and a parse error also revealed whether a file existed. The fix resolves the path first and requires it to lie under an allowed root, and rejects it with a client error before any existence check, so an out-of-bounds path cannot be used to probe the disk. A list of allowed roots was chosen over a blocklist of path patterns, because blocklists on path strings can be defeated by symbolic links, percent-encoding and short file names, whereas resolving first and then asking where the path ended up is decided after any such trick has been applied. The allowed roots can be replaced through an environment variable, and the variable replaces the defaults and does not extend them, so setting it cannot leave a development convenience in place. Thirteen tests cover the containment.
+
+\subsection{What Is Deliberately Not Defended}
+
+The service has no authentication, no rate limiting, no transport security and no tenant isolation, and it keeps one global in-memory store. These are consequences of its scope as a local tool and are recorded as such. The correct remedy for a shared deployment is an authenticating reverse proxy in front of the service and not code inside it.
+
+\section{DASHBOARD COMPONENTS}
+
+The dashboard is a React application made of small components, each with one view. Table~\ref{tab:components} lists them. The panels that display a measured result carry the provenance of the value, so a reader can tell whether a figure comes from a vehicle, a rig, a dataset or a simulation.
+
+\begin{table}[htbp]
+	\caption{Components of the Dashboard}
+	\centering
+	\small
+	\renewcommand{\arraystretch}{1.15}
+	\setlength{\tabcolsep}{4pt}
+	\begin{tabular}{|L{0.3\linewidth}|L{0.44\linewidth}|}
+		\hline
+		\textbf{Component} & \textbf{View} \\
+		\hline
+		Fleet table & Health, risk and remaining life of every battery \\
+		\hline
+		Battery detail & Health over cycles and attribution of the health index \\
+		\hline
+		Guardian panel & Plain-language report of the causes found \\
+		\hline
+		Twin panel & Twin state and its transitions \\
+		\hline
+		Telemetry replay & Replay of a CAN log or serial capture \\
+		\hline
+		Thermal map & Temperature across the pack \\
+		\hline
+		Validation panel & Measured error of each estimator \\
+		\hline
+		Transfer panel & Result of transfer between datasets \\
+		\hline
+		Provenance & Source of the displayed values \\
+		\hline
+	\end{tabular}
+	\label{tab:components}
+\end{table}
+
+The design mock-up of the dashboard contained placeholder readings, such as a state of health of 92.4\% and a remaining life of 1,245 cycles. A decision record fixes that the interface renders only values that were computed, and shows a refusal or an empty state in place of a placeholder when the pipeline has produced nothing. This is the same stance as in the estimators, applied to the display.
+
 \section{HEALTH REPORT CARD}
 \label{sec:impl-card}
 
@@ -397,6 +531,40 @@ There are 44 test modules, and three kinds of test are not the usual kind.
 
 Continuous integration runs eight jobs: lint and type checking, the test suite on Python 3.10 and 3.12, a job that uninstalls the optional CAN dependency and re-runs the suite, a job that reproduces the headline benchmark end to end, a firmware compile for three targets, the gateway tests, the client build, and the Docker build. The job without the optional dependency exists because ``it is optional'' is otherwise an untested claim. The Python-version matrix exists because testing only the newest version lets a declared floor rot silently.
 
+\subsection{Test Modules by Subsystem}
+
+Table~\ref{tab:tests} lists some of the test modules and the behaviour each one pins. Each subsystem has tests at its own boundary, so a fault is caught where it is introduced and not where it is first noticed.
+
+\begin{table}[htbp]
+	\caption{Selected Test Modules and What They Check}
+	\centering
+	\footnotesize
+	\renewcommand{\arraystretch}{1.1}
+	\setlength{\tabcolsep}{3pt}
+	\begin{tabular}{|L{0.42\linewidth}|L{0.42\linewidth}|}
+		\hline
+		\textbf{Module} & \textbf{Behaviour checked} \\
+		\hline
+		\texttt{test\_api} & Route behaviour, repeated identical seeded run produces no new twin transitions \\
+		\hline
+		\texttt{test\_api\_path\_containment} & Out-of-root, relative and symbolic paths are rejected before any existence check \\
+		\hline
+		\texttt{test\_can\_dbc} & Decoded values match the published worked example; missing voltage and temperature reported by the validator \\
+		\hline
+		\texttt{test\_can\_vehicle\_registry} & Vehicle identified from observed identifiers; ambiguous input refused \\
+		\hline
+		\texttt{test\_digital\_twin} & State derivation and transition recording \\
+		\hline
+		\texttt{test\_serial\_telemetry} & Framing, checksum, rejected values, capture-level refusal \\
+		\hline
+		\texttt{test\_hardware\_readiness} & Truncated lines, corrupted checksums, non-finite and out-of-range fields \\
+		\hline
+		Gateway tests (\texttt{gateway}, \texttt{telemetry}) & Each route forwards to the Python service and returns its result unchanged \\
+		\hline
+	\end{tabular}
+	\label{tab:tests}
+\end{table}
+
 \section{CONTAINERISATION AND DEPLOYMENT}
 \label{sec:impl-deploy}
 
@@ -408,6 +576,12 @@ python scripts/run_serial_demo.py  # emulated rig
 python -m pytest tests/ -q         # the test suite
 docker compose up                  # API, gateway, client
 \end{verbatim}
+
+\section{OPERATIONAL WORKFLOW}
+
+A typical session with the system follows the same path whatever the source. An operator starts the three services, or runs the single command that produces the end-to-end result, and selects a source: a simulated fleet, a recorded CAN log with its DBC file, a serial capture, or a live capture from the rig. The service converts the source to the unified frame, applies the schema and capture-level checks, and scores the result. The dashboard then shows the fleet table first, with each battery's health, risk and remaining life, and each value labelled with its source. Selecting a battery opens its detail, where the health over cycles, the attribution of the health index and the twin history are shown. If a capture was refused, the dashboard shows the refusal and its cause in the place where the number would have been.
+
+The same path serves a bench session. With the rig connected, the operator records a capture to a file and replays it through the serial route, which gives the same result as scoring it live and leaves a file that can be re-scored after any change to the code. Replay from a recorded file is also how the results of this report were reproduced, since a file scored twice gives the same output, and a live cell does not.
 
 \section{CHAPTER SUMMARY}
 

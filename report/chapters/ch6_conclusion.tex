@@ -11,6 +11,10 @@ On the engineering side, the system refuses to output a number it cannot justify
 
 Each output therefore carries a measured error band and is withheld when its evidence is missing or inconsistent, and the criterion that makes that decision was itself validated against laboratory truth.
 
+\section{SUMMARY OF THE WORK}
+
+The project proceeded in four stages. The first built the data pipeline and a behaviour layer of rules, and found by benchmarking that fitted models did not hold up when the test protocol changed. The second replaced fitted models with estimators that measure each cell against its own behaviour, validated them on CALCE, and added a criterion for when to refuse. The third tested the estimators on a second and a third dataset without re-tuning, and built the CAN, serial and dataset paths into one scoring function. The fourth built the bench rig, the service tier and the dashboard, and fixed the documentation to the artifacts that produced it, so that every number in the report can be traced to a script and a file.
+
 \section{LIMITATIONS}
 
 The scope is single cells: LCO for development, an NMC/LCO blend pouch for external validation, mostly at constant current, with one real drive-cycle discharge. Packs, lithium iron phosphate and temperature-dependent capacity correction are not covered. The conventional 80\% end-of-life threshold is not validated on CALCE, and the Oxford results at 80\% are a conservative bound with low precision. The heuristic risk layer is not validated against measured degradation. The bench rig has been run on one cell, at rest, for under 90~s, and its two sensors have not yet operated in the same capture.
@@ -27,3 +31,26 @@ In order of dependency:
     \item \textbf{Broader validation.} Test packs, lithium iron phosphate and large-scale dynamic drive cycles, and obtain data that crosses the 80\% end-of-life convention for a validated result there.
     \item \textbf{Persistence and operations.} Add a database behind the fleet store, structured logging and metrics, a load-test harness, and asynchronous serial ingest with backpressure.
 \end{enumerate}
+
+\section{PRACTICAL IMPLICATIONS}
+
+For an operator, the system shows what a software layer can honestly say about a battery from the signals a BMS already has. A health figure arrives with the error measured for that kind of figure, or with a statement of what is missing. For a developer, the single scoring function means that a new source needs only a loader that produces the unified frame, and the validators, estimators and dashboard then apply without change. For an educator, the repository shows a complete chain from raw telemetry to a served result, with the decisions, the tests and the failed attempts documented.
+
+\section{LESSONS LEARNED}
+
+Several lessons from the project apply beyond it. A validation split is part of the claim, and a result that is stated without it is incomplete. A default value is a hidden measurement, and removing defaults, as with the rated capacity that is now declared, closed a class of silent errors. Reading code and documents for defects before connecting hardware is cheaper than finding the same defects with a cell on the bench. A negative result retained with its evidence, such as the failure of sparse-discharge RUL, is more useful to a later reader than a positive result with no account of what was tried first.
+
+\section{RECOMMENDATIONS FOR DEPLOYMENT}
+
+The system as built is a bench and analysis tool, and moving it beyond that needs the steps below, which follow from the limitations and from the security review.
+\begin{enumerate}
+	\item Place an authenticating reverse proxy with transport security and rate limiting in front of the service, and restrict the allowed data roots to the deployment's own directories through the environment variable provided for that.
+	\item Add a persistence layer behind the fleet store, so that the twin history survives a restart and more than one process can share it.
+	\item Register a rated capacity and a verified DBC file for each vehicle, so that neither the reference capacity nor the signal mapping is assumed.
+	\item Record a load step and a full discharge for a few cells of the target chemistry before relying on any health figure, so that the measured error bands can be confirmed for that chemistry.
+	\item Keep the displayed provenance and the refusals visible to operators, because they are what tells an operator how far to trust a figure.
+\end{enumerate}
+
+\section{CONCLUDING REMARKS}
+
+The project set out to build a software layer for battery health, and the most useful thing it found was where such a layer should stop. Voltage, current and time are enough to measure capacity and a resistance trend from a discharge, with a stated error, on cells of more than one kind. They are not enough to say how long a cell will last when it is far from the end of its life, and they are not enough when the telemetry lacks the channels or the discharges that the estimators need. A system that knows the difference, and says so at the point of use, is more valuable to an operator than one that always produces a figure. BEACON is an attempt at the first kind of system, and its limitations and its future work define the next steps toward a deployment on a real vehicle.

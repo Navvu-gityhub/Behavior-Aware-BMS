@@ -183,7 +183,7 @@ Designation: \underline{\hspace{3.4cm}}
 \makeatother
 
 % TODO: fill in the supervisor's designation (HOD taken from the department template).
-\supervisor{Dr. M GAYATHRI}{[DESIGNATION]}
+\supervisor{Dr. M GAYATHRI}{Assistant Professor}
 \hod{Dr. LAKSHMANAN S A}{Associate Professor}
 
 \universitylogo{Amrita_Logo.png}
@@ -281,11 +281,73 @@ The objectives of the project are:
     \item To build and bring up a physical data-acquisition rig, and to serve all results through a REST API and a web dashboard.
 \end{enumerate}
 
+\section{BATTERY HEALTH INDICATORS}
+
+Three quantities are used throughout this report, and they are defined here once so that every later chapter uses them in the same way.
+
+\subsection{State of Health}
+
+State of health is the fraction of the original capacity that the cell can still deliver. With $Q_{\mathrm{now}}$ the capacity measured on a full constant-current discharge and $Q_{\mathrm{ref}}$ the reference capacity of the same cell, it is
+\begin{equation}
+	\mathrm{SOH} = \frac{Q_{\mathrm{now}}}{Q_{\mathrm{ref}}} \times 100\,\%.
+	\label{eq:sohdef}
+\end{equation}
+The choice of $Q_{\mathrm{ref}}$ matters. It may be the rated capacity from the data sheet or the capacity measured on the cell's own first discharges. The two give different numbers for the same cell, and this report states which is used wherever a figure is quoted. A battery is conventionally regarded as having reached end of life when SOH falls to 80\%.
+
+\subsection{Internal Resistance}
+
+Internal resistance is the ratio of the voltage step to the current step when a load is applied. For a step from current $I_{1}$ to $I_{2}$ that moves the terminal voltage from $V_{1}$ to $V_{2}$,
+\begin{equation}
+	R_{\mathrm{int}} = \frac{\left|V_{2}-V_{1}\right|}{\left|I_{2}-I_{1}\right|}.
+	\label{eq:rintdef}
+\end{equation}
+Resistance rises as the cell ages, and it determines the voltage sag under load and therefore the power the cell can deliver.
+
+\subsection{Remaining Useful Life}
+
+Remaining useful life is the number of further cycles before SOH reaches the end-of-life threshold. It is a prediction, so it carries an error that grows with the distance from the threshold, and a figure for it is meaningful only if the error is stated alongside it.
+
+\section{PROPOSED APPROACH IN BRIEF}
+
+BEACON, the system built in this project, is organised in three tiers. The data tier receives telemetry from three sources, a controller area network (CAN) bus, a serial link from a bench rig and public research datasets, and converts all three into one unified frame. The analytics tier is a Python service that scores every frame through a single function and returns state of health, resistance, remaining useful life and a behaviour risk score, each with its evidence and, where the evidence is insufficient, a refusal with the reason. The presentation tier is an Express gateway and a React dashboard that display the results and label every value with its source.
+
+Three design commitments run through the work. The first is that nothing is fitted across cells: the estimators measure each cell against its own early behaviour. The second is that a result is either validated against laboratory truth, reported with a measured error band, or refused. The third is that the same scoring function serves a vehicle, a rig and a dataset, so that any difference between their outputs comes from the telemetry and not from the code.
+
+\section{SIGNIFICANCE OF THE WORK}
+
+For a fleet operator or an owner, a health figure is useful only if it can be trusted, and a figure that cannot be trusted is worse than none. By measuring its own error on public data and by declining to answer when its evidence is poor, the system gives an operator a reason to act on an estimate when one is shown and a reason to collect more data when one is withheld. For the research community, the retained negative results, in particular the loss of skill of fitted models when the test protocol changes, are a reusable finding about how battery health models should be validated. For students and practitioners, the repository is a worked example of how a software layer over a BMS can be tested, documented and reproduced.
+
 \section{SCOPE AND ORGANISATION OF THE REPORT}
 
 Development and primary validation use single lithium cobalt oxide (LCO) cells at constant current (CALCE). External validation uses NMC/LCO blend pouch cells at 40~$^\circ$C (Oxford), which also supply one real drive-cycle discharge. A third dataset (NASA) is used for the benchmark and for a cross-dataset test. The project makes no claim about packs, lithium iron phosphate, or temperature-dependent capacity correction. The bench rig validates data acquisition, not health estimation: no discharge has yet been recorded on it.
 
-The remainder of the report is organised as follows. Chapter~\ref{ch:lit} reviews related work. Chapter~\ref{ch:method} presents the system design and the estimation methods. Chapter~\ref{ch:implementation} describes the implementation, the hardware rig and the deployment. Chapter~\ref{ch:results} reports the results and discusses them. Chapter~\ref{ch:conclusion} concludes and lists future work.
+Table~\ref{tab:chapters} gives a map of the chapters. The remainder of the report is organised as follows. Chapter~\ref{ch:lit} reviews related work. Chapter~\ref{ch:method} presents the system design and the estimation methods. Chapter~\ref{ch:implementation} describes the implementation, the hardware rig and the deployment. Chapter~\ref{ch:results} reports the results and discusses them. Chapter~\ref{ch:conclusion} concludes and lists future work.
+
+\begin{table}[htbp]
+	\caption{Organisation of the Report}
+	\centering
+	\small
+	\renewcommand{\arraystretch}{1.15}
+	\setlength{\tabcolsep}{4pt}
+	\begin{tabular}{|C{0.1\linewidth}|L{0.28\linewidth}|L{0.44\linewidth}|}
+		\hline
+		\textbf{Chapter} & \textbf{Title} & \textbf{Content} \\
+		\hline
+		1 & Introduction & Background, problem, objectives and scope \\
+		\hline
+		2 & Literature Review & Ageing, estimation methods, interfaces and validation practice \\
+		\hline
+		3 & Methodology / System Design & Requirements, schema, estimators, gates and validation protocol \\
+		\hline
+		4 & Implementation and Deployment & Acquisition, rig, services, security and testing \\
+		\hline
+		5 & Results and Discussion & Benchmark, estimator accuracy, hardware results and threats to validity \\
+		\hline
+		6 & Conclusion and Future Work & Findings, limitations, lessons and next steps \\
+		\hline
+	\end{tabular}
+	\label{tab:chapters}
+\end{table}
 
 %%%%%%%%%%%%%%%% ch2_literature %%%%%%%%%%%%%%%%
 \chapter{LITERATURE REVIEW}
@@ -294,6 +356,8 @@ The remainder of the report is organised as follows. Chapter~\ref{ch:lit} review
 \section{STATE ESTIMATION IN THE BATTERY MANAGEMENT SYSTEM}
 
 A BMS protects the pack and estimates its state of charge from the terminal measurements it already holds. Reviews of monitoring methods for electric and hybrid vehicles \cite{waag2014} and of SOH estimation for real applications \cite{berecibar2016} distinguish direct measurement (capacity or resistance tests), model-based estimation and data-driven approaches. Ageing mechanisms and their effect on capacity and resistance are reviewed by Vetter \emph{et al.}\ \cite{vetter2005} and, for automotive applications, by Barr\'e \emph{et al.}\ \cite{barre2013}. Recursive estimation of cell parameters within the BMS, including internal resistance, is established \cite{plett2004}, and monitoring of resistance is part of the methods reviewed by Waag \emph{et al.}\ \cite{waag2014}.
+
+Textbook treatments of the BMS, including state-of-charge indication and cell balancing, are given by Pop \emph{et al.}\ \cite{pop2008} and Plett \cite{plett2015}. State of charge and state of health are related but different quantities: the first says how much charge remains in the present state of the cell, the second says how much the cell can hold at all, and a layer that reports health must not take its reference from a state-of-charge estimate that itself depends on a capacity assumption.
 
 In this project, resistance serves two roles: it corrects the ohmic sag that would otherwise make a fixed voltage window slide along the discharge curve, and it is reported as a second health output, validated against the laboratory instrument (Section~\ref{sec:res-r}).
 
@@ -327,6 +391,86 @@ Three public datasets are used, chosen because they differ in chemistry, format,
 
 In a vehicle, BMS data is carried on a CAN bus, and a DBC file describes how signals are packed into frames. A research dataset arrives as files, and a bench rig typically streams text over a serial port. Each source has its own failure modes: a CAN decode can silently miss a signal, a serial link can drop or corrupt bytes, and a research file can store a quantity with a different sign or scale. The review above does not address how these three sources are made to agree, and this project treats it as a design question (Chapter~\ref{ch:method}): one schema, one scoring function, and explicit refusals when a capture's shape is wrong.
 
+\section{BATTERY AGEING MECHANISMS}
+
+The capacity and resistance that the estimators in this project measure are the visible result of physical processes inside the cell. Growth of the solid electrolyte interphase on the negative electrode consumes lithium inventory and thickens the resistive film, so capacity falls and resistance rises. Lithium plating, which is more likely at high charge rates and low temperature, removes lithium irreversibly and can create a safety risk. Loss of active material through particle cracking or dissolution reduces the number of sites available to hold lithium \cite{vetter2005,barre2013}. These mechanisms depend on temperature, state of charge, current rate and depth of discharge, which is why a monitoring layer pays attention to how a battery is used and not only to its age. They also explain why a single protocol, such as constant-current cycling at room temperature, cannot represent the conditions a vehicle imposes, a point on which the validation in Chapter~\ref{ch:results} depends.
+
+\section{TAXONOMY OF HEALTH ESTIMATION METHODS}
+
+Reviews of the field group state-of-health estimation into three families \cite{berecibar2016,waag2014}. Table~\ref{tab:taxonomy} summarises them and states what each requires, because the requirement, more than the accuracy, decides whether a method can run inside a vehicle.
+
+\begin{table}[htbp]
+	\caption{Families of State-of-Health Estimation}
+	\centering
+	\small
+	\renewcommand{\arraystretch}{1.15}
+	\setlength{\tabcolsep}{4pt}
+	\begin{tabular}{|L{0.2\linewidth}|L{0.3\linewidth}|L{0.34\linewidth}|}
+		\hline
+		\textbf{Family} & \textbf{Principle} & \textbf{Requirement in a vehicle} \\
+		\hline
+		Direct measurement & Measure capacity or resistance by a dedicated test & A controlled full discharge or load pulse, rarely available \\
+		\hline
+		Model-based & Fit an equivalent-circuit or electrochemical model and track its parameters & Accurate model, parameter identification and a good initial state \\
+		\hline
+		Data-driven & Learn a mapping from features to health from past cells & Training cells representative of the deployment conditions \\
+		\hline
+	\end{tabular}
+	\label{tab:taxonomy}
+\end{table}
+
+The window estimator of this project is a direct measurement made opportunistically: whenever the telemetry contains a discharge that is long enough, it counts the charge delivered between two voltage thresholds and reads capacity from that, so it needs no dedicated test and no model of other cells.
+
+\section{INTERNAL RESISTANCE ESTIMATION IN THE LITERATURE}
+
+Internal resistance can be measured from the voltage response to a current step, from electrochemical impedance spectroscopy or from recursive parameter identification inside an equivalent-circuit model \cite{plett2004,waag2014}. The step method is the simplest and is the one adopted here, because a vehicle produces current steps routinely, at every transition between acceleration, cruising and braking. The step response contains an instantaneous ohmic part and slower diffusion and charge-transfer parts, so a resistance read from the first loaded sample is an apparent value that includes some polarisation. This project therefore treats the estimate as a trend indicator whose direction is validated against the laboratory instrument, and uses it as a correction term for the voltage window, and not as an absolute impedance.
+
+\section{VEHICLE DATA INTERFACES}
+
+\subsection{Controller Area Network}
+
+The controller area network is the serial bus on which the control units of a vehicle exchange short frames \cite{iso11898}. A frame carries an identifier and up to eight data bytes, and the identifier determines which message the data belong to. The bytes are packed with several signals, each defined by a start bit, a length, a byte order, a scale factor and an offset. A DBC file records these definitions. Manufacturers regard their DBC files as proprietary, which is the main obstacle to a general decoder, and public decoding exists for a limited number of vehicles through community projects such as the Open Vehicles Monitoring System.
+
+\subsection{Serial Bench Rigs}
+
+A laboratory or student rig usually streams text lines over a universal asynchronous serial link. Such a link has no error detection of its own, so bytes can be lost or corrupted, and a boot banner or debug message can appear between data records. A reliable acquisition layer therefore needs a delimiter, a checksum and a rule for what to do with a record that fails them. These concerns do not arise with a dataset file, which is why the three sources need an explicit common schema.
+
+\subsection{Open Datasets}
+
+Public datasets store the same physical quantities under different names, units, sign conventions and file formats. Reported capacity may be in ampere-hours or in coulombs, current may be positive on charge or on discharge, and temperature may be absent. Without a documented mapping into a single schema, a result computed on one dataset cannot be compared with a result on another.
+
+\section{DIGITAL TWINS AND FLEET MONITORING}
+
+A digital twin is a virtual representation of a physical asset that is updated from the asset's data and can be queried in its place \cite{grieves2014}. For batteries, the term is used for anything from a detailed electrochemical simulation to a simple state record. In BEACON the twin is deliberately modest: a state machine layered on the outputs of the scoring pipeline that records the current health state of each battery and every transition between states across runs. It adds structure and a queryable history and does not add a predictive model, and the report says so wherever the twin is mentioned. In a fleet, such a record lets an operator see which batteries have changed state since the last evaluation, which is what a maintenance decision depends on.
+
+\section{EXPLAINABILITY AND HONEST REPORTING}
+
+Explanations of a model's output are expected in safety-relevant systems, and feature attribution is the usual tool. For rule-based scores, the contribution of each rule to the total can be computed exactly and does not need an approximation. The behaviour layer of BEACON reports such attributions for its heuristic scores. A related concern is the honesty of the output itself. A dashboard that displays a placeholder, a default or an extrapolated value looks identical to one that displays a measurement. This project therefore treats the provenance of every displayed number as part of the result, and the dashboard renders only computed values, labelling those that come from simulated data.
+
+\section{VALIDATION PRACTICE AND LEAKAGE}
+
+The way data are split between training and testing determines what a reported accuracy means. A random split over cycles allows neighbouring cycles of the same cell to appear on both sides, which inflates accuracy. A leave-one-cell-out split removes that leak but still places the held-out cell's siblings from the same protocol in the training set. A leave-one-cohort-out split removes the whole protocol, and so tests transfer to conditions that were not seen. Table~\ref{tab:splits} summarises the three, and the benchmark in Chapter~\ref{ch:results} uses the last two.
+
+\begin{table}[htbp]
+	\caption{Validation Splits and What Each One Tests}
+	\centering
+	\small
+	\renewcommand{\arraystretch}{1.15}
+	\setlength{\tabcolsep}{4pt}
+	\begin{tabular}{|L{0.22\linewidth}|L{0.3\linewidth}|L{0.32\linewidth}|}
+		\hline
+		\textbf{Split} & \textbf{What is held out} & \textbf{What the score tests} \\
+		\hline
+		Random over cycles & Individual cycles & Interpolation within seen cells \\
+		\hline
+		Leave-one-cell-out & One whole cell & Recognition of a seen protocol \\
+		\hline
+		Leave-one-cohort-out & All cells of one protocol & Transfer to an unseen protocol \\
+		\hline
+	\end{tabular}
+	\label{tab:splits}
+\end{table}
+
 \section{POSITIONING OF THIS WORK}
 
 Table~\ref{tab:positioning} summarises the three families of approach in this review by the properties that matter for a deployed software layer. It is a statement about the families as categories and not about any individual cited study.
@@ -353,6 +497,34 @@ Table~\ref{tab:positioning} summarises the three families of approach in this re
 		\hline
 	\end{tabular}
 	\label{tab:positioning}
+\end{table}
+
+\section{IDENTIFIED GAPS AND HOW THEY ARE ADDRESSED}
+
+Table~\ref{tab:gaps} lists the gaps that the review leaves open and the parts of this report that address them.
+
+\begin{table}[htbp]
+	\caption{Gaps in the Literature and Where They Are Addressed}
+	\centering
+	\small
+	\renewcommand{\arraystretch}{1.15}
+	\setlength{\tabcolsep}{4pt}
+	\begin{tabular}{|L{0.38\linewidth}|L{0.38\linewidth}|}
+		\hline
+		\textbf{Gap} & \textbf{Addressed in} \\
+		\hline
+		Skill of fitted models under a change of protocol & Benchmark with leave-one-cohort-out validation (Section~\ref{sec:res-bench}) \\
+		\hline
+		Health estimation without cross-cell fitting & Window estimator with ohmic correction (Chapter~\ref{ch:method}) \\
+		\hline
+		Refusal when evidence is missing or inconsistent & Refusal gates and evidence sufficiency (Chapters~\ref{ch:method} and~\ref{ch:implementation}) \\
+		\hline
+		Agreement of CAN, serial and file sources & Unified frame and single scoring function (Chapter~\ref{ch:implementation}) \\
+		\hline
+		Provenance of displayed values & Dashboard that renders computed values only (Chapter~\ref{ch:implementation}) \\
+		\hline
+	\end{tabular}
+	\label{tab:gaps}
 \end{table}
 
 \section{SUMMARY}
@@ -382,6 +554,47 @@ The objective is a software layer above a BMS that converts voltage, current and
     \item \textbf{Dependent variables:} per-cell mean absolute SOH error and its median over cells, coverage (cells measured out of cells scored), rank correlation of resistance, RUL error indexed by true and by predicted distance to end of life, and error stratified by the consistency of readings.
     \item \textbf{Controlled variables:} the reference definition (a quantity a BMS can hold), the primary window and tolerances, fixed before each study ran, and the scoring rule. Choices made after seeing a result are labelled exploratory.
 \end{itemize}
+
+\section{SYSTEM REQUIREMENTS}
+\label{sec:requirements}
+
+The requirements below were fixed before the implementation and are the basis on which the results of Chapter~\ref{ch:results} are judged. Table~\ref{tab:requirements} lists them.
+
+\begin{table}[htbp]
+	\caption{Functional and Non-Functional Requirements}
+	\centering
+	\small
+	\renewcommand{\arraystretch}{1.15}
+	\setlength{\tabcolsep}{4pt}
+	\begin{tabular}{|C{0.07\linewidth}|L{0.5\linewidth}|L{0.2\linewidth}|}
+		\hline
+		\textbf{ID} & \textbf{Requirement} & \textbf{Type} \\
+		\hline
+		R1 & Accept telemetry from a CAN bus, a serial rig and dataset files & Functional \\
+		\hline
+		R2 & Convert every source to one schema with documented units and sign convention & Functional \\
+		\hline
+		R3 & Estimate SOH, resistance and RUL from voltage, current and time & Functional \\
+		\hline
+		R4 & Refuse, with a stated reason, when the evidence is insufficient & Functional \\
+		\hline
+		R5 & Serve all results over an HTTP API and a web dashboard & Functional \\
+		\hline
+		R6 & Fit no model across cells for the shipped estimators & Design constraint \\
+		\hline
+		R7 & Show the provenance of every displayed value & Non-functional \\
+		\hline
+		R8 & Run end to end from a clean checkout with one command each for tests and results & Non-functional \\
+		\hline
+		R9 & Need no external service or physical hardware in continuous integration & Non-functional \\
+		\hline
+	\end{tabular}
+	\label{tab:requirements}
+\end{table}
+
+\section{ASSUMPTIONS AND CONSTRAINTS}
+
+The design rests on a small number of explicit assumptions. Telemetry is sampled at a known and reasonably uniform rate, so that charge can be obtained by integrating current over time. The current sign convention of each source is known and is corrected in the loader. A cell's own early discharges are representative of its undegraded state, which is why the reference is taken from them when the rated capacity is not declared. The service is a local bench and analysis tool: it binds to the loopback address by default, has no authentication and keeps its state in memory. These constraints are recorded because several of the results and several of the design choices follow from them.
 
 \section{OVERALL SYSTEM FRAMEWORK}
 \label{sec:framework}
@@ -414,7 +627,7 @@ BEACON ingests telemetry from three transports, converges them on one schema, an
     \label{fig:framework}
 \end{figure}
 
-\subsection{One Scoring Path, Extracted Rather Than Copied}
+\subsection{Single Shared Scoring Path}
 
 The function \texttt{score\_telemetry\_frame} contains everything downstream of acquisition: segmentation, coulomb counting, features, risk, health, RUL, the Guardian explanation and the digital twin. It was extracted from the CAN pipeline when serial ingestion was added, instead of being copied. A second segmentation or feature extractor would mean that a disagreement between a CAN run and a serial run over the same battery could not be traced to either the data or the code. With the tail shared, a difference in output is a difference in the telemetry.
 
@@ -446,6 +659,65 @@ Four sources are used (Table~\ref{tab:datasets}). They were chosen because they 
 \end{table}
 
 CALCE records span many files whose test time restarts per file. A monotonic time base is constructed by offsetting each restart, not by sorting timestamps, which would interleave overlapping segments. The CALCE set includes real partial cycling (CS2 Types 5 and 6): thousands of discharges of about 25\% depth in a fixed band, with a full capacity check roughly every 100 cycles. Type~6 cycles at the top of charge (about 4.07 to 3.78~V) and Type~5 near empty (about 3.69 to 2.70~V). The Oxford set additionally holds one real drive-cycle discharge of Cell~1 sampled at 1~Hz, used only for external validation.
+
+\section{UNIFIED TELEMETRY SCHEMA}
+\label{sec:schema}
+
+Public datasets, vehicle frames and a serial rig describe the same measurements with different names, units and missing-value conventions, so every source is converted into one schema before any feature is computed. Table~\ref{tab:schema} lists the core columns.
+
+\begin{table}[htbp]
+	\caption{Core Columns of the Unified Schema}
+	\centering
+	\small
+	\renewcommand{\arraystretch}{1.15}
+	\setlength{\tabcolsep}{4pt}
+	\begin{tabular}{|L{0.24\linewidth}|C{0.08\linewidth}|C{0.17\linewidth}|L{0.28\linewidth}|}
+		\hline
+		\textbf{Column} & \textbf{Unit} & \textbf{Required} & \textbf{Description} \\
+		\hline
+		\texttt{dataset} & text & Yes & Source dataset name \\
+		\hline
+		\texttt{cell\_id} & text & Yes & Cell, module or vehicle identifier \\
+		\hline
+		\texttt{cycle} or \texttt{timestamp} & -- & One of two & Ordering of the samples \\
+		\hline
+		\texttt{voltage\_v} & V & Yes & Terminal voltage \\
+		\hline
+		\texttt{current\_a} & A & Yes & Current with a documented sign \\
+		\hline
+		\texttt{temperature\_c} & $^\circ$C & Yes & Battery temperature \\
+		\hline
+		\texttt{capacity\_ah} & Ah & Recommended & Measured capacity \\
+		\hline
+		\texttt{soc} & \% & Recommended & State of charge, 0--100 \\
+		\hline
+		\texttt{resistance\_ohm} & $\Omega$ & Optional & Internal resistance if available \\
+		\hline
+	\end{tabular}
+	\label{tab:schema}
+\end{table}
+
+\subsection{Derived Fields}
+
+Three fields are derived from the core columns and regenerated after every preprocessing run. Power is the product of voltage and current. The operating mode is inferred from the current when the source does not give one: a current above $+0.02$~A is charge, below $-0.02$~A is discharge, and a current inside that band is rest. The state-of-charge band assigns each sample to one of four ranges, below 20\% (deep-discharge region), 20 to 80\% (preferred region), 80 to 90\% (elevated) and 90\% and above (high-state-of-charge region, where calendar ageing is greatest). These bands feed the behaviour layer of Section~\ref{sec:behaviour}.
+
+\subsection{Validation of the Schema}
+
+After conversion the validator checks that the required columns exist and are not entirely empty, that numeric columns can be converted to numbers, that state of charge and state of health lie between 0 and 100 when present, that voltage, capacity and resistance are not negative, and that either a cycle or a timestamp exists. A frame that fails these checks is reported with the reason, and is not scored. This is the point at which a source that lacks a required channel is stopped, as when a CAN message carries current and state of charge but no voltage or temperature.
+
+\section{DATA FLOW AND PROCESSING SEQUENCE}
+
+For every source the processing follows the same eight steps, in the same order, in the same function.
+\begin{enumerate}
+	\item \textbf{Acquire.} Read frames from the bus, lines from the serial port or rows from a file.
+	\item \textbf{Convert.} Decode signals or fields and convert to the units and sign convention of the schema.
+	\item \textbf{Validate.} Apply the schema checks and the capture-level gates, and refuse the capture if they fail.
+	\item \textbf{Segment.} Split the stream into discharges by current direction and by gaps in time.
+	\item \textbf{Measure.} Integrate current to obtain charge between voltage thresholds, apply the ohmic correction and estimate SOH and resistance.
+	\item \textbf{Predict.} Extrapolate the cell's own fade to the end-of-life threshold and attach an error band.
+	\item \textbf{Score behaviour.} Compute the stress features, the risk score, the health index and the Guardian explanation.
+	\item \textbf{Publish.} Update the twin and the fleet store, and serve the result with its evidence and its refusals.
+\end{enumerate}
 
 \section{FROM TELEMETRY TO DISCHARGES}
 \label{sec:segment}
@@ -498,7 +770,7 @@ accepted when the two samples are within 60~s and the current change is at least
 \end{equation}
 Discharges preceding the first resistance estimate are left unmeasured rather than scored uncompensated.
 
-\section{GATES}
+\section{REFUSAL GATES AND DATA-QUALITY CHECKS}
 \label{sec:gates}
 
 Each gate needs no ground truth and can therefore run in deployment.
@@ -509,7 +781,7 @@ Each gate needs no ground truth and can therefore run in deployment.
     \item \textbf{Reference timing.} The reference must be complete within 20 equivalent full cycles of charge throughput. Throughput rather than a discharge count is used because storage-protocol records contain thousands of short pulses.
 \end{enumerate}
 
-\section{LEARNED WINDOWS FOR PARTIAL DISCHARGES}
+\section{LEARNED VOLTAGE WINDOWS FOR PARTIAL DISCHARGES}
 \label{sec:learned}
 
 A car rarely discharges across a fixed window. When the fixed window cannot be read and the rated capacity $C_\mathrm{rated}$ is known, a window is learned from the cell's first ten discharges only. The band they all cover is trimmed by 15\% at each end, and the flattest sub-window of up to 0.30~V within it is selected by its steepness
@@ -520,7 +792,7 @@ s = \frac{V_\mathrm{high}-V_\mathrm{low}}{\Qw/C_\mathrm{rated}}
 \end{equation}
 The window is refused if even the flattest choice has $s > 2.0$, because it then lies on the end-of-discharge knee. There, voltage reflects kinetics (resistance and solid-state diffusion) rather than stored charge.
 
-\section{REMAINING USEFUL LIFE FROM THE CELL'S OWN FADE}
+\section{REMAINING USEFUL LIFE ESTIMATION FROM CELL-SPECIFIC FADE}
 \label{sec:rul-method}
 
 At cycle $k$, the cell's SOH history up to $k$ is smoothed with an 11-point rolling median, a straight line is fitted to the full history, and its crossing of 0.90 gives the end-of-life estimate. Estimates are refused in three cases: with fewer than 30 points, for flat or rising trends, and when the estimate reaches more than twice the history length ahead. A cell already past the threshold is reported as zero. Linear, square-root and quadratic forms, over full and trailing windows, were compared, and the full-history line was most accurate near end of life. No other cell's data enters, so there is no training cohort.
@@ -590,16 +862,123 @@ The aging budget starts at 100 and is reduced by penalties for stress, temperatu
 
 This layer is \emph{not} validated against measured degradation. The Spearman correlation between the risk score and measured fade on a separate set of 33 NASA cells was $\rho = -0.27$ ($p = 0.12$), so it is labelled a heuristic wherever it appears. Where measured SOH exists and the log starts at beginning of life, the measured SOH sets the battery state and records that it did, and the heuristic index is used only otherwise.
 
+\section{DIGITAL-TWIN STATE MODEL}
+
+The digital twin records, for each battery, a state derived from the health index of the latest run and the history of changes in that state. The state is a relabelling of the health index (Table~\ref{tab:rules}), not a separately tuned threshold set, so any change to the health-index formula flows through to the twin without a second edit. A transition is recorded whenever the state of a battery differs from its state in the previous run, and a battery's first observation counts as a transition from no state. Re-running an unchanged, identically seeded fleet therefore produces no new transitions, which is checked by a test. The failure likelihood the twin reports is a monotonic transform of the health index onto the interval from 0 to 1. It is named a likelihood and not a probability because it is not a calibrated statistical quantity.
+
+\section{DESIGN DECISIONS}
+
+Fourteen architecture decision records document the choices made during the project, with the context, the decision and its status. Table~\ref{tab:adr} lists them. Several record a claim that was withdrawn after a later measurement, and that history is kept in the repository and not rewritten.
+
+\begin{table}[htbp]
+	\caption{Architecture Decision Records}
+	\centering
+	\footnotesize
+	\renewcommand{\arraystretch}{1.1}
+	\setlength{\tabcolsep}{3pt}
+	\begin{tabular}{|C{0.06\linewidth}|L{0.8\linewidth}|}
+		\hline
+		\textbf{No.} & \textbf{Decision} \\
+		\hline
+		1 & Cross-dataset validation is not possible; leave-one-cohort-out replaces it \\
+		\hline
+		2 & Health index version 1 stays the default; version 2 is exposed conditionally \\
+		\hline
+		3 & Exact Shapley attribution for the rule scores; SHAP only where it is the right tool \\
+		\hline
+		4 & The dashboard renders only computed values \\
+		\hline
+		5 & The gate is the product, not the model \\
+		\hline
+		6 & Transfer targets are screened on commensurability, not availability \\
+		\hline
+		7 & The target was the binding constraint, not the model \\
+		\hline
+		8 & Model capacity buys within-protocol skill and spends it on transfer \\
+		\hline
+		9 & The protocol-shift collapse replicates on CALCE, but its shape is dataset-specific \\
+		\hline
+		10 & The leave-one-cohort-out estimate is noisier than the effect it is used to measure \\
+		\hline
+		11 & Unsupervised detection finds structure, not harm \\
+		\hline
+		12 & An absolute SOH target on CALCE recovers four cells \\
+		\hline
+		13 & The estimator-variance result survives the target correction as a ratio \\
+		\hline
+		14 & Rated capacity is declared, not defaulted \\
+		\hline
+	\end{tabular}
+	\label{tab:adr}
+\end{table}
+
+\section{ALGORITHM SUMMARY}
+
+The estimators of the previous sections combine into one procedure per cell, summarised below in the order in which the steps run. Every step that can fail ends in a refusal with a stated cause and not in a default.
+
+\begin{footnotesize}
+\begin{verbatim}
+for each cell in the capture:
+    discharges <- segment(stream)           # by current, time gaps
+    if capture-level gate fails:  refuse(cause)
+    for each discharge n:
+        R(n)  <- trailing median of last 11 load-step estimates
+        if no R yet:  mark n "unmeasured"; continue
+        window <- [V_low, V_high] shifted by |I_n| * R(n)
+        if window not spanned:  mark n "unmeasured"
+        Q(n)  <- charge delivered inside window (coulomb count)
+        SOH(n) <- Q(n) / Q_ref
+    fade   <- trend of SOH(n) over the cell's own cycles
+    if evidence inconsistent:  confidence <- low
+    RUL    <- cycles until fade crosses EOL threshold
+    return SOH, R, RUL, confidence, band, refusals
+\end{verbatim}
+\end{footnotesize}
+
+The reference $Q_{\mathrm{ref}}$ is the declared rated capacity when the source gives one, or the cell's own early capacity otherwise, and the source of the reference is returned with the result. The error band attached to each output is the measured error of that output on the validation data and is not a quantity computed from the cell being scored.
+
 \section{VALIDATION PROTOCOL}
 \label{sec:protocol}
 
-\paragraph{Ground truth.} Ground truth is the cycler's measured discharge capacity, which never enters an estimate. SOH truth is capacity over the median of the cell's first five cycles. For partial-cycling cells, whose checks are about 100 cycles apart, the partial-discharge study scores each cell against its first check, and the remaining-life study uses the capacity over the checks within the first ten cycles. Each is a reference a BMS can hold. A reference drawn from the cell's whole record uses the future, and Section~\ref{sec:res-rul} quantifies the resulting inflation.
+\paragraph{Ground Truth.} Ground truth is the cycler's measured discharge capacity, which never enters an estimate. SOH truth is capacity over the median of the cell's first five cycles. For partial-cycling cells, whose checks are about 100 cycles apart, the partial-discharge study scores each cell against its first check, and the remaining-life study uses the capacity over the checks within the first ten cycles. Each is a reference a BMS can hold. A reference drawn from the cell's whole record uses the future, and Section~\ref{sec:res-rul} quantifies the resulting inflation.
 
-\paragraph{Pre-declared configurations.} Primary windows, comparison arms, tolerances and scoring were fixed before each study ran. Choices made after seeing a result are labelled exploratory.
+\paragraph{Pre-Declared Configurations.} Primary windows, comparison arms, tolerances and scoring were fixed before each study ran. Choices made after seeing a result are labelled exploratory.
 
 \paragraph{Benchmark.} The benchmark uses leave-one-cell-out (LOBO, 31 folds) and leave-one-cohort-out (LOCO, 9 folds) validation. $R^2$ is computed against the training-fold mean, with 95\% bootstrap intervals resampling folds (2,000 resamples). Hyperparameters were fixed and not tuned per fold, except ElasticNet's penalty, chosen by inner cross-validation within the training fold.
 
 \paragraph{Aggregation.} Errors are summarised per cell, then across cells, so long-lived cells do not dominate.
+
+\section{PARAMETERS OF THE ESTIMATORS}
+
+The estimators have few parameters, and each was fixed on the development data before the external datasets were scored. Table~\ref{tab:params} lists those quoted in this chapter. None was changed when the estimators were applied to the Oxford and NASA data.
+
+\begin{table}[htbp]
+	\caption{Parameters Fixed Before External Validation}
+	\centering
+	\small
+	\renewcommand{\arraystretch}{1.15}
+	\setlength{\tabcolsep}{4pt}
+	\begin{tabular}{|L{0.38\linewidth}|C{0.14\linewidth}|L{0.28\linewidth}|}
+		\hline
+		\textbf{Parameter} & \textbf{Value} & \textbf{Used for} \\
+		\hline
+		Maximum gap between rest and load samples & 60~s & Accepting a load-step estimate \\
+		\hline
+		Minimum current change at the step & 0.05~A & Accepting a load-step estimate \\
+		\hline
+		Length of trailing resistance median & 11 steps & Ohmic correction \\
+		\hline
+		Rest or charge current threshold & $\pm$0.02~A & Mode inference \\
+		\hline
+		Serial sampling period (rig) & 1~s & Rig firmware \\
+		\hline
+		End-of-life threshold & 80\% & Conventional RUL target \\
+		\hline
+	\end{tabular}
+	\label{tab:params}
+\end{table}
+
+Fixing the parameters in advance has a cost. They are not the best possible values for any one dataset, and the errors reported on the external data are therefore a fair statement of what the estimators do on data they were not tuned on, and not the best that could be obtained by tuning.
 
 \section{EVALUATION METRICS}
 \label{sec:metrics}
@@ -729,7 +1108,7 @@ Outside the package, the repository holds the following.
 	\item \texttt{docs/adr/}: fourteen architecture decision records, including those that record reversed decisions.
 \end{itemize}
 
-\section{TELEMETRY ACQUISITION: THREE TRANSPORTS, ONE FRAME}
+\section{TELEMETRY ACQUISITION AND THE UNIFIED FRAME}
 \label{sec:impl-transports}
 
 The three transports converge on one unified telemetry frame with the columns \texttt{cell\_id}, \texttt{test\_time\_s}, \texttt{voltage\_v}, \texttt{current\_a}, \texttt{temperature\_c} and \texttt{soc}.
@@ -740,9 +1119,27 @@ The three transports converge on one unified telemetry frame with the columns \t
     \item \textbf{Research datasets.} Loaders read the NASA MATLAB files and the CALCE and Oxford records into the same frame.
 \end{itemize}
 
-\subsection{The Seam Is Narrow}
+\subsection{Interface Between Acquisition and Scoring}
 
 A serial source is a protocol with one method, \texttt{lines()}. A physical port, a recorded text file, a list in a test and the deterministic emulator are interchangeable, so the demo path and the hardware path differ in one constructor call. The emulator deliberately generates \emph{wire-format text} and not record objects. Emitting objects would have been less code but would have proved nothing, because the parser, the checksum, the schema validation and the coverage gate would all be bypassed in exactly the path the tests exercise. The emulator even prints an ESP32 boot banner, so the sentinel filter runs on every test. Recording composes at the same seam: one decorator makes a live port, a replay or the emulator recordable, and the file on disk is exactly the bytes that produced the result.
+
+\section{UNIFIED SCHEMA IMPLEMENTATION}
+
+Each source has its own loader, whose only job is to map that source onto the schema of Section~\ref{sec:schema}. The NASA and CALCE loaders read the laboratory files, the CAN loader decodes frames, and the serial loader parses lines. Every loader corrects the current sign convention of its source before the validator runs, so the pipeline never sees a mixed convention. The derived fields, power, operating mode and state-of-charge band, are recomputed after each preprocessing run and not stored from an earlier one, so a change to a threshold takes effect everywhere at once. A loader that cannot supply a required channel returns a frame that the validator rejects with the name of the missing column, which is preferable to a loader that fills the gap with a plausible constant.
+
+\section{CAN AND DBC ADAPTER}
+
+The CAN adapter decodes raw frames described by a DBC file into the unified schema. It uses an established library, \texttt{cantools}, for the decoding and does not implement the bit extraction itself. This is a deliberate choice: the big-endian bit numbering used in DBC files is a well-known source of subtle errors, and an almost-correct hand-written decoder would produce values that look plausible and are wrong, the failure the project is designed to avoid.
+
+The decoder is general, because it parses any standard DBC file. The bundled example describes the primary battery status message of a Renault Twizy, identifier 0x155, transcribed from the public documentation of the Open Vehicles Monitoring System. Its correctness is checked against an independent source: a test decodes the exact bytes of the worked example in that documentation and asserts that the current and state of charge match the published result, 58.25~A and 69.98\%, so the test does not merely confirm that the code agrees with itself.
+
+\subsection{Vehicle Registry}
+
+The single-file adapter is generalised by a registry in which several vehicles' DBC files can be registered. Given a batch of raw frames, the registry identifies the vehicle by comparing the observed identifiers with the identifiers each vehicle defines, and decodes accordingly. If no registered vehicle matches with confidence, it raises an error and does not choose the closest match, which is the same refusal stance as elsewhere in the system. By default exactly one real vehicle is registered. A synthetic fixture, clearly named as not a real vehicle, can be added in tests to exercise the disambiguation logic and is never part of the default registry, so application code cannot mistake it for real coverage.
+
+\subsection{Limits of the Adapter}
+
+The adapter proves the pattern, a CAN frame becomes decoded signals and then a unified frame, against real vehicle protocol data. It does not prove broad coverage of manufacturers. Most vehicles supported by community projects are decoded by hand-written code and not by a portable DBC file, and manufacturer files are proprietary. The documented message carries current and state of charge but no voltage or temperature, so the validator correctly reports that it cannot be scored on its own. Reading a live bus would be the task of a separate library layered under the decoder and has not been built.
 
 \section{SERIAL WIRE PROTOCOL}
 \label{sec:impl-protocol}
@@ -759,7 +1156,7 @@ BEACON1 D {"t":12.5,"v":3.91,"i":-1.48,"tc":27.4,"soc":82.1}*06
     \label{fig:frame}
 \end{figure}
 
-\subsection{Framing by Sentinel}
+\subsection{Frame Delimitation}
 
 Framing is by sentinel and not by length. Every microcontroller prints boot banners and debugging text, so a length-prefixed parser would resynchronise after such noise only by luck. A sentinel parser discards anything not beginning with \texttt{BEACON1} as counted noise and continues, which makes the protocol self-synchronising: it recovers at the next newline after any corruption, with a loss of at most one frame.
 
@@ -1000,6 +1397,122 @@ Fig.~\ref{fig:uioverview} and Fig.~\ref{fig:uihealth} show the dashboard. Both a
 
 There are two deliberate absences. There is no database: the fleet store is in memory, and adding a database to the compose file would imply a persistence layer that does not exist, so the compose file says so. Persistence is the next substantial piece of work.
 
+\section{DIGITAL TWIN AND FLEET STORE}
+
+The twin is implemented as a domain module with no transport dependency. The API layer is a thin adapter over it, so adding another front end, for example a message broker, means writing a new adapter and leaves the module unchanged. The fleet store holds the latest twin state, the transition history and the telemetry of the most recent run for each battery. It is held in process memory and does not survive a restart, which is stated in the API documentation and shown in the compose file by the absence of a database service.
+
+The twin also carries a field called evidence confidence, which takes one of four values: validated, heuristic, mixed or not applicable. It states whether the causes the Guardian identified for a battery are supported by the calibration work or are hand-chosen thresholds. Temperature exposure is the only cause with a measured, cohort-controlled effect (0.0038~Ah per $^\circ$C), while the current-based causes and the health index itself are marked heuristic. This does not change what the Guardian detects. It changes what the system says about its own certainty, which was previously not visible in the output.
+
+\section{API REFERENCE}
+
+Table~\ref{tab:api} lists the routes of the Python service, grouped by purpose. The interactive documentation generated by FastAPI from the same code is served at \texttt{/docs}, so it cannot drift from the code in the way a hand-written reference can.
+
+\begin{table}[htbp]
+	\caption{Routes of the Python Service}
+	\centering
+	\small
+	\renewcommand{\arraystretch}{1.15}
+	\setlength{\tabcolsep}{4pt}
+	\begin{tabular}{|L{0.4\linewidth}|L{0.4\linewidth}|}
+		\hline
+		\textbf{Route} & \textbf{Purpose} \\
+		\hline
+		\texttt{GET /healthz} & Service liveness, with run and battery counts \\
+		\hline
+		\texttt{POST /pipeline/simulate} & Score a simulated fleet and fold it into the store \\
+		\hline
+		\texttt{GET /batteries} & Twin state of every battery seen \\
+		\hline
+		\texttt{GET /batteries/\{id\}} & Twin, Guardian report, risk, history, evidence confidence \\
+		\hline
+		\texttt{GET /batteries/\{id\}/timeline} & Per-cycle stress, state of charge and temperature \\
+		\hline
+		\texttt{POST /telemetry/replay} & Replay a recorded CAN log through the pipeline \\
+		\hline
+		\texttt{POST /telemetry/serial/replay} & Replay a recorded serial capture \\
+		\hline
+		\texttt{GET /telemetry/coverage} & Report which required signals a DBC file provides \\
+		\hline
+	\end{tabular}
+	\label{tab:api}
+\end{table}
+
+A battery that is in the store but absent from the most recent run has a twin state and a history but no timeline, and a request for its timeline returns a not-found response and not a stale series. Every request body is validated by Pydantic. The duration of a live capture is bounded above by 300~s, the number of emulated cycles lies between 1 and 50, the sampling period lies between 0 and 3600~s and the accepted fraction lies between 0 and 1, so no request can start a capture that never returns.
+
+\section{SECURITY CONSIDERATIONS}
+
+The service is a local bench and analysis tool, and its security review asked a narrow question: can a caller who reaches the service make it do something it should not? The review was carried out against the repository and recorded, with the findings and the decision taken on each. Table~\ref{tab:security} summarises them.
+
+\begin{table}[htbp]
+	\caption{Security Review of the Service}
+	\centering
+	\footnotesize
+	\renewcommand{\arraystretch}{1.1}
+	\setlength{\tabcolsep}{3pt}
+	\begin{tabular}{|L{0.3\linewidth}|L{0.5\linewidth}|}
+		\hline
+		\textbf{Finding} & \textbf{Outcome} \\
+		\hline
+		Request-supplied file paths on replay and coverage routes & Fixed: path must resolve under an allowed root \\
+		\hline
+		Cross-origin policy permissive by default & Made configurable; not presented as a security boundary \\
+		\hline
+		Secrets and language-model integration & Verified absent by search of the repository \\
+		\hline
+		Request validation & Adequate; bounds on durations and counts \\
+		\hline
+		Serial parser under adversarial input & Safe: bad lines counted, values rejected, capture refused below a threshold \\
+		\hline
+		Notebook metadata & Noted; left to the author \\
+		\hline
+	\end{tabular}
+	\label{tab:security}
+\end{table}
+
+The one substantive finding was that three routes opened a filesystem path taken from the request body without any containment. A caller could name a private key or a configuration file, and the per-line rejection reasons returned by the serial path could carry fragments of what was read. The difference between a not-found and a parse error also revealed whether a file existed. The fix resolves the path first and requires it to lie under an allowed root, and rejects it with a client error before any existence check, so an out-of-bounds path cannot be used to probe the disk. A list of allowed roots was chosen over a blocklist of path patterns, because blocklists on path strings can be defeated by symbolic links, percent-encoding and short file names, whereas resolving first and then asking where the path ended up is decided after any such trick has been applied. The allowed roots can be replaced through an environment variable, and the variable replaces the defaults and does not extend them, so setting it cannot leave a development convenience in place. Thirteen tests cover the containment.
+
+\subsection{What Is Deliberately Not Defended}
+
+The service has no authentication, no rate limiting, no transport security and no tenant isolation, and it keeps one global in-memory store. These are consequences of its scope as a local tool and are recorded as such. The correct remedy for a shared deployment is an authenticating reverse proxy in front of the service and not code inside it.
+
+\section{DASHBOARD COMPONENTS}
+
+The dashboard is a React application made of small components, each with one view. Table~\ref{tab:components} lists them. The panels that display a measured result carry the provenance of the value, so a reader can tell whether a figure comes from a vehicle, a rig, a dataset or a simulation.
+
+\begin{table}[htbp]
+	\caption{Components of the Dashboard}
+	\centering
+	\small
+	\renewcommand{\arraystretch}{1.15}
+	\setlength{\tabcolsep}{4pt}
+	\begin{tabular}{|L{0.3\linewidth}|L{0.44\linewidth}|}
+		\hline
+		\textbf{Component} & \textbf{View} \\
+		\hline
+		Fleet table & Health, risk and remaining life of every battery \\
+		\hline
+		Battery detail & Health over cycles and attribution of the health index \\
+		\hline
+		Guardian panel & Plain-language report of the causes found \\
+		\hline
+		Twin panel & Twin state and its transitions \\
+		\hline
+		Telemetry replay & Replay of a CAN log or serial capture \\
+		\hline
+		Thermal map & Temperature across the pack \\
+		\hline
+		Validation panel & Measured error of each estimator \\
+		\hline
+		Transfer panel & Result of transfer between datasets \\
+		\hline
+		Provenance & Source of the displayed values \\
+		\hline
+	\end{tabular}
+	\label{tab:components}
+\end{table}
+
+The design mock-up of the dashboard contained placeholder readings, such as a state of health of 92.4\% and a remaining life of 1,245 cycles. A decision record fixes that the interface renders only values that were computed, and shows a refusal or an empty state in place of a placeholder when the pipeline has produced nothing. This is the same stance as in the estimators, applied to the display.
+
 \section{HEALTH REPORT CARD}
 \label{sec:impl-card}
 
@@ -1018,6 +1531,40 @@ There are 44 test modules, and three kinds of test are not the usual kind.
 
 Continuous integration runs eight jobs: lint and type checking, the test suite on Python 3.10 and 3.12, a job that uninstalls the optional CAN dependency and re-runs the suite, a job that reproduces the headline benchmark end to end, a firmware compile for three targets, the gateway tests, the client build, and the Docker build. The job without the optional dependency exists because ``it is optional'' is otherwise an untested claim. The Python-version matrix exists because testing only the newest version lets a declared floor rot silently.
 
+\subsection{Test Modules by Subsystem}
+
+Table~\ref{tab:tests} lists some of the test modules and the behaviour each one pins. Each subsystem has tests at its own boundary, so a fault is caught where it is introduced and not where it is first noticed.
+
+\begin{table}[htbp]
+	\caption{Selected Test Modules and What They Check}
+	\centering
+	\footnotesize
+	\renewcommand{\arraystretch}{1.1}
+	\setlength{\tabcolsep}{3pt}
+	\begin{tabular}{|L{0.42\linewidth}|L{0.42\linewidth}|}
+		\hline
+		\textbf{Module} & \textbf{Behaviour checked} \\
+		\hline
+		\texttt{test\_api} & Route behaviour, repeated identical seeded run produces no new twin transitions \\
+		\hline
+		\texttt{test\_api\_path\_containment} & Out-of-root, relative and symbolic paths are rejected before any existence check \\
+		\hline
+		\texttt{test\_can\_dbc} & Decoded values match the published worked example; missing voltage and temperature reported by the validator \\
+		\hline
+		\texttt{test\_can\_vehicle\_registry} & Vehicle identified from observed identifiers; ambiguous input refused \\
+		\hline
+		\texttt{test\_digital\_twin} & State derivation and transition recording \\
+		\hline
+		\texttt{test\_serial\_telemetry} & Framing, checksum, rejected values, capture-level refusal \\
+		\hline
+		\texttt{test\_hardware\_readiness} & Truncated lines, corrupted checksums, non-finite and out-of-range fields \\
+		\hline
+		Gateway tests (\texttt{gateway}, \texttt{telemetry}) & Each route forwards to the Python service and returns its result unchanged \\
+		\hline
+	\end{tabular}
+	\label{tab:tests}
+\end{table}
+
 \section{CONTAINERISATION AND DEPLOYMENT}
 \label{sec:impl-deploy}
 
@@ -1030,6 +1577,12 @@ python -m pytest tests/ -q         # the test suite
 docker compose up                  # API, gateway, client
 \end{verbatim}
 
+\section{OPERATIONAL WORKFLOW}
+
+A typical session with the system follows the same path whatever the source. An operator starts the three services, or runs the single command that produces the end-to-end result, and selects a source: a simulated fleet, a recorded CAN log with its DBC file, a serial capture, or a live capture from the rig. The service converts the source to the unified frame, applies the schema and capture-level checks, and scores the result. The dashboard then shows the fleet table first, with each battery's health, risk and remaining life, and each value labelled with its source. Selecting a battery opens its detail, where the health over cycles, the attribution of the health index and the twin history are shown. If a capture was refused, the dashboard shows the refusal and its cause in the place where the number would have been.
+
+The same path serves a bench session. With the rig connected, the operator records a capture to a file and replays it through the serial route, which gives the same result as scoring it live and leaves a file that can be re-scored after any change to the code. Replay from a recorded file is also how the results of this report were reproduced, since a file scored twice gives the same output, and a live cell does not.
+
 \section{CHAPTER SUMMARY}
 
 This chapter described the realisation of the design: a shared scoring path fed by three transports through a narrow seam, a self-synchronising wire protocol with refusal gates at both record and capture level, a physical rig brought up in two stages, a three-service stack served from containers, and a test and CI strategy aimed at keeping the documentation and the code honest. What this implementation \emph{achieved} is reported in the next chapter.
@@ -1040,7 +1593,7 @@ This chapter described the realisation of the design: a shared scoring path fed 
 
 This chapter reports what the system measured and interprets each result where it appears. Every number is traced to a committed artifact (Appendix~A). Errors are mean absolute errors in SOH (0.01 equals one percentage point) per cell, summarised as a median over cells with a 95\% bootstrap interval that resamples cells, unless stated otherwise. Results that failed are reported alongside those that worked.
 
-\section{FITTED MODELS DO NOT SURVIVE A CHANGE OF PROTOCOL}
+\section{PERFORMANCE OF FITTED MODELS UNDER PROTOCOL SHIFT}
 \label{sec:res-bench}
 
 On the NASA benchmark (31 cells, nine cohorts; the isotonic signal ceiling for the target SOH is 0.569), every one of twelve published methods lost skill from leave-one-cell-out (LOBO) to leave-one-cohort-out (LOCO) validation (Table~\ref{tab:bench}). LOBO rank carried almost no information about LOCO rank (Spearman $\rho = +0.084$, $p = 0.795$, $n = 12$). Across fourteen scored methods, the spread of LOCO point estimates (2.06 in $R^2$) was smaller than the width of the best method's own interval (3.66).
@@ -1113,7 +1666,7 @@ Temperature was the only usage factor with a consistent, correctly signed within
 
 \textbf{Interpretation.} No fitted method retains reliable skill under a change of protocol, and no method can be distinguished from another. This is the result that motivates the rest of the project: the estimators that ship fit nothing across cells.
 
-\section{FIELD SOH FROM VOLTAGE, CURRENT AND TIME}
+\section{FIELD STATE-OF-HEALTH ESTIMATION}
 \label{sec:res-field}
 
 Table~\ref{tab:field} compares three ohmic treatments at the primary window on 22 CALCE cells. The field correction matched the laboratory correction within its interval and measured five more cells than no correction. Sensitivity windows gave 1.2\% (4.05--3.55~V, 16 cells) and 1.9\% (3.85--3.55~V, 17 cells).
@@ -1185,7 +1738,7 @@ On the four cells of real partial cycling (Table~\ref{tab:partial}), estimates u
 
 \textbf{Interpretation.} The refusal is physics and not a tuned cut. On the plateau, window charge tracks capacity, while on the knee voltage is set by resistance and diffusion, so it measures how hard the cell is working instead. The scope is two cells per band, which shows the mechanism and is too few to quote a population error.
 
-\section{RESISTANCE TRACKS THE INSTRUMENT}
+\section{INTERNAL RESISTANCE ESTIMATION}
 \label{sec:res-r}
 
 Against the cycler's internal-resistance column over each cell's life (20 cells carrying both values), the step resistance achieved a median Spearman correlation of 0.86, growth in the same direction on 19 of 20 cells, and a median growth of 1.26 times against the cycler's 1.29 times. This includes the partial-cycling cells (0.90 and 0.98), and the exception is a Type~3 cell. The levels differ, since the step value includes early polarisation, but the trends agree, which is what a power-fade indicator requires.
@@ -1228,7 +1781,7 @@ Scored against a reference capacity taken as the 95th percentile of the cell's w
 
 \textbf{Interpretation.} The ``within $\pm$20 cycles'' claim is true near end of life and false far from it (0\% at 200 or more cycles out), so it is reported with its condition and not bare. The conservative direction is a property of the 90\% threshold on these cells and is not a general guarantee. At an 85\% threshold the median bias near end of life turns positive (+6.7 cycles within 25 cycles of end of life), so the estimate runs late there and only 62.8\% of estimates fall within $\pm$20 cycles. The conventional 80\% end-of-life threshold is not validated on CALCE, because its full-discharge trajectories end near 0.81 and only one cell of 22 crosses 0.80.
 
-\section{RUL WHEN COMPLETE DISCHARGES ARE RARE}
+\section{RUL ESTIMATION UNDER SPARSE COMPLETE DISCHARGES}
 \label{sec:res-sparse}
 
 A driver who seldom fully discharges produces few complete discharges (CS2\_24 has 18 in 1,617). Four methods were evaluated on the same sparse evidence (Table~\ref{tab:sparse}). Sparsity is real on the partial-cycling cells and emulated as one complete discharge in 50 on the constant-current cells.
@@ -1257,7 +1810,7 @@ A driver who seldom fully discharges produces few complete discharges (CS2\_24 h
 
 The failure of the field-trajectory method has a clean cause. Near 0.90, field SOH reads a median 1.1 points below capacity (measured in a first pass of this study, not kept as a separate artifact). Because fade near the threshold is slow, that small bias moves the 0.90 crossing a median 56 cycles early. An SOH error that is acceptable as a health figure thus becomes large as a time to threshold. None of the four is reported, and the system refuses RUL for partial-only records and states that this was tested.
 
-\section{WHEN THE EVIDENCE SUFFICES}
+\section{EVIDENCE SUFFICIENCY ANALYSIS}
 \label{sec:res-suff}
 
 Three questions were fixed before the study and scored at every laboratory check on 19 cells. First, \emph{count does not predict accuracy}: median error was 0.75\% at 6--10 usable readings and 1.97\% beyond 60, because error grows with age as the approximation in Eq.~\eqref{eq:soh} drifts. A rule of high confidence after a fixed number of discharges therefore has no support. Second, \emph{consistency does} (Table~\ref{tab:suff}). The pooled Spearman correlation between $u$ and absolute error was 0.48. Within cells it was weaker (median 0.14, positive in 14 of 19), so $u$ chiefly separates unreliable cells and periods and does not rank readings within a good one.
@@ -1309,11 +1862,11 @@ The estimator was applied to the eight Oxford cells without re-tuning. Arms, ref
 
 All eight cells were measured (Table~\ref{tab:oxford}). The near-equilibrium C/18 window was not more accurate than the 1C window, so on this blend cathode the residual error stems from the curve changing shape with age and not from ohmic sag, consistent with the stated approximation of Eq.~\eqref{eq:soh}.
 
-\paragraph{A real drive-cycle discharge.} The drive-cycle discharge of Cell~1 has current between $-5.0$ and $+1.6$~A. Resistance from its own 1,575 current steps of at least 0.2~A gave a median of 21~m$\Omega$ (interquartile 19--24). The discharge is itself partial (it stops at about 65\% depth), so a coverage window (4.08--3.78~V) was chosen from the corrected curve's span alone, before any comparison was computed. In it the drive-cycle reading, corrected per sample and fitted monotonically, was 0.2625~Ah, against 0.2661~Ah from the same cell's 1C constant-current discharge, a difference of 1.4\%. Both lay about 13\% below the C/18 reading in that window, so the rate effect cancels in a ratio of like with like but would bias one that mixed rates. This is a single discharge and demonstrates the mechanism, not a population error.
+\paragraph{Drive-Cycle Discharge.} The drive-cycle discharge of Cell~1 has current between $-5.0$ and $+1.6$~A. Resistance from its own 1,575 current steps of at least 0.2~A gave a median of 21~m$\Omega$ (interquartile 19--24). The discharge is itself partial (it stops at about 65\% depth), so a coverage window (4.08--3.78~V) was chosen from the corrected curve's span alone, before any comparison was computed. In it the drive-cycle reading, corrected per sample and fitted monotonically, was 0.2625~Ah, against 0.2661~Ah from the same cell's 1C constant-current discharge, a difference of 1.4\%. Both lay about 13\% below the C/18 reading in that window, so the rate effect cancels in a ratio of like with like but would bias one that mixed rates. This is a single discharge and demonstrates the mechanism, not a population error.
 
-\paragraph{Remaining life at 80\%.} The Oxford trajectories cross the 80\% convention, so the shipped RUL estimator was scored there unchanged. When it predicted fewer than 500 cycles to 80\%, the cell lasted at least that long in 97\% of cases (36 estimates, 5 cells). Precision is low: the median miss is 385 cycles against characterisations 100 cycles apart. The guarantee also weakens with distance, since predictions of 500 to 1,000 cycles were met or exceeded only 80\% of the time (25 estimates, 5 cells).
+\paragraph{Remaining Life at the 80\% Threshold.} The Oxford trajectories cross the 80\% convention, so the shipped RUL estimator was scored there unchanged. When it predicted fewer than 500 cycles to 80\%, the cell lasted at least that long in 97\% of cases (36 estimates, 5 cells). Precision is low: the median miss is 385 cycles against characterisations 100 cycles apart. The guarantee also weakens with distance, since predictions of 500 to 1,000 cycles were met or exceeded only 80\% of the time (25 estimates, 5 cells).
 
-\section{A THIRD DATASET AND KNOWING WHEN TO REFUSE}
+\section{VALIDATION ON A THIRD DATASET AND REFUSAL BEHAVIOUR}
 \label{sec:res-xds}
 
 The NASA files (18650 cells, ambient 4--44~$^\circ$C) were read from their original MATLAB form and scored the same way, unchanged. The estimator was poor on NASA overall, with a median per-cell error of 9.2\% over 27 cells, and it depended on temperature: 1.7\% in the 43~$^\circ$C cohort and 12--14\% at 4 and 22~$^\circ$C. The step resistance captures only the ohmic part of the overpotential, and at low temperature the charge-transfer and diffusion parts, which grow with age, move the curve through the window.
@@ -1376,7 +1929,7 @@ Faults injected into a real capture behaved as designed: a corrupted byte failed
 
 The captures demonstrate that the transport, the protocol, the gate and the refusal path work against real silicon. They are one cell, at rest, for under 90~s, with no load step and no charge or discharge cycle. They are \emph{not} a validation of the health, RUL or risk models, which were fitted on cycled research cells and cannot be confirmed or refuted by a cell that was never cycled. Sensor accuracy against a reference meter was not measured, and no discharge has yet been recorded on the rig.
 
-\section{A WORKED EXAMPLE: THE REPORT CARD}
+\section{ILLUSTRATIVE EXAMPLE: THE HEALTH REPORT CARD}
 \label{sec:res-card}
 
 Fig.~\ref{fig:card} abridges the report card for CALCE cell CS2\_35 as it would have read at cycle 90. The pipeline saw voltage, current and time only.
@@ -1412,15 +1965,15 @@ The health figure is within half a point. The remaining-life figure is 51 cycles
 \section{DISCUSSION}
 \label{sec:discussion}
 
-\paragraph{Conditioning moved accuracy; model choice did not.} Across fourteen scored methods, LOCO differences were smaller than the uncertainty on any one of them. Three conditioning decisions, by contrast, changed error by multiples. Refusing truncated discharges took the worst cell from 52\% to about 10\%. Identifying resistance from the load step took the median from 4.3\% to 1.7\% and coverage from 12 to 17 cells. Refusing knee windows converted 6.8--12.8\% errors into refusals. For a BMS software layer, the leverage lies in what is measured and how it is conditioned, not in the regressor that follows. The first of these was a misdiagnosis corrected during the project: the 52\% worst case had been attributed to loss of active material, when it was actually truncated discharges being read as full ones.
+\paragraph{Effect of Conditioning Versus Model Choice.} Across fourteen scored methods, LOCO differences were smaller than the uncertainty on any one of them. Three conditioning decisions, by contrast, changed error by multiples. Refusing truncated discharges took the worst cell from 52\% to about 10\%. Identifying resistance from the load step took the median from 4.3\% to 1.7\% and coverage from 12 to 17 cells. Refusing knee windows converted 6.8--12.8\% errors into refusals. For a BMS software layer, the leverage lies in what is measured and how it is conditioned, not in the regressor that follows. The first of these was a misdiagnosis corrected during the project: the 52\% worst case had been attributed to loss of active material, when it was actually truncated discharges being read as full ones.
 
-\paragraph{Reference definitions change conclusions.} Two results moved when the reference was made one a BMS can hold: RUL accuracy fell from 88\% to 73\%, and a partial-discharge reference formed from a late discharge produced a large error until the timing gate existed. Validation should use the reference the deployed system will have.
+\paragraph{Dependence on the Reference Definition.} Two results moved when the reference was made one a BMS can hold: RUL accuracy fell from 88\% to 73\%, and a partial-discharge reference formed from a late discharge produced a large error until the timing gate existed. Validation should use the reference the deployed system will have.
 
-\paragraph{Threshold crossings amplify small biases.} A 1.1-point SOH bias, unremarkable as a health figure, shifted predicted end of life by about 56 cycles. Any RUL built on an estimated rather than measured SOH inherits this, and should be evaluated as a time to threshold and not through SOH error.
+\paragraph{Sensitivity of Threshold Crossings to Bias.} A 1.1-point SOH bias, unremarkable as a health figure, shifted predicted end of life by about 56 cycles. Any RUL built on an estimated rather than measured SOH inherits this, and should be evaluated as a time to threshold and not through SOH error.
 
-\paragraph{Sufficiency is measurable.} Treating ``enough data'' as a count is intuitive and here wrong, because the estimator's error is dominated by age-related drift and not sampling. The consistency of readings is observable without ground truth and separates 1.3\% from 5.1\% median error, which gives a BMS layer a principled way to report ``not yet'' for a battery it has never seen.
+\paragraph{Quantifying Evidence Sufficiency.} Treating ``enough data'' as a count is intuitive and here wrong, because the estimator's error is dominated by age-related drift and not sampling. The consistency of readings is observable without ground truth and separates 1.3\% from 5.1\% median error, which gives a BMS layer a principled way to report ``not yet'' for a battery it has never seen.
 
-\paragraph{Limitations.}
+\paragraph{Limitations of the Findings.}
 \begin{itemize}
     \item \emph{Temperature.} On NASA cells at 4 and 22~$^\circ$C the estimator erred by 12--14\%. The low-confidence label marked most of these readings, but a temperature-aware correction is future work.
     \item \emph{Two cathode families, single cells, one real drive cycle.} Packs add cell-to-cell imbalance, thermal gradients and balancing currents, and the flat plateau of lithium iron phosphate would challenge the window method directly.
@@ -1429,6 +1982,18 @@ The health figure is within half a point. The remaining-life figure is 51 cycles
     \item \emph{Apparent resistance} depends on the logger's sample interval and is comparable within a record, not across loggers.
     \item \emph{No hardware discharge} has yet been recorded on the bench rig, and the heuristic risk layer is not validated.
 \end{itemize}
+
+\section{IMPLICATIONS FOR BMS SOFTWARE DESIGN}
+
+Four implications follow from the results and are stated here as design guidance for a software layer above a BMS.
+
+\paragraph{Validate on the Unit of Deployment.} A model is deployed on a battery that has not been seen and often on a protocol that has not been seen. The validation split should hold out that unit, and the interval around the result should be reported, because on the benchmark of this project the interval on a single method was wider than the difference between methods.
+
+\paragraph{Prefer Measurement to Fitting Where Measurement Is Possible.} Voltage, current and time are enough to measure capacity on a discharge that spans a voltage window, and the measurement needs no training cells. Fitting is then needed only for the quantities that cannot be measured directly.
+
+\paragraph{Make Refusal a Normal Output.} A refusal that carries its cause is information, since it tells the operator what data to collect. The consistency criterion separated a 4.5\% median error from a 13.2\% median error without any knowledge of the true capacity, which shows that a system can recognise its own poor conditions.
+
+\paragraph{Keep One Scoring Path.} When a vehicle, a rig and a dataset all pass through the same function, a result obtained on a dataset says something about the vehicle, and a defect found on the rig is fixed for all three.
 
 \section{VALIDATION SUMMARY}
 
@@ -1474,6 +2039,52 @@ Table~\ref{tab:summary} lists the outputs by status. Claims that failed or were 
 	\label{tab:summary}
 \end{table}
 
+\section{ASSESSMENT AGAINST THE OBJECTIVES}
+
+Table~\ref{tab:objectives} relates each objective of Section~1.5 to the evidence for it in this chapter and in Chapter~\ref{ch:implementation}.
+
+\begin{table}[htbp]
+	\caption{Objectives and Evidence}
+	\centering
+	\footnotesize
+	\renewcommand{\arraystretch}{1.1}
+	\setlength{\tabcolsep}{3pt}
+	\begin{tabular}{|C{0.05\linewidth}|L{0.42\linewidth}|L{0.34\linewidth}|}
+		\hline
+		\textbf{No.} & \textbf{Objective} & \textbf{Evidence} \\
+		\hline
+		1 & End-to-end ingestion of CAN, serial and dataset sources through one pipeline & Single scoring function; three transports; test modules and continuous integration \\
+		\hline
+		2 & SOH from voltage, current and time with ohmic correction & 1.7\% median error on 17 of 22 CALCE cells \\
+		\hline
+		3 & Resistance as a second quantity; RUL from each cell's own fade & Resistance trend in the same direction on 19 of 20 cells; 73\% of RUL within $\pm$20 cycles near end of life \\
+		\hline
+		4 & Measured evidence sufficiency; refusal of insufficient evidence & Consistency criterion separates 4.5\% from 13.2\% error; every refusal carries a reason \\
+		\hline
+		5 & External validation without re-tuning; retention of negative results & Oxford median error 3.0\%; sparse-discharge RUL and fitted-model ranking retained as negative results \\
+		\hline
+		6 & Physical rig, API and dashboard & 83 of 83 frames received; routes and dashboard served from containers \\
+		\hline
+	\end{tabular}
+	\label{tab:objectives}
+\end{table}
+
+\section{THREATS TO VALIDITY}
+
+The results are bounded by the way they were obtained, and the bounds are stated here so that they can be weighed against the figures.
+
+\begin{itemize}
+	\item \textbf{Chemistry and format.} Development and primary validation use LCO prismatic cells at constant current. The external dataset is an NMC/LCO blend pouch cell at one temperature. Results for lithium iron phosphate, for packs and for dynamic loads are not claimed.
+	\item \textbf{Reference definition.} Two results moved when the reference was changed to the capacity the cell's own first discharges measure, which is what a BMS can know. A figure is therefore tied to the reference named with it.
+	\item \textbf{Small numbers of cells.} Several results rest on a few cells, for example the partial-discharge result on two cells. They are reported as validated on those cells, and no claim is made beyond them.
+	\item \textbf{Hardware.} The rig validates the data-acquisition path. No discharge has been recorded on it, so no health figure from the rig is claimed.
+	\item \textbf{Heuristic layer.} The behaviour risk score was not significantly related to measured fade ($\rho=-0.27$, $p=0.12$ on 33 NASA cells) and is labelled a heuristic wherever it appears.
+\end{itemize}
+
+\section{ROBUSTNESS AND SECURITY CHECKS}
+
+Beyond estimation accuracy, the system was checked for the behaviour of its interfaces under bad input. The serial parser ignores lines without the sentinel as noise, counts and discards malformed lines, rejects out-of-range, non-finite and checksum-failed values instead of clamping them, and refuses a capture whose accepted fraction falls below a configured threshold. These behaviours are exercised by tests with truncated lines, corrupted checksums, non-finite values, out-of-range fields and unknown record types. The path-containment fix was verified by thirteen tests, and a repository search found no key, secret or external language-model call. Continuous integration runs with no key, no hardware and no external service beyond the package registries, so the checks run the same way on every commit.
+
 %%%%%%%%%%%%%%%% ch6_conclusion %%%%%%%%%%%%%%%%
 \chapter{CONCLUSION AND FUTURE WORK}
 \label{ch:conclusion}
@@ -1487,6 +2098,10 @@ Equally important are the results that failed. Twelve published fitted methods a
 On the engineering side, the system refuses to output a number it cannot justify. Nine gates return a refusal as a value instead of an exception, the wire protocol is self-synchronising with record-level and capture-level checks, and 44 test modules and an eight-job CI pipeline pin the documentation to the artifacts that produced it. A physical rig built on a NodeMCU ESP8266 with an INA219 and an LM35 streamed 83 of 83 checksummed frames at a measured 1.000~s cadence. That validates data acquisition. It does not validate health estimation, because no discharge has yet been recorded on the rig.
 
 Each output therefore carries a measured error band and is withheld when its evidence is missing or inconsistent, and the criterion that makes that decision was itself validated against laboratory truth.
+
+\section{SUMMARY OF THE WORK}
+
+The project proceeded in four stages. The first built the data pipeline and a behaviour layer of rules, and found by benchmarking that fitted models did not hold up when the test protocol changed. The second replaced fitted models with estimators that measure each cell against its own behaviour, validated them on CALCE, and added a criterion for when to refuse. The third tested the estimators on a second and a third dataset without re-tuning, and built the CAN, serial and dataset paths into one scoring function. The fourth built the bench rig, the service tier and the dashboard, and fixed the documentation to the artifacts that produced it, so that every number in the report can be traced to a script and a file.
 
 \section{LIMITATIONS}
 
@@ -1504,6 +2119,29 @@ In order of dependency:
     \item \textbf{Broader validation.} Test packs, lithium iron phosphate and large-scale dynamic drive cycles, and obtain data that crosses the 80\% end-of-life convention for a validated result there.
     \item \textbf{Persistence and operations.} Add a database behind the fleet store, structured logging and metrics, a load-test harness, and asynchronous serial ingest with backpressure.
 \end{enumerate}
+
+\section{PRACTICAL IMPLICATIONS}
+
+For an operator, the system shows what a software layer can honestly say about a battery from the signals a BMS already has. A health figure arrives with the error measured for that kind of figure, or with a statement of what is missing. For a developer, the single scoring function means that a new source needs only a loader that produces the unified frame, and the validators, estimators and dashboard then apply without change. For an educator, the repository shows a complete chain from raw telemetry to a served result, with the decisions, the tests and the failed attempts documented.
+
+\section{LESSONS LEARNED}
+
+Several lessons from the project apply beyond it. A validation split is part of the claim, and a result that is stated without it is incomplete. A default value is a hidden measurement, and removing defaults, as with the rated capacity that is now declared, closed a class of silent errors. Reading code and documents for defects before connecting hardware is cheaper than finding the same defects with a cell on the bench. A negative result retained with its evidence, such as the failure of sparse-discharge RUL, is more useful to a later reader than a positive result with no account of what was tried first.
+
+\section{RECOMMENDATIONS FOR DEPLOYMENT}
+
+The system as built is a bench and analysis tool, and moving it beyond that needs the steps below, which follow from the limitations and from the security review.
+\begin{enumerate}
+	\item Place an authenticating reverse proxy with transport security and rate limiting in front of the service, and restrict the allowed data roots to the deployment's own directories through the environment variable provided for that.
+	\item Add a persistence layer behind the fleet store, so that the twin history survives a restart and more than one process can share it.
+	\item Register a rated capacity and a verified DBC file for each vehicle, so that neither the reference capacity nor the signal mapping is assumed.
+	\item Record a load step and a full discharge for a few cells of the target chemistry before relying on any health figure, so that the measured error bands can be confirmed for that chemistry.
+	\item Keep the displayed provenance and the refusals visible to operators, because they are what tells an operator how far to trust a figure.
+\end{enumerate}
+
+\section{CONCLUDING REMARKS}
+
+The project set out to build a software layer for battery health, and the most useful thing it found was where such a layer should stop. Voltage, current and time are enough to measure capacity and a resistance trend from a discharge, with a stated error, on cells of more than one kind. They are not enough to say how long a cell will last when it is far from the end of its life, and they are not enough when the telemetry lacks the channels or the discharges that the estimators need. A system that knows the difference, and says so at the point of use, is more valuable to an operator than one that always produces a figure. BEACON is an attempt at the first kind of system, and its limitations and its future work define the next steps toward a deployment on a real vehicle.
 
 
 %\addcontentsline{toc}{chapter}{REFERENCES}
@@ -1568,6 +2206,18 @@ D.~Howey and C.~Birkl, ``Oxford battery degradation dataset 1,'' University of O
 
 \bibitem{birkl2017thesis}
 C.~R. Birkl, ``Diagnosis and prognosis of degradation in lithium-ion batteries,'' Ph.D. dissertation, Dept. Eng. Sci., Univ. Oxford, Oxford, U.K., 2017.
+
+\bibitem{iso11898}
+{ISO} 11898-1:2015, Road vehicles --- Controller area network ({CAN}) --- Part 1: Data link layer and physical signalling,'' International Organization for Standardization, Geneva, Switzerland, 2015.
+
+\bibitem{grieves2014}
+M.~Grieves, Digital twin: Manufacturing excellence through virtual factory replication,'' White Paper, 2014.
+
+\bibitem{pop2008}
+V.~Pop, H.~J. Bergveld, D.~Danilov, P.~P.~L. Regtien, and P.~H.~L. Notten, \emph{Battery Management Systems: Accurate State-of-Charge Indication for Battery-Powered Applications}. Dordrecht, The Netherlands: Springer, 2008.
+
+\bibitem{plett2015}
+G.~L. Plett, \emph{Battery Management Systems, Volume I: Battery Modeling}. Norwood, MA, USA: Artech House, 2015.
 
 \end{thebibliography}
 

@@ -43,8 +43,70 @@ The objectives of the project are:
     \item To build and bring up a physical data-acquisition rig, and to serve all results through a REST API and a web dashboard.
 \end{enumerate}
 
+\section{BATTERY HEALTH INDICATORS}
+
+Three quantities are used throughout this report, and they are defined here once so that every later chapter uses them in the same way.
+
+\subsection{State of Health}
+
+State of health is the fraction of the original capacity that the cell can still deliver. With $Q_{\mathrm{now}}$ the capacity measured on a full constant-current discharge and $Q_{\mathrm{ref}}$ the reference capacity of the same cell, it is
+\begin{equation}
+	\mathrm{SOH} = \frac{Q_{\mathrm{now}}}{Q_{\mathrm{ref}}} \times 100\,\%.
+	\label{eq:sohdef}
+\end{equation}
+The choice of $Q_{\mathrm{ref}}$ matters. It may be the rated capacity from the data sheet or the capacity measured on the cell's own first discharges. The two give different numbers for the same cell, and this report states which is used wherever a figure is quoted. A battery is conventionally regarded as having reached end of life when SOH falls to 80\%.
+
+\subsection{Internal Resistance}
+
+Internal resistance is the ratio of the voltage step to the current step when a load is applied. For a step from current $I_{1}$ to $I_{2}$ that moves the terminal voltage from $V_{1}$ to $V_{2}$,
+\begin{equation}
+	R_{\mathrm{int}} = \frac{\left|V_{2}-V_{1}\right|}{\left|I_{2}-I_{1}\right|}.
+	\label{eq:rintdef}
+\end{equation}
+Resistance rises as the cell ages, and it determines the voltage sag under load and therefore the power the cell can deliver.
+
+\subsection{Remaining Useful Life}
+
+Remaining useful life is the number of further cycles before SOH reaches the end-of-life threshold. It is a prediction, so it carries an error that grows with the distance from the threshold, and a figure for it is meaningful only if the error is stated alongside it.
+
+\section{PROPOSED APPROACH IN BRIEF}
+
+BEACON, the system built in this project, is organised in three tiers. The data tier receives telemetry from three sources, a controller area network (CAN) bus, a serial link from a bench rig and public research datasets, and converts all three into one unified frame. The analytics tier is a Python service that scores every frame through a single function and returns state of health, resistance, remaining useful life and a behaviour risk score, each with its evidence and, where the evidence is insufficient, a refusal with the reason. The presentation tier is an Express gateway and a React dashboard that display the results and label every value with its source.
+
+Three design commitments run through the work. The first is that nothing is fitted across cells: the estimators measure each cell against its own early behaviour. The second is that a result is either validated against laboratory truth, reported with a measured error band, or refused. The third is that the same scoring function serves a vehicle, a rig and a dataset, so that any difference between their outputs comes from the telemetry and not from the code.
+
+\section{SIGNIFICANCE OF THE WORK}
+
+For a fleet operator or an owner, a health figure is useful only if it can be trusted, and a figure that cannot be trusted is worse than none. By measuring its own error on public data and by declining to answer when its evidence is poor, the system gives an operator a reason to act on an estimate when one is shown and a reason to collect more data when one is withheld. For the research community, the retained negative results, in particular the loss of skill of fitted models when the test protocol changes, are a reusable finding about how battery health models should be validated. For students and practitioners, the repository is a worked example of how a software layer over a BMS can be tested, documented and reproduced.
+
 \section{SCOPE AND ORGANISATION OF THE REPORT}
 
 Development and primary validation use single lithium cobalt oxide (LCO) cells at constant current (CALCE). External validation uses NMC/LCO blend pouch cells at 40~$^\circ$C (Oxford), which also supply one real drive-cycle discharge. A third dataset (NASA) is used for the benchmark and for a cross-dataset test. The project makes no claim about packs, lithium iron phosphate, or temperature-dependent capacity correction. The bench rig validates data acquisition, not health estimation: no discharge has yet been recorded on it.
 
-The remainder of the report is organised as follows. Chapter~\ref{ch:lit} reviews related work. Chapter~\ref{ch:method} presents the system design and the estimation methods. Chapter~\ref{ch:implementation} describes the implementation, the hardware rig and the deployment. Chapter~\ref{ch:results} reports the results and discusses them. Chapter~\ref{ch:conclusion} concludes and lists future work.
+Table~\ref{tab:chapters} gives a map of the chapters. The remainder of the report is organised as follows. Chapter~\ref{ch:lit} reviews related work. Chapter~\ref{ch:method} presents the system design and the estimation methods. Chapter~\ref{ch:implementation} describes the implementation, the hardware rig and the deployment. Chapter~\ref{ch:results} reports the results and discusses them. Chapter~\ref{ch:conclusion} concludes and lists future work.
+
+\begin{table}[htbp]
+	\caption{Organisation of the Report}
+	\centering
+	\small
+	\renewcommand{\arraystretch}{1.15}
+	\setlength{\tabcolsep}{4pt}
+	\begin{tabular}{|C{0.1\linewidth}|L{0.28\linewidth}|L{0.44\linewidth}|}
+		\hline
+		\textbf{Chapter} & \textbf{Title} & \textbf{Content} \\
+		\hline
+		1 & Introduction & Background, problem, objectives and scope \\
+		\hline
+		2 & Literature Review & Ageing, estimation methods, interfaces and validation practice \\
+		\hline
+		3 & Methodology / System Design & Requirements, schema, estimators, gates and validation protocol \\
+		\hline
+		4 & Implementation and Deployment & Acquisition, rig, services, security and testing \\
+		\hline
+		5 & Results and Discussion & Benchmark, estimator accuracy, hardware results and threats to validity \\
+		\hline
+		6 & Conclusion and Future Work & Findings, limitations, lessons and next steps \\
+		\hline
+	\end{tabular}
+	\label{tab:chapters}
+\end{table}

@@ -21,6 +21,47 @@ The objective is a software layer above a BMS that converts voltage, current and
     \item \textbf{Controlled variables:} the reference definition (a quantity a BMS can hold), the primary window and tolerances, fixed before each study ran, and the scoring rule. Choices made after seeing a result are labelled exploratory.
 \end{itemize}
 
+\section{SYSTEM REQUIREMENTS}
+\label{sec:requirements}
+
+The requirements below were fixed before the implementation and are the basis on which the results of Chapter~\ref{ch:results} are judged. Table~\ref{tab:requirements} lists them.
+
+\begin{table}[htbp]
+	\caption{Functional and Non-Functional Requirements}
+	\centering
+	\small
+	\renewcommand{\arraystretch}{1.15}
+	\setlength{\tabcolsep}{4pt}
+	\begin{tabular}{|C{0.07\linewidth}|L{0.5\linewidth}|L{0.2\linewidth}|}
+		\hline
+		\textbf{ID} & \textbf{Requirement} & \textbf{Type} \\
+		\hline
+		R1 & Accept telemetry from a CAN bus, a serial rig and dataset files & Functional \\
+		\hline
+		R2 & Convert every source to one schema with documented units and sign convention & Functional \\
+		\hline
+		R3 & Estimate SOH, resistance and RUL from voltage, current and time & Functional \\
+		\hline
+		R4 & Refuse, with a stated reason, when the evidence is insufficient & Functional \\
+		\hline
+		R5 & Serve all results over an HTTP API and a web dashboard & Functional \\
+		\hline
+		R6 & Fit no model across cells for the shipped estimators & Design constraint \\
+		\hline
+		R7 & Show the provenance of every displayed value & Non-functional \\
+		\hline
+		R8 & Run end to end from a clean checkout with one command each for tests and results & Non-functional \\
+		\hline
+		R9 & Need no external service or physical hardware in continuous integration & Non-functional \\
+		\hline
+	\end{tabular}
+	\label{tab:requirements}
+\end{table}
+
+\section{ASSUMPTIONS AND CONSTRAINTS}
+
+The design rests on a small number of explicit assumptions. Telemetry is sampled at a known and reasonably uniform rate, so that charge can be obtained by integrating current over time. The current sign convention of each source is known and is corrected in the loader. A cell's own early discharges are representative of its undegraded state, which is why the reference is taken from them when the rated capacity is not declared. The service is a local bench and analysis tool: it binds to the loopback address by default, has no authentication and keeps its state in memory. These constraints are recorded because several of the results and several of the design choices follow from them.
+
 \section{OVERALL SYSTEM FRAMEWORK}
 \label{sec:framework}
 
@@ -52,7 +93,7 @@ BEACON ingests telemetry from three transports, converges them on one schema, an
     \label{fig:framework}
 \end{figure}
 
-\subsection{One Scoring Path, Extracted Rather Than Copied}
+\subsection{Single Shared Scoring Path}
 
 The function \texttt{score\_telemetry\_frame} contains everything downstream of acquisition: segmentation, coulomb counting, features, risk, health, RUL, the Guardian explanation and the digital twin. It was extracted from the CAN pipeline when serial ingestion was added, instead of being copied. A second segmentation or feature extractor would mean that a disagreement between a CAN run and a serial run over the same battery could not be traced to either the data or the code. With the tail shared, a difference in output is a difference in the telemetry.
 
@@ -84,6 +125,65 @@ Four sources are used (Table~\ref{tab:datasets}). They were chosen because they 
 \end{table}
 
 CALCE records span many files whose test time restarts per file. A monotonic time base is constructed by offsetting each restart, not by sorting timestamps, which would interleave overlapping segments. The CALCE set includes real partial cycling (CS2 Types 5 and 6): thousands of discharges of about 25\% depth in a fixed band, with a full capacity check roughly every 100 cycles. Type~6 cycles at the top of charge (about 4.07 to 3.78~V) and Type~5 near empty (about 3.69 to 2.70~V). The Oxford set additionally holds one real drive-cycle discharge of Cell~1 sampled at 1~Hz, used only for external validation.
+
+\section{UNIFIED TELEMETRY SCHEMA}
+\label{sec:schema}
+
+Public datasets, vehicle frames and a serial rig describe the same measurements with different names, units and missing-value conventions, so every source is converted into one schema before any feature is computed. Table~\ref{tab:schema} lists the core columns.
+
+\begin{table}[htbp]
+	\caption{Core Columns of the Unified Schema}
+	\centering
+	\small
+	\renewcommand{\arraystretch}{1.15}
+	\setlength{\tabcolsep}{4pt}
+	\begin{tabular}{|L{0.24\linewidth}|C{0.08\linewidth}|C{0.17\linewidth}|L{0.28\linewidth}|}
+		\hline
+		\textbf{Column} & \textbf{Unit} & \textbf{Required} & \textbf{Description} \\
+		\hline
+		\texttt{dataset} & text & Yes & Source dataset name \\
+		\hline
+		\texttt{cell\_id} & text & Yes & Cell, module or vehicle identifier \\
+		\hline
+		\texttt{cycle} or \texttt{timestamp} & -- & One of two & Ordering of the samples \\
+		\hline
+		\texttt{voltage\_v} & V & Yes & Terminal voltage \\
+		\hline
+		\texttt{current\_a} & A & Yes & Current with a documented sign \\
+		\hline
+		\texttt{temperature\_c} & $^\circ$C & Yes & Battery temperature \\
+		\hline
+		\texttt{capacity\_ah} & Ah & Recommended & Measured capacity \\
+		\hline
+		\texttt{soc} & \% & Recommended & State of charge, 0--100 \\
+		\hline
+		\texttt{resistance\_ohm} & $\Omega$ & Optional & Internal resistance if available \\
+		\hline
+	\end{tabular}
+	\label{tab:schema}
+\end{table}
+
+\subsection{Derived Fields}
+
+Three fields are derived from the core columns and regenerated after every preprocessing run. Power is the product of voltage and current. The operating mode is inferred from the current when the source does not give one: a current above $+0.02$~A is charge, below $-0.02$~A is discharge, and a current inside that band is rest. The state-of-charge band assigns each sample to one of four ranges, below 20\% (deep-discharge region), 20 to 80\% (preferred region), 80 to 90\% (elevated) and 90\% and above (high-state-of-charge region, where calendar ageing is greatest). These bands feed the behaviour layer of Section~\ref{sec:behaviour}.
+
+\subsection{Validation of the Schema}
+
+After conversion the validator checks that the required columns exist and are not entirely empty, that numeric columns can be converted to numbers, that state of charge and state of health lie between 0 and 100 when present, that voltage, capacity and resistance are not negative, and that either a cycle or a timestamp exists. A frame that fails these checks is reported with the reason, and is not scored. This is the point at which a source that lacks a required channel is stopped, as when a CAN message carries current and state of charge but no voltage or temperature.
+
+\section{DATA FLOW AND PROCESSING SEQUENCE}
+
+For every source the processing follows the same eight steps, in the same order, in the same function.
+\begin{enumerate}
+	\item \textbf{Acquire.} Read frames from the bus, lines from the serial port or rows from a file.
+	\item \textbf{Convert.} Decode signals or fields and convert to the units and sign convention of the schema.
+	\item \textbf{Validate.} Apply the schema checks and the capture-level gates, and refuse the capture if they fail.
+	\item \textbf{Segment.} Split the stream into discharges by current direction and by gaps in time.
+	\item \textbf{Measure.} Integrate current to obtain charge between voltage thresholds, apply the ohmic correction and estimate SOH and resistance.
+	\item \textbf{Predict.} Extrapolate the cell's own fade to the end-of-life threshold and attach an error band.
+	\item \textbf{Score behaviour.} Compute the stress features, the risk score, the health index and the Guardian explanation.
+	\item \textbf{Publish.} Update the twin and the fleet store, and serve the result with its evidence and its refusals.
+\end{enumerate}
 
 \section{FROM TELEMETRY TO DISCHARGES}
 \label{sec:segment}
@@ -136,7 +236,7 @@ accepted when the two samples are within 60~s and the current change is at least
 \end{equation}
 Discharges preceding the first resistance estimate are left unmeasured rather than scored uncompensated.
 
-\section{GATES}
+\section{REFUSAL GATES AND DATA-QUALITY CHECKS}
 \label{sec:gates}
 
 Each gate needs no ground truth and can therefore run in deployment.
@@ -147,7 +247,7 @@ Each gate needs no ground truth and can therefore run in deployment.
     \item \textbf{Reference timing.} The reference must be complete within 20 equivalent full cycles of charge throughput. Throughput rather than a discharge count is used because storage-protocol records contain thousands of short pulses.
 \end{enumerate}
 
-\section{LEARNED WINDOWS FOR PARTIAL DISCHARGES}
+\section{LEARNED VOLTAGE WINDOWS FOR PARTIAL DISCHARGES}
 \label{sec:learned}
 
 A car rarely discharges across a fixed window. When the fixed window cannot be read and the rated capacity $C_\mathrm{rated}$ is known, a window is learned from the cell's first ten discharges only. The band they all cover is trimmed by 15\% at each end, and the flattest sub-window of up to 0.30~V within it is selected by its steepness
@@ -158,7 +258,7 @@ s = \frac{V_\mathrm{high}-V_\mathrm{low}}{\Qw/C_\mathrm{rated}}
 \end{equation}
 The window is refused if even the flattest choice has $s > 2.0$, because it then lies on the end-of-discharge knee. There, voltage reflects kinetics (resistance and solid-state diffusion) rather than stored charge.
 
-\section{REMAINING USEFUL LIFE FROM THE CELL'S OWN FADE}
+\section{REMAINING USEFUL LIFE ESTIMATION FROM CELL-SPECIFIC FADE}
 \label{sec:rul-method}
 
 At cycle $k$, the cell's SOH history up to $k$ is smoothed with an 11-point rolling median, a straight line is fitted to the full history, and its crossing of 0.90 gives the end-of-life estimate. Estimates are refused in three cases: with fewer than 30 points, for flat or rising trends, and when the estimate reaches more than twice the history length ahead. A cell already past the threshold is reported as zero. Linear, square-root and quadratic forms, over full and trailing windows, were compared, and the full-history line was most accurate near end of life. No other cell's data enters, so there is no training cohort.
@@ -228,16 +328,123 @@ The aging budget starts at 100 and is reduced by penalties for stress, temperatu
 
 This layer is \emph{not} validated against measured degradation. The Spearman correlation between the risk score and measured fade on a separate set of 33 NASA cells was $\rho = -0.27$ ($p = 0.12$), so it is labelled a heuristic wherever it appears. Where measured SOH exists and the log starts at beginning of life, the measured SOH sets the battery state and records that it did, and the heuristic index is used only otherwise.
 
+\section{DIGITAL-TWIN STATE MODEL}
+
+The digital twin records, for each battery, a state derived from the health index of the latest run and the history of changes in that state. The state is a relabelling of the health index (Table~\ref{tab:rules}), not a separately tuned threshold set, so any change to the health-index formula flows through to the twin without a second edit. A transition is recorded whenever the state of a battery differs from its state in the previous run, and a battery's first observation counts as a transition from no state. Re-running an unchanged, identically seeded fleet therefore produces no new transitions, which is checked by a test. The failure likelihood the twin reports is a monotonic transform of the health index onto the interval from 0 to 1. It is named a likelihood and not a probability because it is not a calibrated statistical quantity.
+
+\section{DESIGN DECISIONS}
+
+Fourteen architecture decision records document the choices made during the project, with the context, the decision and its status. Table~\ref{tab:adr} lists them. Several record a claim that was withdrawn after a later measurement, and that history is kept in the repository and not rewritten.
+
+\begin{table}[htbp]
+	\caption{Architecture Decision Records}
+	\centering
+	\footnotesize
+	\renewcommand{\arraystretch}{1.1}
+	\setlength{\tabcolsep}{3pt}
+	\begin{tabular}{|C{0.06\linewidth}|L{0.8\linewidth}|}
+		\hline
+		\textbf{No.} & \textbf{Decision} \\
+		\hline
+		1 & Cross-dataset validation is not possible; leave-one-cohort-out replaces it \\
+		\hline
+		2 & Health index version 1 stays the default; version 2 is exposed conditionally \\
+		\hline
+		3 & Exact Shapley attribution for the rule scores; SHAP only where it is the right tool \\
+		\hline
+		4 & The dashboard renders only computed values \\
+		\hline
+		5 & The gate is the product, not the model \\
+		\hline
+		6 & Transfer targets are screened on commensurability, not availability \\
+		\hline
+		7 & The target was the binding constraint, not the model \\
+		\hline
+		8 & Model capacity buys within-protocol skill and spends it on transfer \\
+		\hline
+		9 & The protocol-shift collapse replicates on CALCE, but its shape is dataset-specific \\
+		\hline
+		10 & The leave-one-cohort-out estimate is noisier than the effect it is used to measure \\
+		\hline
+		11 & Unsupervised detection finds structure, not harm \\
+		\hline
+		12 & An absolute SOH target on CALCE recovers four cells \\
+		\hline
+		13 & The estimator-variance result survives the target correction as a ratio \\
+		\hline
+		14 & Rated capacity is declared, not defaulted \\
+		\hline
+	\end{tabular}
+	\label{tab:adr}
+\end{table}
+
+\section{ALGORITHM SUMMARY}
+
+The estimators of the previous sections combine into one procedure per cell, summarised below in the order in which the steps run. Every step that can fail ends in a refusal with a stated cause and not in a default.
+
+\begin{footnotesize}
+\begin{verbatim}
+for each cell in the capture:
+    discharges <- segment(stream)           # by current, time gaps
+    if capture-level gate fails:  refuse(cause)
+    for each discharge n:
+        R(n)  <- trailing median of last 11 load-step estimates
+        if no R yet:  mark n "unmeasured"; continue
+        window <- [V_low, V_high] shifted by |I_n| * R(n)
+        if window not spanned:  mark n "unmeasured"
+        Q(n)  <- charge delivered inside window (coulomb count)
+        SOH(n) <- Q(n) / Q_ref
+    fade   <- trend of SOH(n) over the cell's own cycles
+    if evidence inconsistent:  confidence <- low
+    RUL    <- cycles until fade crosses EOL threshold
+    return SOH, R, RUL, confidence, band, refusals
+\end{verbatim}
+\end{footnotesize}
+
+The reference $Q_{\mathrm{ref}}$ is the declared rated capacity when the source gives one, or the cell's own early capacity otherwise, and the source of the reference is returned with the result. The error band attached to each output is the measured error of that output on the validation data and is not a quantity computed from the cell being scored.
+
 \section{VALIDATION PROTOCOL}
 \label{sec:protocol}
 
-\paragraph{Ground truth.} Ground truth is the cycler's measured discharge capacity, which never enters an estimate. SOH truth is capacity over the median of the cell's first five cycles. For partial-cycling cells, whose checks are about 100 cycles apart, the partial-discharge study scores each cell against its first check, and the remaining-life study uses the capacity over the checks within the first ten cycles. Each is a reference a BMS can hold. A reference drawn from the cell's whole record uses the future, and Section~\ref{sec:res-rul} quantifies the resulting inflation.
+\paragraph{Ground Truth.} Ground truth is the cycler's measured discharge capacity, which never enters an estimate. SOH truth is capacity over the median of the cell's first five cycles. For partial-cycling cells, whose checks are about 100 cycles apart, the partial-discharge study scores each cell against its first check, and the remaining-life study uses the capacity over the checks within the first ten cycles. Each is a reference a BMS can hold. A reference drawn from the cell's whole record uses the future, and Section~\ref{sec:res-rul} quantifies the resulting inflation.
 
-\paragraph{Pre-declared configurations.} Primary windows, comparison arms, tolerances and scoring were fixed before each study ran. Choices made after seeing a result are labelled exploratory.
+\paragraph{Pre-Declared Configurations.} Primary windows, comparison arms, tolerances and scoring were fixed before each study ran. Choices made after seeing a result are labelled exploratory.
 
 \paragraph{Benchmark.} The benchmark uses leave-one-cell-out (LOBO, 31 folds) and leave-one-cohort-out (LOCO, 9 folds) validation. $R^2$ is computed against the training-fold mean, with 95\% bootstrap intervals resampling folds (2,000 resamples). Hyperparameters were fixed and not tuned per fold, except ElasticNet's penalty, chosen by inner cross-validation within the training fold.
 
 \paragraph{Aggregation.} Errors are summarised per cell, then across cells, so long-lived cells do not dominate.
+
+\section{PARAMETERS OF THE ESTIMATORS}
+
+The estimators have few parameters, and each was fixed on the development data before the external datasets were scored. Table~\ref{tab:params} lists those quoted in this chapter. None was changed when the estimators were applied to the Oxford and NASA data.
+
+\begin{table}[htbp]
+	\caption{Parameters Fixed Before External Validation}
+	\centering
+	\small
+	\renewcommand{\arraystretch}{1.15}
+	\setlength{\tabcolsep}{4pt}
+	\begin{tabular}{|L{0.38\linewidth}|C{0.14\linewidth}|L{0.28\linewidth}|}
+		\hline
+		\textbf{Parameter} & \textbf{Value} & \textbf{Used for} \\
+		\hline
+		Maximum gap between rest and load samples & 60~s & Accepting a load-step estimate \\
+		\hline
+		Minimum current change at the step & 0.05~A & Accepting a load-step estimate \\
+		\hline
+		Length of trailing resistance median & 11 steps & Ohmic correction \\
+		\hline
+		Rest or charge current threshold & $\pm$0.02~A & Mode inference \\
+		\hline
+		Serial sampling period (rig) & 1~s & Rig firmware \\
+		\hline
+		End-of-life threshold & 80\% & Conventional RUL target \\
+		\hline
+	\end{tabular}
+	\label{tab:params}
+\end{table}
+
+Fixing the parameters in advance has a cost. They are not the best possible values for any one dataset, and the errors reported on the external data are therefore a fair statement of what the estimators do on data they were not tuned on, and not the best that could be obtained by tuning.
 
 \section{EVALUATION METRICS}
 \label{sec:metrics}

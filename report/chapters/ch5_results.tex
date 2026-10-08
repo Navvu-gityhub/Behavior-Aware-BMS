@@ -3,7 +3,7 @@
 
 This chapter reports what the system measured and interprets each result where it appears. Every number is traced to a committed artifact (Appendix~A). Errors are mean absolute errors in SOH (0.01 equals one percentage point) per cell, summarised as a median over cells with a 95\% bootstrap interval that resamples cells, unless stated otherwise. Results that failed are reported alongside those that worked.
 
-\section{FITTED MODELS DO NOT SURVIVE A CHANGE OF PROTOCOL}
+\section{PERFORMANCE OF FITTED MODELS UNDER PROTOCOL SHIFT}
 \label{sec:res-bench}
 
 On the NASA benchmark (31 cells, nine cohorts; the isotonic signal ceiling for the target SOH is 0.569), every one of twelve published methods lost skill from leave-one-cell-out (LOBO) to leave-one-cohort-out (LOCO) validation (Table~\ref{tab:bench}). LOBO rank carried almost no information about LOCO rank (Spearman $\rho = +0.084$, $p = 0.795$, $n = 12$). Across fourteen scored methods, the spread of LOCO point estimates (2.06 in $R^2$) was smaller than the width of the best method's own interval (3.66).
@@ -76,7 +76,7 @@ Temperature was the only usage factor with a consistent, correctly signed within
 
 \textbf{Interpretation.} No fitted method retains reliable skill under a change of protocol, and no method can be distinguished from another. This is the result that motivates the rest of the project: the estimators that ship fit nothing across cells.
 
-\section{FIELD SOH FROM VOLTAGE, CURRENT AND TIME}
+\section{FIELD STATE-OF-HEALTH ESTIMATION}
 \label{sec:res-field}
 
 Table~\ref{tab:field} compares three ohmic treatments at the primary window on 22 CALCE cells. The field correction matched the laboratory correction within its interval and measured five more cells than no correction. Sensitivity windows gave 1.2\% (4.05--3.55~V, 16 cells) and 1.9\% (3.85--3.55~V, 17 cells).
@@ -148,7 +148,7 @@ On the four cells of real partial cycling (Table~\ref{tab:partial}), estimates u
 
 \textbf{Interpretation.} The refusal is physics and not a tuned cut. On the plateau, window charge tracks capacity, while on the knee voltage is set by resistance and diffusion, so it measures how hard the cell is working instead. The scope is two cells per band, which shows the mechanism and is too few to quote a population error.
 
-\section{RESISTANCE TRACKS THE INSTRUMENT}
+\section{INTERNAL RESISTANCE ESTIMATION}
 \label{sec:res-r}
 
 Against the cycler's internal-resistance column over each cell's life (20 cells carrying both values), the step resistance achieved a median Spearman correlation of 0.86, growth in the same direction on 19 of 20 cells, and a median growth of 1.26 times against the cycler's 1.29 times. This includes the partial-cycling cells (0.90 and 0.98), and the exception is a Type~3 cell. The levels differ, since the step value includes early polarisation, but the trends agree, which is what a power-fade indicator requires.
@@ -191,7 +191,7 @@ Scored against a reference capacity taken as the 95th percentile of the cell's w
 
 \textbf{Interpretation.} The ``within $\pm$20 cycles'' claim is true near end of life and false far from it (0\% at 200 or more cycles out), so it is reported with its condition and not bare. The conservative direction is a property of the 90\% threshold on these cells and is not a general guarantee. At an 85\% threshold the median bias near end of life turns positive (+6.7 cycles within 25 cycles of end of life), so the estimate runs late there and only 62.8\% of estimates fall within $\pm$20 cycles. The conventional 80\% end-of-life threshold is not validated on CALCE, because its full-discharge trajectories end near 0.81 and only one cell of 22 crosses 0.80.
 
-\section{RUL WHEN COMPLETE DISCHARGES ARE RARE}
+\section{RUL ESTIMATION UNDER SPARSE COMPLETE DISCHARGES}
 \label{sec:res-sparse}
 
 A driver who seldom fully discharges produces few complete discharges (CS2\_24 has 18 in 1,617). Four methods were evaluated on the same sparse evidence (Table~\ref{tab:sparse}). Sparsity is real on the partial-cycling cells and emulated as one complete discharge in 50 on the constant-current cells.
@@ -220,7 +220,7 @@ A driver who seldom fully discharges produces few complete discharges (CS2\_24 h
 
 The failure of the field-trajectory method has a clean cause. Near 0.90, field SOH reads a median 1.1 points below capacity (measured in a first pass of this study, not kept as a separate artifact). Because fade near the threshold is slow, that small bias moves the 0.90 crossing a median 56 cycles early. An SOH error that is acceptable as a health figure thus becomes large as a time to threshold. None of the four is reported, and the system refuses RUL for partial-only records and states that this was tested.
 
-\section{WHEN THE EVIDENCE SUFFICES}
+\section{EVIDENCE SUFFICIENCY ANALYSIS}
 \label{sec:res-suff}
 
 Three questions were fixed before the study and scored at every laboratory check on 19 cells. First, \emph{count does not predict accuracy}: median error was 0.75\% at 6--10 usable readings and 1.97\% beyond 60, because error grows with age as the approximation in Eq.~\eqref{eq:soh} drifts. A rule of high confidence after a fixed number of discharges therefore has no support. Second, \emph{consistency does} (Table~\ref{tab:suff}). The pooled Spearman correlation between $u$ and absolute error was 0.48. Within cells it was weaker (median 0.14, positive in 14 of 19), so $u$ chiefly separates unreliable cells and periods and does not rank readings within a good one.
@@ -272,11 +272,11 @@ The estimator was applied to the eight Oxford cells without re-tuning. Arms, ref
 
 All eight cells were measured (Table~\ref{tab:oxford}). The near-equilibrium C/18 window was not more accurate than the 1C window, so on this blend cathode the residual error stems from the curve changing shape with age and not from ohmic sag, consistent with the stated approximation of Eq.~\eqref{eq:soh}.
 
-\paragraph{A real drive-cycle discharge.} The drive-cycle discharge of Cell~1 has current between $-5.0$ and $+1.6$~A. Resistance from its own 1,575 current steps of at least 0.2~A gave a median of 21~m$\Omega$ (interquartile 19--24). The discharge is itself partial (it stops at about 65\% depth), so a coverage window (4.08--3.78~V) was chosen from the corrected curve's span alone, before any comparison was computed. In it the drive-cycle reading, corrected per sample and fitted monotonically, was 0.2625~Ah, against 0.2661~Ah from the same cell's 1C constant-current discharge, a difference of 1.4\%. Both lay about 13\% below the C/18 reading in that window, so the rate effect cancels in a ratio of like with like but would bias one that mixed rates. This is a single discharge and demonstrates the mechanism, not a population error.
+\paragraph{Drive-Cycle Discharge.} The drive-cycle discharge of Cell~1 has current between $-5.0$ and $+1.6$~A. Resistance from its own 1,575 current steps of at least 0.2~A gave a median of 21~m$\Omega$ (interquartile 19--24). The discharge is itself partial (it stops at about 65\% depth), so a coverage window (4.08--3.78~V) was chosen from the corrected curve's span alone, before any comparison was computed. In it the drive-cycle reading, corrected per sample and fitted monotonically, was 0.2625~Ah, against 0.2661~Ah from the same cell's 1C constant-current discharge, a difference of 1.4\%. Both lay about 13\% below the C/18 reading in that window, so the rate effect cancels in a ratio of like with like but would bias one that mixed rates. This is a single discharge and demonstrates the mechanism, not a population error.
 
-\paragraph{Remaining life at 80\%.} The Oxford trajectories cross the 80\% convention, so the shipped RUL estimator was scored there unchanged. When it predicted fewer than 500 cycles to 80\%, the cell lasted at least that long in 97\% of cases (36 estimates, 5 cells). Precision is low: the median miss is 385 cycles against characterisations 100 cycles apart. The guarantee also weakens with distance, since predictions of 500 to 1,000 cycles were met or exceeded only 80\% of the time (25 estimates, 5 cells).
+\paragraph{Remaining Life at the 80\% Threshold.} The Oxford trajectories cross the 80\% convention, so the shipped RUL estimator was scored there unchanged. When it predicted fewer than 500 cycles to 80\%, the cell lasted at least that long in 97\% of cases (36 estimates, 5 cells). Precision is low: the median miss is 385 cycles against characterisations 100 cycles apart. The guarantee also weakens with distance, since predictions of 500 to 1,000 cycles were met or exceeded only 80\% of the time (25 estimates, 5 cells).
 
-\section{A THIRD DATASET AND KNOWING WHEN TO REFUSE}
+\section{VALIDATION ON A THIRD DATASET AND REFUSAL BEHAVIOUR}
 \label{sec:res-xds}
 
 The NASA files (18650 cells, ambient 4--44~$^\circ$C) were read from their original MATLAB form and scored the same way, unchanged. The estimator was poor on NASA overall, with a median per-cell error of 9.2\% over 27 cells, and it depended on temperature: 1.7\% in the 43~$^\circ$C cohort and 12--14\% at 4 and 22~$^\circ$C. The step resistance captures only the ohmic part of the overpotential, and at low temperature the charge-transfer and diffusion parts, which grow with age, move the curve through the window.
@@ -339,7 +339,7 @@ Faults injected into a real capture behaved as designed: a corrupted byte failed
 
 The captures demonstrate that the transport, the protocol, the gate and the refusal path work against real silicon. They are one cell, at rest, for under 90~s, with no load step and no charge or discharge cycle. They are \emph{not} a validation of the health, RUL or risk models, which were fitted on cycled research cells and cannot be confirmed or refuted by a cell that was never cycled. Sensor accuracy against a reference meter was not measured, and no discharge has yet been recorded on the rig.
 
-\section{A WORKED EXAMPLE: THE REPORT CARD}
+\section{ILLUSTRATIVE EXAMPLE: THE HEALTH REPORT CARD}
 \label{sec:res-card}
 
 Fig.~\ref{fig:card} abridges the report card for CALCE cell CS2\_35 as it would have read at cycle 90. The pipeline saw voltage, current and time only.
@@ -375,15 +375,15 @@ The health figure is within half a point. The remaining-life figure is 51 cycles
 \section{DISCUSSION}
 \label{sec:discussion}
 
-\paragraph{Conditioning moved accuracy; model choice did not.} Across fourteen scored methods, LOCO differences were smaller than the uncertainty on any one of them. Three conditioning decisions, by contrast, changed error by multiples. Refusing truncated discharges took the worst cell from 52\% to about 10\%. Identifying resistance from the load step took the median from 4.3\% to 1.7\% and coverage from 12 to 17 cells. Refusing knee windows converted 6.8--12.8\% errors into refusals. For a BMS software layer, the leverage lies in what is measured and how it is conditioned, not in the regressor that follows. The first of these was a misdiagnosis corrected during the project: the 52\% worst case had been attributed to loss of active material, when it was actually truncated discharges being read as full ones.
+\paragraph{Effect of Conditioning Versus Model Choice.} Across fourteen scored methods, LOCO differences were smaller than the uncertainty on any one of them. Three conditioning decisions, by contrast, changed error by multiples. Refusing truncated discharges took the worst cell from 52\% to about 10\%. Identifying resistance from the load step took the median from 4.3\% to 1.7\% and coverage from 12 to 17 cells. Refusing knee windows converted 6.8--12.8\% errors into refusals. For a BMS software layer, the leverage lies in what is measured and how it is conditioned, not in the regressor that follows. The first of these was a misdiagnosis corrected during the project: the 52\% worst case had been attributed to loss of active material, when it was actually truncated discharges being read as full ones.
 
-\paragraph{Reference definitions change conclusions.} Two results moved when the reference was made one a BMS can hold: RUL accuracy fell from 88\% to 73\%, and a partial-discharge reference formed from a late discharge produced a large error until the timing gate existed. Validation should use the reference the deployed system will have.
+\paragraph{Dependence on the Reference Definition.} Two results moved when the reference was made one a BMS can hold: RUL accuracy fell from 88\% to 73\%, and a partial-discharge reference formed from a late discharge produced a large error until the timing gate existed. Validation should use the reference the deployed system will have.
 
-\paragraph{Threshold crossings amplify small biases.} A 1.1-point SOH bias, unremarkable as a health figure, shifted predicted end of life by about 56 cycles. Any RUL built on an estimated rather than measured SOH inherits this, and should be evaluated as a time to threshold and not through SOH error.
+\paragraph{Sensitivity of Threshold Crossings to Bias.} A 1.1-point SOH bias, unremarkable as a health figure, shifted predicted end of life by about 56 cycles. Any RUL built on an estimated rather than measured SOH inherits this, and should be evaluated as a time to threshold and not through SOH error.
 
-\paragraph{Sufficiency is measurable.} Treating ``enough data'' as a count is intuitive and here wrong, because the estimator's error is dominated by age-related drift and not sampling. The consistency of readings is observable without ground truth and separates 1.3\% from 5.1\% median error, which gives a BMS layer a principled way to report ``not yet'' for a battery it has never seen.
+\paragraph{Quantifying Evidence Sufficiency.} Treating ``enough data'' as a count is intuitive and here wrong, because the estimator's error is dominated by age-related drift and not sampling. The consistency of readings is observable without ground truth and separates 1.3\% from 5.1\% median error, which gives a BMS layer a principled way to report ``not yet'' for a battery it has never seen.
 
-\paragraph{Limitations.}
+\paragraph{Limitations of the Findings.}
 \begin{itemize}
     \item \emph{Temperature.} On NASA cells at 4 and 22~$^\circ$C the estimator erred by 12--14\%. The low-confidence label marked most of these readings, but a temperature-aware correction is future work.
     \item \emph{Two cathode families, single cells, one real drive cycle.} Packs add cell-to-cell imbalance, thermal gradients and balancing currents, and the flat plateau of lithium iron phosphate would challenge the window method directly.
@@ -392,6 +392,18 @@ The health figure is within half a point. The remaining-life figure is 51 cycles
     \item \emph{Apparent resistance} depends on the logger's sample interval and is comparable within a record, not across loggers.
     \item \emph{No hardware discharge} has yet been recorded on the bench rig, and the heuristic risk layer is not validated.
 \end{itemize}
+
+\section{IMPLICATIONS FOR BMS SOFTWARE DESIGN}
+
+Four implications follow from the results and are stated here as design guidance for a software layer above a BMS.
+
+\paragraph{Validate on the Unit of Deployment.} A model is deployed on a battery that has not been seen and often on a protocol that has not been seen. The validation split should hold out that unit, and the interval around the result should be reported, because on the benchmark of this project the interval on a single method was wider than the difference between methods.
+
+\paragraph{Prefer Measurement to Fitting Where Measurement Is Possible.} Voltage, current and time are enough to measure capacity on a discharge that spans a voltage window, and the measurement needs no training cells. Fitting is then needed only for the quantities that cannot be measured directly.
+
+\paragraph{Make Refusal a Normal Output.} A refusal that carries its cause is information, since it tells the operator what data to collect. The consistency criterion separated a 4.5\% median error from a 13.2\% median error without any knowledge of the true capacity, which shows that a system can recognise its own poor conditions.
+
+\paragraph{Keep One Scoring Path.} When a vehicle, a rig and a dataset all pass through the same function, a result obtained on a dataset says something about the vehicle, and a defect found on the rig is fixed for all three.
 
 \section{VALIDATION SUMMARY}
 
@@ -436,3 +448,50 @@ Table~\ref{tab:summary} lists the outputs by status. Claims that failed or were 
 	\end{tabular}
 	\label{tab:summary}
 \end{table}
+
+\section{ASSESSMENT AGAINST THE OBJECTIVES}
+
+Table~\ref{tab:objectives} relates each objective of Section~1.5 to the evidence for it in this chapter and in Chapter~\ref{ch:implementation}.
+
+\begin{table}[htbp]
+	\caption{Objectives and Evidence}
+	\centering
+	\footnotesize
+	\renewcommand{\arraystretch}{1.1}
+	\setlength{\tabcolsep}{3pt}
+	\begin{tabular}{|C{0.05\linewidth}|L{0.42\linewidth}|L{0.34\linewidth}|}
+		\hline
+		\textbf{No.} & \textbf{Objective} & \textbf{Evidence} \\
+		\hline
+		1 & End-to-end ingestion of CAN, serial and dataset sources through one pipeline & Single scoring function; three transports; test modules and continuous integration \\
+		\hline
+		2 & SOH from voltage, current and time with ohmic correction & 1.7\% median error on 17 of 22 CALCE cells \\
+		\hline
+		3 & Resistance as a second quantity; RUL from each cell's own fade & Resistance trend in the same direction on 19 of 20 cells; 73\% of RUL within $\pm$20 cycles near end of life \\
+		\hline
+		4 & Measured evidence sufficiency; refusal of insufficient evidence & Consistency criterion separates 4.5\% from 13.2\% error; every refusal carries a reason \\
+		\hline
+		5 & External validation without re-tuning; retention of negative results & Oxford median error 3.0\%; sparse-discharge RUL and fitted-model ranking retained as negative results \\
+		\hline
+		6 & Physical rig, API and dashboard & 83 of 83 frames received; routes and dashboard served from containers \\
+		\hline
+	\end{tabular}
+	\label{tab:objectives}
+\end{table}
+
+\section{THREATS TO VALIDITY}
+
+The results are bounded by the way they were obtained, and the bounds are stated here so that they can be weighed against the figures.
+
+\begin{itemize}
+	\item \textbf{Chemistry and format.} Development and primary validation use LCO prismatic cells at constant current. The external dataset is an NMC/LCO blend pouch cell at one temperature. Results for lithium iron phosphate, for packs and for dynamic loads are not claimed.
+	\item \textbf{Reference definition.} Two results moved when the reference was changed to the capacity the cell's own first discharges measure, which is what a BMS can know. A figure is therefore tied to the reference named with it.
+	\item \textbf{Small numbers of cells.} Several results rest on a few cells, for example the partial-discharge result on two cells. They are reported as validated on those cells, and no claim is made beyond them.
+	\item \textbf{Hardware.} The rig validates the data-acquisition path. No discharge has been recorded on it, so no health figure from the rig is claimed.
+	\item \textbf{Heuristic layer.} The behaviour risk score was not significantly related to measured fade ($\rho=-0.27$, $p=0.12$ on 33 NASA cells) and is labelled a heuristic wherever it appears.
+\end{itemize}
+
+\section{ROBUSTNESS AND SECURITY CHECKS}
+
+Beyond estimation accuracy, the system was checked for the behaviour of its interfaces under bad input. The serial parser ignores lines without the sentinel as noise, counts and discards malformed lines, rejects out-of-range, non-finite and checksum-failed values instead of clamping them, and refuses a capture whose accepted fraction falls below a configured threshold. These behaviours are exercised by tests with truncated lines, corrupted checksums, non-finite values, out-of-range fields and unknown record types. The path-containment fix was verified by thirteen tests, and a repository search found no key, secret or external language-model call. Continuous integration runs with no key, no hardware and no external service beyond the package registries, so the checks run the same way on every commit.
+

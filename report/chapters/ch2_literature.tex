@@ -5,6 +5,8 @@
 
 A BMS protects the pack and estimates its state of charge from the terminal measurements it already holds. Reviews of monitoring methods for electric and hybrid vehicles \cite{waag2014} and of SOH estimation for real applications \cite{berecibar2016} distinguish direct measurement (capacity or resistance tests), model-based estimation and data-driven approaches. Ageing mechanisms and their effect on capacity and resistance are reviewed by Vetter \emph{et al.}\ \cite{vetter2005} and, for automotive applications, by Barr\'e \emph{et al.}\ \cite{barre2013}. Recursive estimation of cell parameters within the BMS, including internal resistance, is established \cite{plett2004}, and monitoring of resistance is part of the methods reviewed by Waag \emph{et al.}\ \cite{waag2014}.
 
+Textbook treatments of the BMS, including state-of-charge indication and cell balancing, are given by Pop \emph{et al.}\ \cite{pop2008} and Plett \cite{plett2015}. State of charge and state of health are related but different quantities: the first says how much charge remains in the present state of the cell, the second says how much the cell can hold at all, and a layer that reports health must not take its reference from a state-of-charge estimate that itself depends on a capacity assumption.
+
 In this project, resistance serves two roles: it corrects the ohmic sag that would otherwise make a fixed voltage window slide along the discharge curve, and it is reported as a second health output, validated against the laboratory instrument (Section~\ref{sec:res-r}).
 
 \section{DATA-DRIVEN SOH ESTIMATION AND HOW IT IS VALIDATED}
@@ -37,6 +39,86 @@ Three public datasets are used, chosen because they differ in chemistry, format,
 
 In a vehicle, BMS data is carried on a CAN bus, and a DBC file describes how signals are packed into frames. A research dataset arrives as files, and a bench rig typically streams text over a serial port. Each source has its own failure modes: a CAN decode can silently miss a signal, a serial link can drop or corrupt bytes, and a research file can store a quantity with a different sign or scale. The review above does not address how these three sources are made to agree, and this project treats it as a design question (Chapter~\ref{ch:method}): one schema, one scoring function, and explicit refusals when a capture's shape is wrong.
 
+\section{BATTERY AGEING MECHANISMS}
+
+The capacity and resistance that the estimators in this project measure are the visible result of physical processes inside the cell. Growth of the solid electrolyte interphase on the negative electrode consumes lithium inventory and thickens the resistive film, so capacity falls and resistance rises. Lithium plating, which is more likely at high charge rates and low temperature, removes lithium irreversibly and can create a safety risk. Loss of active material through particle cracking or dissolution reduces the number of sites available to hold lithium \cite{vetter2005,barre2013}. These mechanisms depend on temperature, state of charge, current rate and depth of discharge, which is why a monitoring layer pays attention to how a battery is used and not only to its age. They also explain why a single protocol, such as constant-current cycling at room temperature, cannot represent the conditions a vehicle imposes, a point on which the validation in Chapter~\ref{ch:results} depends.
+
+\section{TAXONOMY OF HEALTH ESTIMATION METHODS}
+
+Reviews of the field group state-of-health estimation into three families \cite{berecibar2016,waag2014}. Table~\ref{tab:taxonomy} summarises them and states what each requires, because the requirement, more than the accuracy, decides whether a method can run inside a vehicle.
+
+\begin{table}[htbp]
+	\caption{Families of State-of-Health Estimation}
+	\centering
+	\small
+	\renewcommand{\arraystretch}{1.15}
+	\setlength{\tabcolsep}{4pt}
+	\begin{tabular}{|L{0.2\linewidth}|L{0.3\linewidth}|L{0.34\linewidth}|}
+		\hline
+		\textbf{Family} & \textbf{Principle} & \textbf{Requirement in a vehicle} \\
+		\hline
+		Direct measurement & Measure capacity or resistance by a dedicated test & A controlled full discharge or load pulse, rarely available \\
+		\hline
+		Model-based & Fit an equivalent-circuit or electrochemical model and track its parameters & Accurate model, parameter identification and a good initial state \\
+		\hline
+		Data-driven & Learn a mapping from features to health from past cells & Training cells representative of the deployment conditions \\
+		\hline
+	\end{tabular}
+	\label{tab:taxonomy}
+\end{table}
+
+The window estimator of this project is a direct measurement made opportunistically: whenever the telemetry contains a discharge that is long enough, it counts the charge delivered between two voltage thresholds and reads capacity from that, so it needs no dedicated test and no model of other cells.
+
+\section{INTERNAL RESISTANCE ESTIMATION IN THE LITERATURE}
+
+Internal resistance can be measured from the voltage response to a current step, from electrochemical impedance spectroscopy or from recursive parameter identification inside an equivalent-circuit model \cite{plett2004,waag2014}. The step method is the simplest and is the one adopted here, because a vehicle produces current steps routinely, at every transition between acceleration, cruising and braking. The step response contains an instantaneous ohmic part and slower diffusion and charge-transfer parts, so a resistance read from the first loaded sample is an apparent value that includes some polarisation. This project therefore treats the estimate as a trend indicator whose direction is validated against the laboratory instrument, and uses it as a correction term for the voltage window, and not as an absolute impedance.
+
+\section{VEHICLE DATA INTERFACES}
+
+\subsection{Controller Area Network}
+
+The controller area network is the serial bus on which the control units of a vehicle exchange short frames \cite{iso11898}. A frame carries an identifier and up to eight data bytes, and the identifier determines which message the data belong to. The bytes are packed with several signals, each defined by a start bit, a length, a byte order, a scale factor and an offset. A DBC file records these definitions. Manufacturers regard their DBC files as proprietary, which is the main obstacle to a general decoder, and public decoding exists for a limited number of vehicles through community projects such as the Open Vehicles Monitoring System.
+
+\subsection{Serial Bench Rigs}
+
+A laboratory or student rig usually streams text lines over a universal asynchronous serial link. Such a link has no error detection of its own, so bytes can be lost or corrupted, and a boot banner or debug message can appear between data records. A reliable acquisition layer therefore needs a delimiter, a checksum and a rule for what to do with a record that fails them. These concerns do not arise with a dataset file, which is why the three sources need an explicit common schema.
+
+\subsection{Open Datasets}
+
+Public datasets store the same physical quantities under different names, units, sign conventions and file formats. Reported capacity may be in ampere-hours or in coulombs, current may be positive on charge or on discharge, and temperature may be absent. Without a documented mapping into a single schema, a result computed on one dataset cannot be compared with a result on another.
+
+\section{DIGITAL TWINS AND FLEET MONITORING}
+
+A digital twin is a virtual representation of a physical asset that is updated from the asset's data and can be queried in its place \cite{grieves2014}. For batteries, the term is used for anything from a detailed electrochemical simulation to a simple state record. In BEACON the twin is deliberately modest: a state machine layered on the outputs of the scoring pipeline that records the current health state of each battery and every transition between states across runs. It adds structure and a queryable history and does not add a predictive model, and the report says so wherever the twin is mentioned. In a fleet, such a record lets an operator see which batteries have changed state since the last evaluation, which is what a maintenance decision depends on.
+
+\section{EXPLAINABILITY AND HONEST REPORTING}
+
+Explanations of a model's output are expected in safety-relevant systems, and feature attribution is the usual tool. For rule-based scores, the contribution of each rule to the total can be computed exactly and does not need an approximation. The behaviour layer of BEACON reports such attributions for its heuristic scores. A related concern is the honesty of the output itself. A dashboard that displays a placeholder, a default or an extrapolated value looks identical to one that displays a measurement. This project therefore treats the provenance of every displayed number as part of the result, and the dashboard renders only computed values, labelling those that come from simulated data.
+
+\section{VALIDATION PRACTICE AND LEAKAGE}
+
+The way data are split between training and testing determines what a reported accuracy means. A random split over cycles allows neighbouring cycles of the same cell to appear on both sides, which inflates accuracy. A leave-one-cell-out split removes that leak but still places the held-out cell's siblings from the same protocol in the training set. A leave-one-cohort-out split removes the whole protocol, and so tests transfer to conditions that were not seen. Table~\ref{tab:splits} summarises the three, and the benchmark in Chapter~\ref{ch:results} uses the last two.
+
+\begin{table}[htbp]
+	\caption{Validation Splits and What Each One Tests}
+	\centering
+	\small
+	\renewcommand{\arraystretch}{1.15}
+	\setlength{\tabcolsep}{4pt}
+	\begin{tabular}{|L{0.22\linewidth}|L{0.3\linewidth}|L{0.32\linewidth}|}
+		\hline
+		\textbf{Split} & \textbf{What is held out} & \textbf{What the score tests} \\
+		\hline
+		Random over cycles & Individual cycles & Interpolation within seen cells \\
+		\hline
+		Leave-one-cell-out & One whole cell & Recognition of a seen protocol \\
+		\hline
+		Leave-one-cohort-out & All cells of one protocol & Transfer to an unseen protocol \\
+		\hline
+	\end{tabular}
+	\label{tab:splits}
+\end{table}
+
 \section{POSITIONING OF THIS WORK}
 
 Table~\ref{tab:positioning} summarises the three families of approach in this review by the properties that matter for a deployed software layer. It is a statement about the families as categories and not about any individual cited study.
@@ -63,6 +145,34 @@ Table~\ref{tab:positioning} summarises the three families of approach in this re
 		\hline
 	\end{tabular}
 	\label{tab:positioning}
+\end{table}
+
+\section{IDENTIFIED GAPS AND HOW THEY ARE ADDRESSED}
+
+Table~\ref{tab:gaps} lists the gaps that the review leaves open and the parts of this report that address them.
+
+\begin{table}[htbp]
+	\caption{Gaps in the Literature and Where They Are Addressed}
+	\centering
+	\small
+	\renewcommand{\arraystretch}{1.15}
+	\setlength{\tabcolsep}{4pt}
+	\begin{tabular}{|L{0.38\linewidth}|L{0.38\linewidth}|}
+		\hline
+		\textbf{Gap} & \textbf{Addressed in} \\
+		\hline
+		Skill of fitted models under a change of protocol & Benchmark with leave-one-cohort-out validation (Section~\ref{sec:res-bench}) \\
+		\hline
+		Health estimation without cross-cell fitting & Window estimator with ohmic correction (Chapter~\ref{ch:method}) \\
+		\hline
+		Refusal when evidence is missing or inconsistent & Refusal gates and evidence sufficiency (Chapters~\ref{ch:method} and~\ref{ch:implementation}) \\
+		\hline
+		Agreement of CAN, serial and file sources & Unified frame and single scoring function (Chapter~\ref{ch:implementation}) \\
+		\hline
+		Provenance of displayed values & Dashboard that renders computed values only (Chapter~\ref{ch:implementation}) \\
+		\hline
+	\end{tabular}
+	\label{tab:gaps}
 \end{table}
 
 \section{SUMMARY}
