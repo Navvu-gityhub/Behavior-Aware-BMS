@@ -45,6 +45,7 @@ from src.bms.health.field_soh import (
     apply_field_gates,
     curves_from_telemetry,
     field_soh_from_table,
+    screen_step_resistances,
 )
 from src.bms.health.voltage_window import (
     WindowSpec,
@@ -122,7 +123,8 @@ class BatteryProfile:
             if local in known:
                 st = steps[steps["cycle"] == local].iloc[0]
                 r_history.append(float(st["r_step_ohm"]))
-                trailing = pd.Series(r_history[-RESISTANCE_WINDOW_CYCLES:]).median()
+                screened = screen_step_resistances(r_history)
+                trailing = pd.Series(screened[-RESISTANCE_WINDOW_CYCLES:]).median()
                 if not np.isfinite(trailing):
                     trailing = self._last_trailing(new_rows)
                 entry.update({"r_step_ohm": float(st["r_step_ohm"]),

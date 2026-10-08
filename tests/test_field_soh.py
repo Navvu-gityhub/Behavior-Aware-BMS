@@ -347,3 +347,35 @@ def test_pipeline_falls_back_to_a_learned_window_only_with_a_rated_capacity():
     with_cap = _score(tel, rated_capacity_ah=1.0)
     assert with_cap.field_soh.available
     assert with_cap.field_soh.window_mode == "learned"
+
+
+# ---------------------------------------------------------------------------
+# Quiet-to-load steps and implausible steps
+# ---------------------------------------------------------------------------
+
+def test_a_step_from_a_charge_tail_is_measured():
+    tel, _ = _cell(n_cycles=6, r_growth=0.0)
+    # Replace the rest before each discharge with a 30 mA constant-voltage tail.
+    full_rest = (tel["current_a"] == 0.0) & (tel["voltage_v"] > 4.1)
+    tel.loc[full_rest, "current_a"] = 0.03
+    _, steps = curves_from_telemetry(tel, _discharges(tel), "SYN", REST)
+    assert steps["r_step_ohm"].notna().all()
+    assert steps["r_step_ohm"].median() == pytest.approx(0.10, rel=0.1)
+
+
+def test_a_large_preceding_current_is_not_a_step():
+    tel, _ = _cell(n_cycles=6, r_growth=0.0)
+    full_rest = (tel["current_a"] == 0.0) & (tel["voltage_v"] > 4.1)
+    tel.loc[full_rest, "current_a"] = -0.5                 # half the load: not quiet
+    _, steps = curves_from_telemetry(tel, _discharges(tel), "SYN", REST)
+    assert steps["r_step_ohm"].isna().all()
+
+
+def test_implausibly_low_steps_are_screened_without_looking_ahead():
+    from src.bms.health.field_soh import screen_step_resistances
+    r = [0.028, 0.029, 0.0003, 0.030, 0.0004, 0.031]
+    out = screen_step_resistances(r)
+    assert np.isnan(out[2]) and np.isnan(out[4])
+    assert np.allclose(out[[0, 1, 3, 5]], [0.028, 0.029, 0.030, 0.031])
+    # Growth is not screened: CALCE cells genuinely grow several-fold.
+    assert np.isfinite(screen_step_resistances([0.1, 0.1, 0.55])).all()

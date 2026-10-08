@@ -72,6 +72,42 @@ MIN_STEP_CURRENT_A = 0.05
 # step, narrow enough to follow resistance growth over life.
 RESISTANCE_WINDOW_CYCLES = 11
 
+# QUIET-TO-LOAD STEPS
+# -------------------
+# R = dV / dI needs a change in current, not a rest. Many cyclers - and many
+# vehicles - go straight from the end of a constant-voltage charge (tens of
+# mA) to the load. On the Imperial LG M50T protocol that was 556 of 570
+# discharges, and requiring a true rest left the cell with no resistance at
+# all (reports/metrics/m50t_heldout/). A preceding current counts as quiet
+# when it is a rest, or at most QUIET_FRACTION of the load step.
+QUIET_FRACTION = 0.05
+
+# IMPLAUSIBLE STEPS
+# -----------------
+# A logger can record the first loaded sample before the voltage has moved:
+# 0.3 milliohm against a real 27.7 on the M50T. Resistance does not fall to a
+# quarter of the cell's own early value with age, so such steps are dropped,
+# judged causally against the median of the first STEP_REFERENCE_COUNT steps
+# accepted so far. No upper bound: CALCE CS2_9 genuinely grew 5.5x.
+MIN_PLAUSIBLE_R_FRACTION = 0.25
+STEP_REFERENCE_COUNT = 5
+
+
+def screen_step_resistances(values) -> np.ndarray:
+    """Step resistances with implausibly low ones set to NaN, using no future step."""
+    out = np.asarray(values, dtype=float).copy()
+    accepted: list[float] = []
+    for k, r in enumerate(out):
+        if not np.isfinite(r):
+            continue
+        if accepted:
+            ref = float(np.median(accepted[:STEP_REFERENCE_COUNT]))
+            if r < MIN_PLAUSIBLE_R_FRACTION * ref:
+                out[k] = float("nan")
+                continue
+        accepted.append(float(r))
+    return out
+
 # Accepted cycles averaged into the reported current SOH. One discharge
 # carries the full noise of a single measurement.
 REPORT_CYCLES = 5
@@ -260,7 +296,8 @@ def curves_from_telemetry(
         r_step = float("nan")
         v_rest = float("nan")
         j = a - 1
-        if j >= 0 and abs(current[j]) < rest_threshold_a and (t[a] - t[j]) <= MAX_STEP_GAP_S:
+        quiet = max(rest_threshold_a, QUIET_FRACTION * abs(current[a])) if j >= 0 else 0.0
+        if j >= 0 and abs(current[j]) <= quiet and (t[a] - t[j]) <= MAX_STEP_GAP_S:
             v_rest = float(voltage[j])
             d_i = abs(current[a] - current[j])
             d_v = voltage[j] - voltage[a]
@@ -280,7 +317,7 @@ def step_overpotential(steps: pd.DataFrame) -> pd.DataFrame:
     """Per-cycle ohmic offset from a trailing median of step resistances."""
     steps = steps.sort_values("cycle").copy()
     steps["r_trailing_ohm"] = (
-        steps["r_step_ohm"]
+        pd.Series(screen_step_resistances(steps["r_step_ohm"]), index=steps.index)
         .rolling(RESISTANCE_WINDOW_CYCLES, min_periods=1).median()
         .ffill()
     )
