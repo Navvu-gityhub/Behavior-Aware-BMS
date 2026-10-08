@@ -359,31 +359,7 @@ The principal endpoints are listed below, together with the telemetry routes for
 \end{itemize}
 The \texttt{/healthz} endpoint is explicitly service liveness and not battery health: in a battery-monitoring system the naming collision is a real hazard and is called out at its definition. The container health check polls it.
 
-The React client has five views (Table~\ref{tab:views}). A Guardian explanation is rendered inside the CAN replay view and not as its own tab, because it is only meaningful next to the run it explains. Refusals are rendered as results and not as errors.
-
-\begin{table}[htbp]
-	\caption{Dashboard Views}
-	\centering
-	\small
-	\renewcommand{\arraystretch}{1.15}
-	\setlength{\tabcolsep}{4pt}
-	\begin{tabular}{|L{0.25\linewidth}|L{0.6\linewidth}|}
-		\hline
-		\textbf{View} & \textbf{Shows} \\
-		\hline
-		Fleet & Fleet table with health, risk and RUL per battery, from a simulated or loaded run \\
-		\hline
-		CAN Replay & Replay of a decoded CAN capture with coverage and the Guardian explanation \\
-		\hline
-		Digital Twin & Twin state and state transitions for a battery \\
-		\hline
-		Thermal & Pack temperature view built only from what was measured \\
-		\hline
-		Transfer Validation & Whether a model may be transferred between datasets, and why not \\
-		\hline
-	\end{tabular}
-	\label{tab:views}
-\end{table}
+The React client is a single-surface dashboard. It shows the fleet of batteries with health, risk and remaining life for each, a battery detail view, a digital-twin sheet with the twin state and its transitions, and a banner stating where the run's data came from. An earlier version had separate tabs for fleet, CAN replay, thermal and transfer views. They were removed because two parallel dashboards meant two provenance banners that could disagree about the same run. A Guardian explanation is shown next to the run it explains, and refusals are rendered as results and not as errors.
 
 There are two deliberate absences. There is no database: the fleet store is in memory, and adding a database to the compose file would imply a persistence layer that does not exist, so the compose file says so. Persistence is the next substantial piece of work.
 
