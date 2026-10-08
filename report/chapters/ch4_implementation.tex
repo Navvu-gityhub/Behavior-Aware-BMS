@@ -192,13 +192,13 @@ Table~\ref{tab:channel} gives the measured frame sizes and the derived link perf
 	\label{tab:channel}
 \end{table}
 
-\section{REFUSAL GATES}
+\section{IMPLEMENTATION OF REFUSAL GATES}
 \label{sec:impl-gates}
 
 A request through the serial path passes the following stages. The route validates the request, a line source yields lines (decode errors become counted rejections, not exceptions), the parser classifies each line and verifies its checksum, the serial pipeline applies the gates below and assembles the unified frame, and the shared scoring function runs. A decode-statistics record rides along the whole way so that a capture that silently dropped most of its lines cannot look like a clean one. Every gate returns a result carrying a refusal and not an exception (Table~\ref{tab:gates}).
 
 \begin{table}[htbp]
-	\caption{Gates and What Each Prevents}
+	\caption{Refusal Gates and Their Purpose}
 	\centering
 	\small
 	\renewcommand{\arraystretch}{1.15}
@@ -264,12 +264,12 @@ Three consequences are recorded. Discharge must stay below 3.2~A with the 0.1~$\
 
 The error budget carries the component errors through to capacity. Combining the INA219 gain error (about 0.5\%), the shunt tolerance (1\%) and shunt self-heating (about 0.2\%) in quadrature gives about 1.14\% of reading, and because capacity is the integral of current, a gain error on current is a gain error on capacity. The expected capacity accuracy is about 1.2\%, dominated by the shunt tolerance, against the 5\% acceptance criterion. A 0.1\% shunt would roughly halve it. Offset and timing contribute negligibly. These are datasheet-based design figures, and measurement against a reference meter has not been done.
 
-\subsection{As-Built Rig}
+\subsection{Implemented Rig Configuration}
 
 The rig that was physically brought up differs from the design document in two components, and that difference is stated here and not hidden (Table~\ref{tab:asbuilt}, Fig.~\ref{fig:rig}).
 
 \begin{table}[htbp]
-	\caption{Design Document Versus As-Built Rig}
+	\caption{Design Specification Versus Implemented Rig}
 	\centering
 	\small
 	\renewcommand{\arraystretch}{1.15}
@@ -307,7 +307,7 @@ The rig that was physically brought up differs from the design document in two c
         \draw[arr] (mcu) -- node[above, font=\scriptsize]{USB serial} node[below, font=\scriptsize]{9600 baud} (pc);
         \draw[arr] (lm) -- (mcu);
     \end{tikzpicture}}
-    \caption{As-built bench rig: measurement chain from the cell to the host.}
+    \caption{Implemented bench rig: measurement chain from the cell to the host.}
     \label{fig:rig}
 \end{figure}
 
@@ -471,7 +471,7 @@ The service is a local bench and analysis tool, and its security review asked a 
 
 The one substantive finding was that three routes opened a filesystem path taken from the request body without any containment. A caller could name a private key or a configuration file, and the per-line rejection reasons returned by the serial path could carry fragments of what was read. The difference between a not-found and a parse error also revealed whether a file existed. The fix resolves the path first and requires it to lie under an allowed root, and rejects it with a client error before any existence check, so an out-of-bounds path cannot be used to probe the disk. A list of allowed roots was chosen over a blocklist of path patterns, because blocklists on path strings can be defeated by symbolic links, percent-encoding and short file names, whereas resolving first and then asking where the path ended up is decided after any such trick has been applied. The allowed roots can be replaced through an environment variable, and the variable replaces the defaults and does not extend them, so setting it cannot leave a development convenience in place. Thirteen tests cover the containment.
 
-\subsection{What Is Deliberately Not Defended}
+\subsection{Threats Outside the Scope of the Design}
 
 The service has no authentication, no rate limiting, no transport security and no tenant isolation, and it keeps one global in-memory store. These are consequences of its scope as a local tool and are recorded as such. The correct remedy for a shared deployment is an authenticating reverse proxy in front of the service and not code inside it.
 
@@ -534,7 +534,7 @@ Continuous integration runs eight jobs: lint and type checking, the test suite o
 Table~\ref{tab:tests} lists some of the test modules and the behaviour each one pins. Each subsystem has tests at its own boundary, so a fault is caught where it is introduced and not where it is first noticed.
 
 \begin{table}[htbp]
-	\caption{Selected Test Modules and What They Check}
+	\caption{Selected Test Modules and Verified Behaviour}
 	\centering
 	\footnotesize
 	\renewcommand{\arraystretch}{1.1}

@@ -119,7 +119,7 @@ The denominators differ because a correction can only be scored on cells for whi
 
 \textbf{Interpretation.} Identifying resistance from the load step took the median error from 4.3\% to 1.7\% and the coverage from 12 to 17 cells, without any quantity the cycler computed. Two earlier figures were corrected downward by this work: an earlier SOH figure and an 88\% RUL figure had been scored against a reference capacity taken from each cell's whole life, which uses the future and which no BMS can hold.
 
-\section{PARTIAL DISCHARGES}
+\section{PARTIAL-DISCHARGE SOH ESTIMATION}
 \label{sec:res-partial}
 
 On the four cells of real partial cycling (Table~\ref{tab:partial}), estimates use only the partial discharges preceding each laboratory check. Before the knee gate existed, the two near-empty cells were reported at 6.8\% and 12.8\% error while appearing confident. Learned windows on the 18 full-discharge cells have steepness 0.44--0.88, so any threshold between about 0.9 and 8 gives the same verdict on every cell and the chosen 2.0 is not tuned. As a control, the learned mode on those 18 cells measured 16 at a median of 1.95\%, beside 1.7\% for the fixed window, so it is a fallback and not a replacement.
@@ -153,7 +153,7 @@ On the four cells of real partial cycling (Table~\ref{tab:partial}), estimates u
 
 Against the cycler's internal-resistance column over each cell's life (20 cells carrying both values), the step resistance achieved a median Spearman correlation of 0.86, growth in the same direction on 19 of 20 cells, and a median growth of 1.26 times against the cycler's 1.29 times. This includes the partial-cycling cells (0.90 and 0.98), and the exception is a Type~3 cell. The levels differ, since the step value includes early polarisation, but the trends agree, which is what a power-fade indicator requires.
 
-\section{REMAINING USEFUL LIFE}
+\section{REMAINING USEFUL LIFE ESTIMATION}
 \label{sec:res-rul}
 
 At threshold 0.90, referenced to each cell's first cycles (17 cells), Table~\ref{tab:rul} reports accuracy by the true distance to end of life and by the prediction a user sees. Near end of life the estimate is a safe lower bound: it warns early and almost never late. Errors are predominantly early because these cells fade quickly at first and then more slowly, so a full-history line is steeper than the remaining fade.
@@ -197,7 +197,7 @@ Scored against a reference capacity taken as the 95th percentile of the cell's w
 A driver who seldom fully discharges produces few complete discharges (on the partial-cycling cell CS2\_24 they are rare). Four methods were evaluated on the same sparse evidence (Table~\ref{tab:sparse}). Sparsity is real on the partial-cycling cells and emulated as one complete discharge in 50 on the constant-current cells.
 
 \begin{table}[htbp]
-	\caption{RUL from Sparse Complete Discharges; None Is Accurate Enough to Report}
+	\caption{RUL Estimation from Sparse Complete Discharges (Methods Compared)}
 	\centering
 	\small
 	\renewcommand{\arraystretch}{1.15}
@@ -245,7 +245,7 @@ Three questions were fixed before the study and scored at every laboratory check
 
 Third, \emph{reference size}: in the study's own scoring, larger references reduced error (one discharge 3.6\%, five 2.0\%, ten 1.3\%), but on the field-study metric ten versus five changed the median only from 1.681\% to 1.665\%, so the estimator retains five.
 
-\section{EXTERNAL VALIDATION ON A SECOND DATASET}
+\section{EXTERNAL VALIDATION ON THE OXFORD DATASET}
 \label{sec:res-oxford}
 
 The estimator was applied to the eight Oxford cells without re-tuning. Arms, reference and scoring were fixed before the run. The reference is each cell's first characterisation, and truth is 1C capacity relative to it. Because each characterisation block begins under load, no rest-to-load step exists, so the 1C window is uncorrected.
@@ -276,7 +276,7 @@ All eight cells were measured (Table~\ref{tab:oxford}). The near-equilibrium C/1
 
 \paragraph{Remaining Life at the 80\% Threshold.} The Oxford trajectories cross the 80\% convention, so the shipped RUL estimator was scored there unchanged. When it predicted fewer than 500 cycles to 80\%, the cell lasted at least that long in 97\% of cases (36 estimates, 5 cells). Precision is low: the median miss is 385 cycles against characterisations 100 cycles apart. The guarantee also weakens with distance, since predictions of 500 to 1,000 cycles were met or exceeded only 80\% of the time (25 estimates, 5 cells).
 
-\section{VALIDATION ON A THIRD DATASET AND REFUSAL BEHAVIOUR}
+\section{CROSS-DATASET VALIDATION ON THE NASA DATASET}
 \label{sec:res-xds}
 
 The NASA files (18650 cells, ambient 4--44~$^\circ$C) were read from their original MATLAB form and scored the same way, unchanged. The estimator was poor on NASA overall, with a median per-cell error of 9.2\% over 27 cells, and it depended on temperature: 1.7\% in the 43~$^\circ$C cohort and 12--14\% at 4 and 22~$^\circ$C. The step resistance captures only the ohmic part of the overpotential, and at low temperature the charge-transfer and diffusion parts, which grow with age, move the curve through the window.
@@ -335,11 +335,11 @@ Fig.~\ref{fig:rigcapture} plots the Stage B capture and Fig.~\ref{fig:uievidence
 
 Faults injected into a real capture behaved as designed: a corrupted byte failed its checksum, a NaN field was rejected, a reversed timestamp refused the capture, and a missing sensor was refused by name. The injection also exposed one defect, since corrected: a 999~V reading passed the field range, which is wide so that packs are admissible. Records outside 0--5~V are now rejected when the source declares a single cell.
 
-\subsection{What the Hardware Result Does and Does Not Show}
+\subsection{Scope of the Hardware Results}
 
 The captures demonstrate that the transport, the protocol, the gate and the refusal path work against real silicon. They are one cell, at rest, for under 90~s, with no load step and no charge or discharge cycle. They are \emph{not} a validation of the health, RUL or risk models, which were fitted on cycled research cells and cannot be confirmed or refuted by a cell that was never cycled. Sensor accuracy against a reference meter was not measured, and no discharge has yet been recorded on the rig.
 
-\section{ILLUSTRATIVE EXAMPLE: THE HEALTH REPORT CARD}
+\section{CASE STUDY: HEALTH REPORT CARD}
 \label{sec:res-card}
 
 Fig.~\ref{fig:card} abridges the report card for CALCE cell CS2\_35 as it would have read at cycle 90. The pipeline saw voltage, current and time only.
@@ -397,13 +397,13 @@ The health figure is within half a point. The remaining-life figure is 51 cycles
 
 Four implications follow from the results and are stated here as design guidance for a software layer above a BMS.
 
-\paragraph{Validate on the Unit of Deployment.} A model is deployed on a battery that has not been seen and often on a protocol that has not been seen. The validation split should hold out that unit, and the interval around the result should be reported, because on the benchmark of this project the interval on a single method was wider than the difference between methods.
+\paragraph{Validation Unit.} A model is deployed on a battery that has not been seen and often on a protocol that has not been seen. The validation split should hold out that unit, and the interval around the result should be reported, because on the benchmark of this project the interval on a single method was wider than the difference between methods.
 
-\paragraph{Prefer Measurement to Fitting Where Measurement Is Possible.} Voltage, current and time are enough to measure capacity on a discharge that spans a voltage window, and the measurement needs no training cells. Fitting is then needed only for the quantities that cannot be measured directly.
+\paragraph{Measurement Versus Fitting.} Voltage, current and time are enough to measure capacity on a discharge that spans a voltage window, and the measurement needs no training cells. Fitting is then needed only for the quantities that cannot be measured directly.
 
-\paragraph{Make Refusal a Normal Output.} A refusal that carries its cause is information, since it tells the operator what data to collect. The consistency criterion separated a 4.5\% median error from a 13.2\% median error without any knowledge of the true capacity, which shows that a system can recognise its own poor conditions.
+\paragraph{Refusal as an Output.} A refusal that carries its cause is information, since it tells the operator what data to collect. The consistency criterion separated a 4.5\% median error from a 13.2\% median error without any knowledge of the true capacity, which shows that a system can recognise its own poor conditions.
 
-\paragraph{Keep One Scoring Path.} When a vehicle, a rig and a dataset all pass through the same function, a result obtained on a dataset says something about the vehicle, and a defect found on the rig is fixed for all three.
+\paragraph{Single Scoring Path.} When a vehicle, a rig and a dataset all pass through the same function, a result obtained on a dataset says something about the vehicle, and a defect found on the rig is fixed for all three.
 
 \section{VALIDATION SUMMARY}
 

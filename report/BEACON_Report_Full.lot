@@ -2,9 +2,9 @@
 \contentsline {table}{\numberline {1.1}{\ignorespaces Organisation of the Report}}{5}{table.caption.6}%
 \addvspace {10\p@ }
 \contentsline {table}{\numberline {2.1}{\ignorespaces Families of State-of-Health Estimation}}{8}{table.caption.7}%
-\contentsline {table}{\numberline {2.2}{\ignorespaces Validation Splits and What Each One Tests}}{10}{table.caption.8}%
-\contentsline {table}{\numberline {2.3}{\ignorespaces Approach Families and the Properties That Matter for a Deployed Layer}}{11}{table.caption.9}%
-\contentsline {table}{\numberline {2.4}{\ignorespaces Gaps in the Literature and Where They Are Addressed}}{11}{table.caption.10}%
+\contentsline {table}{\numberline {2.2}{\ignorespaces Validation Splits and Their Purpose}}{10}{table.caption.8}%
+\contentsline {table}{\numberline {2.3}{\ignorespaces Comparison of Approach Families}}{11}{table.caption.9}%
+\contentsline {table}{\numberline {2.4}{\ignorespaces Research Gaps and Corresponding Report Sections}}{11}{table.caption.10}%
 \addvspace {10\p@ }
 \contentsline {table}{\numberline {3.1}{\ignorespaces Functional and Non-Functional Requirements}}{13}{table.caption.11}%
 \contentsline {table}{\numberline {3.2}{\ignorespaces Data Sources and Their Role}}{14}{table.caption.13}%
@@ -17,22 +17,22 @@
 \contentsline {table}{\numberline {4.1}{\ignorespaces Software Components Used}}{26}{table.caption.24}%
 \contentsline {table}{\numberline {4.2}{\ignorespaces Organisation of the Core Package}}{27}{table.caption.25}%
 \contentsline {table}{\numberline {4.3}{\ignorespaces Frame Size and Link Performance of the JSON Codec}}{29}{table.caption.27}%
-\contentsline {table}{\numberline {4.4}{\ignorespaces Gates and What Each Prevents}}{30}{table.caption.28}%
+\contentsline {table}{\numberline {4.4}{\ignorespaces Refusal Gates and Their Purpose}}{30}{table.caption.28}%
 \contentsline {table}{\numberline {4.5}{\ignorespaces Shunt Sizing for the INA219 (320~mV Full Scale, 10~$\mu $V LSB)}}{31}{table.caption.29}%
-\contentsline {table}{\numberline {4.6}{\ignorespaces Design Document Versus As-Built Rig}}{32}{table.caption.30}%
+\contentsline {table}{\numberline {4.6}{\ignorespaces Design Specification Versus Implemented Rig}}{32}{table.caption.30}%
 \contentsline {table}{\numberline {4.7}{\ignorespaces Firmware Compilation Record (\texttt {arduino-cli}, all warnings enabled)}}{32}{table.caption.32}%
 \contentsline {table}{\numberline {4.8}{\ignorespaces Services}}{33}{table.caption.33}%
 \contentsline {table}{\numberline {4.9}{\ignorespaces Principal Routes of the Python Service}}{36}{table.caption.36}%
 \contentsline {table}{\numberline {4.10}{\ignorespaces Security Review of the Service}}{37}{table.caption.37}%
 \contentsline {table}{\numberline {4.11}{\ignorespaces Views of the Dashboard}}{38}{table.caption.38}%
-\contentsline {table}{\numberline {4.12}{\ignorespaces Selected Test Modules and What They Check}}{39}{table.caption.39}%
+\contentsline {table}{\numberline {4.12}{\ignorespaces Selected Test Modules and Verified Behaviour}}{39}{table.caption.39}%
 \addvspace {10\p@ }
 \contentsline {table}{\numberline {5.1}{\ignorespaces Benchmark on 31 NASA Cells in Nine Cohorts (Six of the Methods Shown); LOCO Intervals Are 95\% Bootstrap Over Folds}}{41}{table.caption.40}%
 \contentsline {table}{\numberline {5.2}{\ignorespaces Feature Ablation and Shuffle Control (NASA SOH, LOCO)}}{42}{table.caption.42}%
 \contentsline {table}{\numberline {5.3}{\ignorespaces Field SOH at the 3.90--3.60~V Window; Median Per-Cell Absolute Error Against Cycler Capacity, 95\% Bootstrap Interval Over Cells}}{43}{table.caption.43}%
 \contentsline {table}{\numberline {5.4}{\ignorespaces SOH from Real Partial Cycling (CALCE CS2 Types 5 and 6)}}{44}{table.caption.46}%
 \contentsline {table}{\numberline {5.5}{\ignorespaces RUL to 90\% Capacity. Left: By True Cycles to End of Life. Right: By Predicted Cycles, With the 90\% Range of (True $-$ Predicted)}}{45}{table.caption.47}%
-\contentsline {table}{\numberline {5.6}{\ignorespaces RUL from Sparse Complete Discharges; None Is Accurate Enough to Report}}{46}{table.caption.49}%
+\contentsline {table}{\numberline {5.6}{\ignorespaces RUL Estimation from Sparse Complete Discharges (Methods Compared)}}{46}{table.caption.49}%
 \contentsline {table}{\numberline {5.7}{\ignorespaces Error by the Consistency Criterion of Eq.~\eqref {eq:u}}}{46}{table.caption.50}%
 \contentsline {table}{\numberline {5.8}{\ignorespaces External Validation on Eight Oxford Cells: Median and Worst Per-Cell Mean Absolute SOH Error}}{47}{table.caption.51}%
 \contentsline {table}{\numberline {5.9}{\ignorespaces Bench Rig Captures}}{48}{table.caption.54}%

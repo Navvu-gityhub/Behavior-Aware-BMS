@@ -5,7 +5,7 @@
 \contentsline {figure}{\numberline {3.2}{\ignorespaces Field SOH estimator: from raw telemetry to a banded or refused output.}}{18}{figure.caption.15}%
 \addvspace {10\p@ }
 \contentsline {figure}{\numberline {4.1}{\ignorespaces A data frame: sentinel \texttt {BEACON1}, kind \texttt {D}, JSON body, and the XOR checksum \texttt {*06}, ending in a newline.}}{29}{figure.caption.26}%
-\contentsline {figure}{\numberline {4.2}{\ignorespaces As-built bench rig: measurement chain from the cell to the host.}}{32}{figure.caption.31}%
+\contentsline {figure}{\numberline {4.2}{\ignorespaces Implemented bench rig: measurement chain from the cell to the host.}}{32}{figure.caption.31}%
 \contentsline {figure}{\numberline {4.3}{\ignorespaces Overview screen of the BEACON dashboard on a synthetic fleet. The banner marks the values as simulated, and the panel at the bottom shows the measured bench-rig readings, with the health index and remaining life refused because no temperature channel exists.}}{34}{figure.caption.34}%
 \contentsline {figure}{\numberline {4.4}{\ignorespaces Battery health screen: state of health over cycles for one battery, the attribution of its health index to behaviour terms, and its aggregate usage parameters (synthetic fleet).}}{35}{figure.caption.35}%
 \addvspace {10\p@ }

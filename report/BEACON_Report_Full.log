@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023/Debian) (preloaded format=pdflatex 2026.10.2)  8 OCT 2026 10:24
+This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023/Debian) (preloaded format=pdflatex 2026.10.2)  8 OCT 2026 10:34
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -989,12 +989,12 @@ Overfull \hbox (0.78043pt too wide) in paragraph at lines 1117--1118
 [25
 
 ] [26] [27] [28] [29] [30] [31] [32] [33]
-<images/ui_overview.png, id=1159, 1445.4pt x 1240.635pt>
+<images/ui_overview.png, id=1160, 1445.4pt x 1240.635pt>
 File: images/ui_overview.png Graphic file (type png)
 <use images/ui_overview.png>
 Package pdftex.def Info: images/ui_overview.png  used on input line 1389.
 (pdftex.def)             Requested size: 408.0616pt x 350.25287pt.
-<images/ui_health.png, id=1160, 1445.4pt x 1146.2825pt>
+<images/ui_health.png, id=1161, 1445.4pt x 1146.2825pt>
 File: images/ui_health.png Graphic file (type png)
 <use images/ui_health.png>
 Package pdftex.def Info: images/ui_health.png  used on input line 1396.
@@ -1002,7 +1002,7 @@ Package pdftex.def Info: images/ui_health.png  used on input line 1396.
  [34 <./images/ui_overview.png (PNG copy)>] [35 <./images/ui_health.png (PNG co
 py)>] [36] [37] [38] [39] [40]
 Chapter 5.
-<images/bench_lobo_loco.png, id=1198, 520.344pt x 260.172pt>
+<images/bench_lobo_loco.png, id=1199, 520.344pt x 260.172pt>
 File: images/bench_lobo_loco.png Graphic file (type png)
 <use images/bench_lobo_loco.png>
 Package pdftex.def Info: images/bench_lobo_loco.png  used on input line 1632.
@@ -1010,13 +1010,13 @@ Package pdftex.def Info: images/bench_lobo_loco.png  used on input line 1632.
 [41
 
 ] [42 <./images/bench_lobo_loco.png>]
-<images/results_soh_tracking.png, id=1213, 794.97pt x 505.89pt>
+<images/results_soh_tracking.png, id=1214, 794.97pt x 505.89pt>
 File: images/results_soh_tracking.png Graphic file (type png)
 <use images/results_soh_tracking.png>
 Package pdftex.def Info: images/results_soh_tracking.png  used on input line 16
 99.
 (pdftex.def)             Requested size: 416.83289pt x 265.26428pt.
-<images/results_soh_per_cell.png, id=1214, 722.7pt x 289.08pt>
+<images/results_soh_per_cell.png, id=1215, 722.7pt x 289.08pt>
 File: images/results_soh_per_cell.png Graphic file (type png)
 <use images/results_soh_per_cell.png>
 Package pdftex.def Info: images/results_soh_per_cell.png  used on input line 17
@@ -1024,19 +1024,19 @@ Package pdftex.def Info: images/results_soh_per_cell.png  used on input line 17
 (pdftex.def)             Requested size: 416.83289pt x 166.73137pt.
  [43 <./images/results_soh_tracking.png>] [44 <./images/results_soh_per_cell.pn
 g>]
-<images/results_rul.png, id=1228, 794.97pt x 332.442pt>
+<images/results_rul.png, id=1229, 794.97pt x 332.442pt>
 File: images/results_rul.png Graphic file (type png)
 <use images/results_rul.png>
 Package pdftex.def Info: images/results_rul.png  used on input line 1778.
 (pdftex.def)             Requested size: 416.83289pt x 174.31653pt.
  [45 <./images/results_rul.png>]
 [46] [47] [48]
-<images/rig_capture.png, id=1261, 520.344pt x 274.626pt>
+<images/rig_capture.png, id=1262, 520.344pt x 274.626pt>
 File: images/rig_capture.png Graphic file (type png)
 <use images/rig_capture.png>
 Package pdftex.def Info: images/rig_capture.png  used on input line 1912.
 (pdftex.def)             Requested size: 416.85536pt x 220.00699pt.
-<images/ui_evidence.png, id=1262, 1445.4pt x 1122.1925pt>
+<images/ui_evidence.png, id=1263, 1445.4pt x 1122.1925pt>
 File: images/ui_evidence.png Graphic file (type png)
 <use images/ui_evidence.png>
 Package pdftex.def Info: images/ui_evidence.png  used on input line 1919.
@@ -1060,14 +1060,14 @@ LaTeX2e <2023-11-01> patch level 1
 L3 programming layer <2024-01-22>
  ***********
 Package rerunfilecheck Info: File `BEACON_Report_Full.out' has not changed.
-(rerunfilecheck)             Checksum: E5F1B47470F74D51C9FC7E271FECD2AD;24155.
+(rerunfilecheck)             Checksum: 55F540F8D4A3C99ED96BC2E757425FEB;24240.
  ) 
 Here is how much of TeX's memory you used:
- 27494 strings out of 476106
- 502074 string characters out of 5793933
+ 27491 strings out of 476106
+ 502047 string characters out of 5793933
  1946975 words of memory out of 5000000
  48317 multiletter control sequences out of 15000+600000
- 628733 words of font info for 355 fonts, out of 8000000 for 9000
+ 628606 words of font info for 353 fonts, out of 8000000 for 9000
  59 hyphenation exceptions out of 8191
  90i,12n,93p,1872b,855s stack positions out of 10000i,1000n,20000p,200000b,200000s
 </usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb></us
@@ -1086,10 +1086,10 @@ re/texlive/texmf-dist/fonts/type1/urw/courier/ucrr8a.pfb></usr/share/texlive/te
 xmf-dist/fonts/type1/urw/times/utmb8a.pfb></usr/share/texlive/texmf-dist/fonts/
 type1/urw/times/utmbi8a.pfb></usr/share/texlive/texmf-dist/fonts/type1/urw/time
 s/utmr8a.pfb></usr/share/texlive/texmf-dist/fonts/type1/urw/times/utmri8a.pfb>
-Output written on BEACON_Report_Full.pdf (78 pages, 1717265 bytes).
+Output written on BEACON_Report_Full.pdf (78 pages, 1717103 bytes).
 PDF statistics:
- 1529 PDF objects out of 1728 (max. 8388607)
- 1381 compressed objects within 14 object streams
+ 1530 PDF objects out of 1728 (max. 8388607)
+ 1382 compressed objects within 14 object streams
  331 named destinations out of 1000 (max. 500000)
  69695 words of extra memory for PDF output out of 74296 (max. 10000000)
 

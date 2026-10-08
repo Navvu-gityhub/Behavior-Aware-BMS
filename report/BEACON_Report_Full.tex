@@ -307,7 +307,7 @@ Resistance rises as the cell ages, and it determines the voltage sag under load 
 
 Remaining useful life is the number of further cycles before SOH reaches the end-of-life threshold. It is a prediction, so it carries an error that grows with the distance from the threshold, and a figure for it is meaningful only if the error is stated alongside it.
 
-\section{PROPOSED APPROACH IN BRIEF}
+\section{PROPOSED APPROACH}
 
 BEACON, the system built in this project, is organised in three tiers. The data tier receives telemetry from three sources, a controller area network (CAN) bus, a serial link from a bench rig and public research datasets, and converts all three into one unified frame. The analytics tier is a Python service that scores every frame through a single function and returns state of health, resistance, remaining useful life and a behaviour risk score, each with its evidence and, where the evidence is insufficient, a refusal with the reason. The presentation tier is an Express gateway and a React dashboard that display the results and label every value with its source.
 
@@ -361,7 +361,7 @@ Textbook treatments of the BMS, including state-of-charge indication and cell ba
 
 In this project, resistance serves two roles: it corrects the ohmic sag that would otherwise make a fixed voltage window slide along the discharge curve, and it is reported as a second health output, validated against the laboratory instrument (Section~\ref{sec:res-r}).
 
-\section{DATA-DRIVEN SOH ESTIMATION AND HOW IT IS VALIDATED}
+\section{DATA-DRIVEN SOH ESTIMATION AND ITS VALIDATION}
 
 Data-driven estimators trained on cycling features are widespread. Severson \emph{et al.}\ \cite{severson2019} showed that features of the capacity--voltage curve, such as the variance of the difference between cycles, predict cycle life from early data. Such models are commonly assessed under random or leave-one-cell-out splits.
 
@@ -377,7 +377,7 @@ The window estimator used here belongs to this curve-based family. It differs in
 
 Remaining-useful-life methods and their uncertainty are reviewed by Hu \emph{et al.}\ \cite{hu2020}. Accuracy is often summarised as a single error figure over all predictions. This project reports RUL error indexed by the prediction a user actually sees, for example ``when the system predicts fewer than 25 cycles, how often did the cell last at least that long'', and records which routes to RUL failed (Sections~\ref{sec:res-rul} and~\ref{sec:res-sparse}).
 
-\section{PUBLIC DATASETS USED}
+\section{PUBLIC DATASETS}
 
 Three public datasets are used, chosen because they differ in chemistry, format, temperature and protocol.
 
@@ -387,7 +387,7 @@ Three public datasets are used, chosen because they differ in chemistry, format,
     \item \textbf{Oxford Battery Degradation Dataset 1} \cite{howey2017oxford,birkl2017thesis}: eight Kokam pouch cells aged at 40~$^\circ$C with an Artemis urban drive-cycle discharge. Used for external validation.
 \end{itemize}
 
-\section{TELEMETRY ACQUISITION IN VEHICLES AND ON THE BENCH}
+\section{TELEMETRY ACQUISITION IN VEHICLES AND LABORATORY RIGS}
 
 In a vehicle, BMS data is carried on a CAN bus, and a DBC file describes how signals are packed into frames. A research dataset arrives as files, and a bench rig typically streams text over a serial port. Each source has its own failure modes: a CAN decode can silently miss a signal, a serial link can drop or corrupt bytes, and a research file can store a quantity with a different sign or scale. The review above does not address how these three sources are made to agree, and this project treats it as a design question (Chapter~\ref{ch:method}): one schema, one scoring function, and explicit refusals when a capture's shape is wrong.
 
@@ -431,7 +431,7 @@ Internal resistance can be measured from the voltage response to a current step,
 
 The controller area network is the serial bus on which the control units of a vehicle exchange short frames \cite{iso11898}. A frame carries an identifier and up to eight data bytes, and the identifier determines which message the data belong to. The bytes are packed with several signals, each defined by a start bit, a length, a byte order, a scale factor and an offset. A DBC file records these definitions. Manufacturers regard their DBC files as proprietary, which is the main obstacle to a general decoder, and public decoding exists for a limited number of vehicles through community projects such as the Open Vehicles Monitoring System.
 
-\subsection{Serial Bench Rigs}
+\subsection{Serial Laboratory Rigs}
 
 A laboratory or student rig usually streams text lines over a universal asynchronous serial link. Such a link has no error detection of its own, so bytes can be lost or corrupted, and a boot banner or debug message can appear between data records. A reliable acquisition layer therefore needs a delimiter, a checksum and a rule for what to do with a record that fails them. These concerns do not arise with a dataset file, which is why the three sources need an explicit common schema.
 
@@ -443,16 +443,16 @@ Public datasets store the same physical quantities under different names, units,
 
 A digital twin is a virtual representation of a physical asset that is updated from the asset's data and can be queried in its place \cite{grieves2014}. For batteries, the term is used for anything from a detailed electrochemical simulation to a simple state record. In BEACON the twin is deliberately modest: a state machine layered on the outputs of the scoring pipeline that records the current health state of each battery and every transition between states across runs. It adds structure and a queryable history and does not add a predictive model, and the report says so wherever the twin is mentioned. In a fleet, such a record lets an operator see which batteries have changed state since the last evaluation, which is what a maintenance decision depends on.
 
-\section{EXPLAINABILITY AND HONEST REPORTING}
+\section{EXPLAINABILITY AND OUTPUT TRANSPARENCY}
 
 Explanations of a model's output are expected in safety-relevant systems, and feature attribution is the usual tool. For rule-based scores, the contribution of each rule to the total can be computed exactly and does not need an approximation. The behaviour layer of BEACON reports such attributions for its heuristic scores. A related concern is the honesty of the output itself. A dashboard that displays a placeholder, a default or an extrapolated value looks identical to one that displays a measurement. This project therefore treats the provenance of every displayed number as part of the result, and the dashboard renders only computed values, labelling those that come from simulated data.
 
-\section{VALIDATION PRACTICE AND LEAKAGE}
+\section{VALIDATION PRACTICE AND DATA LEAKAGE}
 
 The way data are split between training and testing determines what a reported accuracy means. A random split over cycles allows neighbouring cycles of the same cell to appear on both sides, which inflates accuracy. A leave-one-cell-out split removes that leak but still places the held-out cell's siblings from the same protocol in the training set. A leave-one-cohort-out split removes the whole protocol, and so tests transfer to conditions that were not seen. Table~\ref{tab:splits} summarises the three, and the benchmark in Chapter~\ref{ch:results} uses the last two.
 
 \begin{table}[htbp]
-	\caption{Validation Splits and What Each One Tests}
+	\caption{Validation Splits and Their Purpose}
 	\centering
 	\small
 	\renewcommand{\arraystretch}{1.15}
@@ -471,12 +471,12 @@ The way data are split between training and testing determines what a reported a
 	\label{tab:splits}
 \end{table}
 
-\section{POSITIONING OF THIS WORK}
+\section{COMPARISON OF APPROACH FAMILIES}
 
 Table~\ref{tab:positioning} summarises the three families of approach in this review by the properties that matter for a deployed software layer. It is a statement about the families as categories and not about any individual cited study.
 
 \begin{table}[htbp]
-	\caption{Approach Families and the Properties That Matter for a Deployed Layer}
+	\caption{Comparison of Approach Families}
 	\centering
 	\small
 	\renewcommand{\arraystretch}{1.15}
@@ -499,12 +499,12 @@ Table~\ref{tab:positioning} summarises the three families of approach in this re
 	\label{tab:positioning}
 \end{table}
 
-\section{IDENTIFIED GAPS AND HOW THEY ARE ADDRESSED}
+\section{IDENTIFIED RESEARCH GAPS}
 
 Table~\ref{tab:gaps} lists the gaps that the review leaves open and the parts of this report that address them.
 
 \begin{table}[htbp]
-	\caption{Gaps in the Literature and Where They Are Addressed}
+	\caption{Research Gaps and Corresponding Report Sections}
 	\centering
 	\small
 	\renewcommand{\arraystretch}{1.15}
@@ -627,7 +627,7 @@ BEACON ingests telemetry from three transports, converges them on one schema, an
     \label{fig:framework}
 \end{figure}
 
-\subsection{Single Shared Scoring Path}
+\subsection{Unified Scoring Function}
 
 The function \texttt{score\_telemetry\_frame} contains everything downstream of acquisition: segmentation, coulomb counting, features, risk, health, RUL, the Guardian explanation and the digital twin. It was extracted from the CAN pipeline when serial ingestion was added, instead of being copied. A second segmentation or feature extractor would mean that a disagreement between a CAN run and a serial run over the same battery could not be traced to either the data or the code. With the tail shared, a difference in output is a difference in the telemetry.
 
@@ -719,12 +719,12 @@ Every source follows the same eight steps in the same order. The CAN and serial 
 	\item \textbf{Publish.} Update the twin and the fleet store, and serve the result with its evidence and its refusals.
 \end{enumerate}
 
-\section{FROM TELEMETRY TO DISCHARGES}
+\section{DISCHARGE SEGMENTATION}
 \label{sec:segment}
 
 The estimator receives voltage $V(t)$, current $I(t)$ and time. The cycler's capacity, resistance and cycle summaries are removed before scoring. Current is segmented into charge, discharge and rest phases using a dead band (0.02~A in the CALCE studies, where rest is logged as exactly zero, and 0.5~A as the default of the live telemetry path) and a minimum run length. The charge delivered on discharge $n$ is the trapezoidal integral of $|I|\,dt$. Every discharge is retained: a partial discharge that crosses the window is a full measurement of the window.
 
-\section{VOLTAGE-WINDOW STATE OF HEALTH}
+\section{VOLTAGE-WINDOW SOH ESTIMATION}
 \label{sec:soh-method}
 
 For a window $[V_\mathrm{low}, V_\mathrm{high}]$, the window charge $\Qw(n)$ is the charge delivered while terminal voltage falls from $V_\mathrm{high}$ to $V_\mathrm{low}$ on discharge $n$. It is read by interpolation and requires that the discharge span at least 95\% of the window. With $\mathcal{R}$ the cell's first five measurable discharges,
@@ -755,7 +755,7 @@ Equation~\eqref{eq:soh} assumes the discharge curve scales approximately uniform
     \label{fig:sohflow}
 \end{figure}
 
-\section{RESISTANCE FROM THE LOAD STEP AND OHMIC CORRECTION}
+\section{INTERNAL RESISTANCE ESTIMATION AND OHMIC CORRECTION}
 \label{sec:rstep}
 
 Under load, terminal voltage lies below open-circuit voltage by approximately $IR$. As $R$ grows with age, a fixed terminal-voltage window slides along the curve, and the slide reads as additional fade. At each discharge onset, between the last rest sample and the first loaded sample,
@@ -770,7 +770,7 @@ accepted when the two samples are within 60~s and the current change is at least
 \end{equation}
 Discharges preceding the first resistance estimate are left unmeasured rather than scored uncompensated.
 
-\section{REFUSAL GATES AND DATA-QUALITY CHECKS}
+\section{DATA-QUALITY GATES AND REFUSAL CONDITIONS}
 \label{sec:gates}
 
 Each gate needs no ground truth and can therefore run in deployment.
@@ -797,7 +797,7 @@ The window is refused if even the flattest choice has $s > 2.0$, because it then
 
 At cycle $k$, the cell's SOH history up to $k$ is smoothed with an 11-point rolling median, a straight line is fitted to the full history, and its crossing of 0.90 gives the end-of-life estimate. Estimates are refused in three cases: with fewer than 30 points, for flat or rising trends, and when the estimate reaches more than twice the history length ahead. A cell already past the threshold is reported as zero. Linear, square-root and quadratic forms, over full and trailing windows, were compared, and the full-history line was most accurate near end of life. No other cell's data enters, so there is no training cohort.
 
-\section{EVIDENCE SUFFICIENCY}
+\section{EVIDENCE SUFFICIENCY CRITERION}
 \label{sec:suff-method}
 
 Each output has its own requirements: capacity health needs voltage, current and five reference readings plus one; resistance health needs a clean load step; RUL needs 30 complete discharges; and heat exposure needs a temperature channel. Within capacity health, confidence follows consistency. Because a healthy estimate keeps changing as the cell ages, stability of the estimate is the wrong criterion. The question is whether readings agree once that trend is removed. With $\sigma_{\tilde x}(x_{1..n}) = 1.2533\,\mathrm{MAD}(x)/\sqrt{n}$ the standard error of a median,
@@ -809,7 +809,7 @@ u &= \sqrt{u_\mathrm{ref}^2 + u_\mathrm{rec}^2},
 \end{align}
 where $\varepsilon$ are the residuals of the last ten readings about their own straight line. The tolerance $u \le 0.01$ (one SOH point) was fixed before the study of Section~\ref{sec:res-suff}, chosen to lie below the validated 1.7\% median error. Confidence is then assigned as \emph{high} (consistent, fixed window and a beginning-of-life reference), \emph{medium} (consistent, but a learned window or a start-of-log reference), or \emph{low} (inconsistent, reported with the measured 22-point band).
 
-\section{BEHAVIOUR SCORING LAYER (HEURISTIC)}
+\section{HEURISTIC BEHAVIOUR SCORING LAYER}
 \label{sec:behaviour}
 
 Alongside the measured estimators, BEACON carries a rule-based behaviour layer inherited from the project's first phase. It converts usage features into a risk score, an aging budget, a health index, a state label, a Guardian explanation and a digital-twin state. The features are average stress, average temperature, deep-discharge duration, fast-charge duration, aggressive-discharge count and average SOC.
@@ -866,7 +866,7 @@ This layer is \emph{not} validated against measured degradation. The Spearman co
 
 The digital twin records, for each battery, a state derived from the health index of the latest run and the history of changes in that state. The state is a relabelling of the health index (Table~\ref{tab:rules}), not a separately tuned threshold set, so any change to the health-index formula flows through to the twin without a second edit. A transition is recorded whenever the state of a battery differs from its state in the previous run, and a battery's first observation counts as a transition from no state. Re-running an unchanged, identically seeded fleet therefore produces no new transitions, which is checked by a test. The failure likelihood the twin reports is a monotonic transform of the health index onto the interval from 0 to 1. It is named a likelihood and not a probability because it is not a calibrated statistical quantity.
 
-\section{DESIGN DECISIONS}
+\section{DESIGN DECISION RECORDS}
 
 Fourteen architecture decision records document the choices made during the project, with the context, the decision and its status; the table gives a short title for each. Table~\ref{tab:adr} lists them. Several record a claim that was withdrawn after a later measurement, and that history is kept in the repository and not rewritten.
 
@@ -1195,13 +1195,13 @@ Table~\ref{tab:channel} gives the measured frame sizes and the derived link perf
 	\label{tab:channel}
 \end{table}
 
-\section{REFUSAL GATES}
+\section{IMPLEMENTATION OF REFUSAL GATES}
 \label{sec:impl-gates}
 
 A request through the serial path passes the following stages. The route validates the request, a line source yields lines (decode errors become counted rejections, not exceptions), the parser classifies each line and verifies its checksum, the serial pipeline applies the gates below and assembles the unified frame, and the shared scoring function runs. A decode-statistics record rides along the whole way so that a capture that silently dropped most of its lines cannot look like a clean one. Every gate returns a result carrying a refusal and not an exception (Table~\ref{tab:gates}).
 
 \begin{table}[htbp]
-	\caption{Gates and What Each Prevents}
+	\caption{Refusal Gates and Their Purpose}
 	\centering
 	\small
 	\renewcommand{\arraystretch}{1.15}
@@ -1267,12 +1267,12 @@ Three consequences are recorded. Discharge must stay below 3.2~A with the 0.1~$\
 
 The error budget carries the component errors through to capacity. Combining the INA219 gain error (about 0.5\%), the shunt tolerance (1\%) and shunt self-heating (about 0.2\%) in quadrature gives about 1.14\% of reading, and because capacity is the integral of current, a gain error on current is a gain error on capacity. The expected capacity accuracy is about 1.2\%, dominated by the shunt tolerance, against the 5\% acceptance criterion. A 0.1\% shunt would roughly halve it. Offset and timing contribute negligibly. These are datasheet-based design figures, and measurement against a reference meter has not been done.
 
-\subsection{As-Built Rig}
+\subsection{Implemented Rig Configuration}
 
 The rig that was physically brought up differs from the design document in two components, and that difference is stated here and not hidden (Table~\ref{tab:asbuilt}, Fig.~\ref{fig:rig}).
 
 \begin{table}[htbp]
-	\caption{Design Document Versus As-Built Rig}
+	\caption{Design Specification Versus Implemented Rig}
 	\centering
 	\small
 	\renewcommand{\arraystretch}{1.15}
@@ -1310,7 +1310,7 @@ The rig that was physically brought up differs from the design document in two c
         \draw[arr] (mcu) -- node[above, font=\scriptsize]{USB serial} node[below, font=\scriptsize]{9600 baud} (pc);
         \draw[arr] (lm) -- (mcu);
     \end{tikzpicture}}
-    \caption{As-built bench rig: measurement chain from the cell to the host.}
+    \caption{Implemented bench rig: measurement chain from the cell to the host.}
     \label{fig:rig}
 \end{figure}
 
@@ -1474,7 +1474,7 @@ The service is a local bench and analysis tool, and its security review asked a 
 
 The one substantive finding was that three routes opened a filesystem path taken from the request body without any containment. A caller could name a private key or a configuration file, and the per-line rejection reasons returned by the serial path could carry fragments of what was read. The difference between a not-found and a parse error also revealed whether a file existed. The fix resolves the path first and requires it to lie under an allowed root, and rejects it with a client error before any existence check, so an out-of-bounds path cannot be used to probe the disk. A list of allowed roots was chosen over a blocklist of path patterns, because blocklists on path strings can be defeated by symbolic links, percent-encoding and short file names, whereas resolving first and then asking where the path ended up is decided after any such trick has been applied. The allowed roots can be replaced through an environment variable, and the variable replaces the defaults and does not extend them, so setting it cannot leave a development convenience in place. Thirteen tests cover the containment.
 
-\subsection{What Is Deliberately Not Defended}
+\subsection{Threats Outside the Scope of the Design}
 
 The service has no authentication, no rate limiting, no transport security and no tenant isolation, and it keeps one global in-memory store. These are consequences of its scope as a local tool and are recorded as such. The correct remedy for a shared deployment is an authenticating reverse proxy in front of the service and not code inside it.
 
@@ -1537,7 +1537,7 @@ Continuous integration runs eight jobs: lint and type checking, the test suite o
 Table~\ref{tab:tests} lists some of the test modules and the behaviour each one pins. Each subsystem has tests at its own boundary, so a fault is caught where it is introduced and not where it is first noticed.
 
 \begin{table}[htbp]
-	\caption{Selected Test Modules and What They Check}
+	\caption{Selected Test Modules and Verified Behaviour}
 	\centering
 	\footnotesize
 	\renewcommand{\arraystretch}{1.1}
@@ -1710,7 +1710,7 @@ The denominators differ because a correction can only be scored on cells for whi
 
 \textbf{Interpretation.} Identifying resistance from the load step took the median error from 4.3\% to 1.7\% and the coverage from 12 to 17 cells, without any quantity the cycler computed. Two earlier figures were corrected downward by this work: an earlier SOH figure and an 88\% RUL figure had been scored against a reference capacity taken from each cell's whole life, which uses the future and which no BMS can hold.
 
-\section{PARTIAL DISCHARGES}
+\section{PARTIAL-DISCHARGE SOH ESTIMATION}
 \label{sec:res-partial}
 
 On the four cells of real partial cycling (Table~\ref{tab:partial}), estimates use only the partial discharges preceding each laboratory check. Before the knee gate existed, the two near-empty cells were reported at 6.8\% and 12.8\% error while appearing confident. Learned windows on the 18 full-discharge cells have steepness 0.44--0.88, so any threshold between about 0.9 and 8 gives the same verdict on every cell and the chosen 2.0 is not tuned. As a control, the learned mode on those 18 cells measured 16 at a median of 1.95\%, beside 1.7\% for the fixed window, so it is a fallback and not a replacement.
@@ -1744,7 +1744,7 @@ On the four cells of real partial cycling (Table~\ref{tab:partial}), estimates u
 
 Against the cycler's internal-resistance column over each cell's life (20 cells carrying both values), the step resistance achieved a median Spearman correlation of 0.86, growth in the same direction on 19 of 20 cells, and a median growth of 1.26 times against the cycler's 1.29 times. This includes the partial-cycling cells (0.90 and 0.98), and the exception is a Type~3 cell. The levels differ, since the step value includes early polarisation, but the trends agree, which is what a power-fade indicator requires.
 
-\section{REMAINING USEFUL LIFE}
+\section{REMAINING USEFUL LIFE ESTIMATION}
 \label{sec:res-rul}
 
 At threshold 0.90, referenced to each cell's first cycles (17 cells), Table~\ref{tab:rul} reports accuracy by the true distance to end of life and by the prediction a user sees. Near end of life the estimate is a safe lower bound: it warns early and almost never late. Errors are predominantly early because these cells fade quickly at first and then more slowly, so a full-history line is steeper than the remaining fade.
@@ -1788,7 +1788,7 @@ Scored against a reference capacity taken as the 95th percentile of the cell's w
 A driver who seldom fully discharges produces few complete discharges (on the partial-cycling cell CS2\_24 they are rare). Four methods were evaluated on the same sparse evidence (Table~\ref{tab:sparse}). Sparsity is real on the partial-cycling cells and emulated as one complete discharge in 50 on the constant-current cells.
 
 \begin{table}[htbp]
-	\caption{RUL from Sparse Complete Discharges; None Is Accurate Enough to Report}
+	\caption{RUL Estimation from Sparse Complete Discharges (Methods Compared)}
 	\centering
 	\small
 	\renewcommand{\arraystretch}{1.15}
@@ -1836,7 +1836,7 @@ Three questions were fixed before the study and scored at every laboratory check
 
 Third, \emph{reference size}: in the study's own scoring, larger references reduced error (one discharge 3.6\%, five 2.0\%, ten 1.3\%), but on the field-study metric ten versus five changed the median only from 1.681\% to 1.665\%, so the estimator retains five.
 
-\section{EXTERNAL VALIDATION ON A SECOND DATASET}
+\section{EXTERNAL VALIDATION ON THE OXFORD DATASET}
 \label{sec:res-oxford}
 
 The estimator was applied to the eight Oxford cells without re-tuning. Arms, reference and scoring were fixed before the run. The reference is each cell's first characterisation, and truth is 1C capacity relative to it. Because each characterisation block begins under load, no rest-to-load step exists, so the 1C window is uncorrected.
@@ -1867,7 +1867,7 @@ All eight cells were measured (Table~\ref{tab:oxford}). The near-equilibrium C/1
 
 \paragraph{Remaining Life at the 80\% Threshold.} The Oxford trajectories cross the 80\% convention, so the shipped RUL estimator was scored there unchanged. When it predicted fewer than 500 cycles to 80\%, the cell lasted at least that long in 97\% of cases (36 estimates, 5 cells). Precision is low: the median miss is 385 cycles against characterisations 100 cycles apart. The guarantee also weakens with distance, since predictions of 500 to 1,000 cycles were met or exceeded only 80\% of the time (25 estimates, 5 cells).
 
-\section{VALIDATION ON A THIRD DATASET AND REFUSAL BEHAVIOUR}
+\section{CROSS-DATASET VALIDATION ON THE NASA DATASET}
 \label{sec:res-xds}
 
 The NASA files (18650 cells, ambient 4--44~$^\circ$C) were read from their original MATLAB form and scored the same way, unchanged. The estimator was poor on NASA overall, with a median per-cell error of 9.2\% over 27 cells, and it depended on temperature: 1.7\% in the 43~$^\circ$C cohort and 12--14\% at 4 and 22~$^\circ$C. The step resistance captures only the ohmic part of the overpotential, and at low temperature the charge-transfer and diffusion parts, which grow with age, move the curve through the window.
@@ -1926,11 +1926,11 @@ Fig.~\ref{fig:rigcapture} plots the Stage B capture and Fig.~\ref{fig:uievidence
 
 Faults injected into a real capture behaved as designed: a corrupted byte failed its checksum, a NaN field was rejected, a reversed timestamp refused the capture, and a missing sensor was refused by name. The injection also exposed one defect, since corrected: a 999~V reading passed the field range, which is wide so that packs are admissible. Records outside 0--5~V are now rejected when the source declares a single cell.
 
-\subsection{What the Hardware Result Does and Does Not Show}
+\subsection{Scope of the Hardware Results}
 
 The captures demonstrate that the transport, the protocol, the gate and the refusal path work against real silicon. They are one cell, at rest, for under 90~s, with no load step and no charge or discharge cycle. They are \emph{not} a validation of the health, RUL or risk models, which were fitted on cycled research cells and cannot be confirmed or refuted by a cell that was never cycled. Sensor accuracy against a reference meter was not measured, and no discharge has yet been recorded on the rig.
 
-\section{ILLUSTRATIVE EXAMPLE: THE HEALTH REPORT CARD}
+\section{CASE STUDY: HEALTH REPORT CARD}
 \label{sec:res-card}
 
 Fig.~\ref{fig:card} abridges the report card for CALCE cell CS2\_35 as it would have read at cycle 90. The pipeline saw voltage, current and time only.
@@ -1988,13 +1988,13 @@ The health figure is within half a point. The remaining-life figure is 51 cycles
 
 Four implications follow from the results and are stated here as design guidance for a software layer above a BMS.
 
-\paragraph{Validate on the Unit of Deployment.} A model is deployed on a battery that has not been seen and often on a protocol that has not been seen. The validation split should hold out that unit, and the interval around the result should be reported, because on the benchmark of this project the interval on a single method was wider than the difference between methods.
+\paragraph{Validation Unit.} A model is deployed on a battery that has not been seen and often on a protocol that has not been seen. The validation split should hold out that unit, and the interval around the result should be reported, because on the benchmark of this project the interval on a single method was wider than the difference between methods.
 
-\paragraph{Prefer Measurement to Fitting Where Measurement Is Possible.} Voltage, current and time are enough to measure capacity on a discharge that spans a voltage window, and the measurement needs no training cells. Fitting is then needed only for the quantities that cannot be measured directly.
+\paragraph{Measurement Versus Fitting.} Voltage, current and time are enough to measure capacity on a discharge that spans a voltage window, and the measurement needs no training cells. Fitting is then needed only for the quantities that cannot be measured directly.
 
-\paragraph{Make Refusal a Normal Output.} A refusal that carries its cause is information, since it tells the operator what data to collect. The consistency criterion separated a 4.5\% median error from a 13.2\% median error without any knowledge of the true capacity, which shows that a system can recognise its own poor conditions.
+\paragraph{Refusal as an Output.} A refusal that carries its cause is information, since it tells the operator what data to collect. The consistency criterion separated a 4.5\% median error from a 13.2\% median error without any knowledge of the true capacity, which shows that a system can recognise its own poor conditions.
 
-\paragraph{Keep One Scoring Path.} When a vehicle, a rig and a dataset all pass through the same function, a result obtained on a dataset says something about the vehicle, and a defect found on the rig is fixed for all three.
+\paragraph{Single Scoring Path.} When a vehicle, a rig and a dataset all pass through the same function, a result obtained on a dataset says something about the vehicle, and a defect found on the rig is fixed for all three.
 
 \section{VALIDATION SUMMARY}
 
@@ -2236,7 +2236,7 @@ The source code of the system, the firmware, the tests, the architecture decisio
 \addcontentsline{toc}{chapter}{APPENDIX B}
 
 \begin{center}
-\textbf{Provenance of Every Reported Number}
+\textbf{PROVENANCE OF REPORTED RESULTS}
 \end{center}
 
 Almost every number in this report is regenerated from a committed file in \texttt{reports/}\allowbreak\texttt{metrics}. A small number of figures from earlier stages of the study are recorded only in the project documents (the validation matrix, the panel-defence notes and the field-SOH manuscript draft under \texttt{docs/}) and not in a regenerated metrics file: the 1.665\% median for a ten-discharge reference, the 52\% to about 10\% change for the worst cell before and after the truncated-discharge fix, the 6.8\% and 12.8\% errors before the knee gate, and the 1.1-point bias and 56-cycle early crossing in the sparse-RUL study. They are quoted as recorded there.
@@ -2287,7 +2287,7 @@ Every number in this report is regenerated by a named script from committed arti
 \addcontentsline{toc}{chapter}{APPENDIX C}
 
 \begin{center}
-\textbf{Reproducing the System and the Results}
+\textbf{REPRODUCTION PROCEDURE}
 \end{center}
 
 The repository is \url{https://github.com/Navvu-gityhub/Behavior-Aware-BMS}. The commands below run on a fresh clone with no hardware, no database, no API keys and no dataset download.

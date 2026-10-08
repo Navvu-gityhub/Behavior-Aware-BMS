@@ -69,7 +69,7 @@ Resistance rises as the cell ages, and it determines the voltage sag under load 
 
 Remaining useful life is the number of further cycles before SOH reaches the end-of-life threshold. It is a prediction, so it carries an error that grows with the distance from the threshold, and a figure for it is meaningful only if the error is stated alongside it.
 
-\section{PROPOSED APPROACH IN BRIEF}
+\section{PROPOSED APPROACH}
 
 BEACON, the system built in this project, is organised in three tiers. The data tier receives telemetry from three sources, a controller area network (CAN) bus, a serial link from a bench rig and public research datasets, and converts all three into one unified frame. The analytics tier is a Python service that scores every frame through a single function and returns state of health, resistance, remaining useful life and a behaviour risk score, each with its evidence and, where the evidence is insufficient, a refusal with the reason. The presentation tier is an Express gateway and a React dashboard that display the results and label every value with its source.
 
