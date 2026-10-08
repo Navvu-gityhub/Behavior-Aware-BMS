@@ -118,7 +118,7 @@ Four sources are used (Table~\ref{tab:datasets}). They were chosen because they 
 		\hline
 		Oxford Dataset 1 & 8 Kokam NMC/LCO pouch cells, 740~mAh, 40~$^\circ$C, 519 characterisations & External validation, unchanged & 1C capacity at each characterisation \\
 		\hline
-		Bench rig & 1 HONGLI 18650 cell, at rest, under 90~s per capture & Data acquisition only & Frame integrity and timing \\
+		Bench rig & 1 HONGLI 18650 cell, at rest in the two real captures (83 and 85 records) & Data acquisition only & Frame integrity and timing \\
 		\hline
 	\end{tabular}
 	\label{tab:datasets}
@@ -169,11 +169,11 @@ Three fields are derived from the core columns and regenerated after every prepr
 
 \subsection{Validation of the Schema}
 
-After conversion the validator checks that the required columns exist and are not entirely empty, that numeric columns can be converted to numbers, that state of charge and state of health lie between 0 and 100 when present, that voltage, capacity and resistance are not negative, and that either a cycle or a timestamp exists. A frame that fails these checks is reported with the reason, and is not scored. This is the point at which a source that lacks a required channel is stopped, as when a CAN message carries current and state of charge but no voltage or temperature.
+After conversion the validator checks that the required columns exist and are not entirely empty, that numeric columns can be converted to numbers, that state of charge and state of health lie between 0 and 100 when present, that voltage, capacity and resistance are not negative, and that either a cycle or a timestamp exists. The validator reports each failure with its reason. For the CAN and serial paths, the stop for a missing channel is a separate signal-coverage check, which compares the channels a source provides with the channels the estimators need and refuses the run by name, as when a CAN message carries current and state of charge but no voltage or temperature. The serial frames do not carry a dataset name, so the required-column rule applies to the dataset loaders and not to the live telemetry paths.
 
 \section{DATA FLOW AND PROCESSING SEQUENCE}
 
-For every source the processing follows the same eight steps, in the same order, in the same function.
+Every source follows the same eight steps in the same order. The CAN and serial paths run them through the single function \texttt{score\_telemetry\_frame}, and the dataset studies run the same estimators through the study scripts and the batch pipeline.
 \begin{enumerate}
 	\item \textbf{Acquire.} Read frames from the bus, lines from the serial port or rows from a file.
 	\item \textbf{Convert.} Decode signals or fields and convert to the units and sign convention of the schema.
@@ -188,7 +188,7 @@ For every source the processing follows the same eight steps, in the same order,
 \section{FROM TELEMETRY TO DISCHARGES}
 \label{sec:segment}
 
-The estimator receives voltage $V(t)$, current $I(t)$ and time. The cycler's capacity, resistance and cycle summaries are removed before scoring. Current is segmented into charge, discharge and rest phases using a dead band (0.02~A for CALCE, where rest is logged as exactly zero) and a minimum run length. The charge delivered on discharge $n$ is the trapezoidal integral of $|I|\,dt$. Every discharge is retained: a partial discharge that crosses the window is a full measurement of the window.
+The estimator receives voltage $V(t)$, current $I(t)$ and time. The cycler's capacity, resistance and cycle summaries are removed before scoring. Current is segmented into charge, discharge and rest phases using a dead band (0.02~A in the CALCE studies, where rest is logged as exactly zero, and 0.5~A as the default of the live telemetry path) and a minimum run length. The charge delivered on discharge $n$ is the trapezoidal integral of $|I|\,dt$. Every discharge is retained: a partial discharge that crosses the window is a full measurement of the window.
 
 \section{VOLTAGE-WINDOW STATE OF HEALTH}
 \label{sec:soh-method}
@@ -229,7 +229,7 @@ Under load, terminal voltage lies below open-circuit voltage by approximately $I
 R_\mathrm{step} = \frac{V_\mathrm{rest} - V_\mathrm{load}}{|I_\mathrm{load} - I_\mathrm{rest}|},
 \label{eq:rstep}
 \end{equation}
-accepted when the two samples are within 60~s and the current change is at least 0.05~A. $R_\mathrm{step}$ is an \emph{apparent} resistance: the ohmic drop plus polarisation accrued by the first loaded sample. On cell CS2\_35 it is about 0.165~$\Omega$ against the cycler's about 0.099~$\Omega$. Each discharge uses the trailing median $\tilde R(n)$ of the last 11 step estimates, so no correction depends on later data, and its window is shifted to
+accepted when the two samples are within 60~s and the current change is at least 0.05~A. $R_\mathrm{step}$ is an \emph{apparent} resistance: the ohmic drop plus polarisation accrued by the first loaded sample. On cell CS2\_35 its starting value is about 0.141~$\Omega$ against the cycler's about 0.089~$\Omega$ (reports/metrics/calce\_resistance). Each discharge uses the trailing median $\tilde R(n)$ of the last 11 step estimates, so no correction depends on later data, and its window is shifted to
 \begin{equation}
 [V_\mathrm{low} - |I_n|\tilde R(n),\; V_\mathrm{high} - |I_n|\tilde R(n)] .
 \label{eq:shift}
@@ -326,7 +326,7 @@ Alongside the measured estimators, BEACON carries a rule-based behaviour layer i
 
 The aging budget starts at 100 and is reduced by penalties for stress, temperature, deep discharge, fast charging, aggressive discharge and SOC abuse, and the health index is $\mathrm{HI} = 100 - \text{budget}$, so a higher index means a worse battery (Tables~\ref{tab:risk} and~\ref{tab:rules}). The digital twin is a one-to-one relabelling of the battery states, with a queryable API. It adds structure but no new predictive model.
 
-This layer is \emph{not} validated against measured degradation. The Spearman correlation between the risk score and measured fade on a separate set of 33 NASA cells was $\rho = -0.27$ ($p = 0.12$), so it is labelled a heuristic wherever it appears. Where measured SOH exists and the log starts at beginning of life, the measured SOH sets the battery state and records that it did, and the heuristic index is used only otherwise.
+This layer is \emph{not} validated against measured degradation. The Spearman correlation between the risk score and measured fade on a separate set of 33 NASA cells from the earlier health-index ranking was $\rho = -0.27$ ($p = 0.12$), so it is labelled a heuristic wherever it appears. Where measured SOH exists and the log starts at beginning of life, the measured SOH sets the battery state and records that it did, and the heuristic index is used only otherwise.
 
 \section{DIGITAL-TWIN STATE MODEL}
 
@@ -334,7 +334,7 @@ The digital twin records, for each battery, a state derived from the health inde
 
 \section{DESIGN DECISIONS}
 
-Fourteen architecture decision records document the choices made during the project, with the context, the decision and its status. Table~\ref{tab:adr} lists them. Several record a claim that was withdrawn after a later measurement, and that history is kept in the repository and not rewritten.
+Fourteen architecture decision records document the choices made during the project, with the context, the decision and its status; the table gives a short title for each. Table~\ref{tab:adr} lists them. Several record a claim that was withdrawn after a later measurement, and that history is kept in the repository and not rewritten.
 
 \begin{table}[htbp]
 	\caption{Architecture Decision Records}
@@ -368,7 +368,7 @@ Fourteen architecture decision records document the choices made during the proj
 		\hline
 		11 & Unsupervised detection finds structure, not harm \\
 		\hline
-		12 & An absolute SOH target on CALCE recovers four cells \\
+		12 & An absolute SOH target on CALCE recovers four cells and refutes the claim that learned models add enormously \\
 		\hline
 		13 & The estimator-variance result survives the target correction as a ratio \\
 		\hline
@@ -392,16 +392,19 @@ for each cell in the capture:
         if no R yet:  mark n "unmeasured"; continue
         window <- [V_low, V_high] shifted by |I_n| * R(n)
         if window not spanned:  mark n "unmeasured"
+        if truncated / implausible / reference too short:  refuse n
         Q(n)  <- charge delivered inside window (coulomb count)
         SOH(n) <- Q(n) / Q_ref
-    fade   <- trend of SOH(n) over the cell's own cycles
+    if enough complete discharges (30):
+        RUL <- cycles until fade of complete-discharge capacity
+               crosses the EOL threshold (90 % default)
+    else:  refuse RUL
     if evidence inconsistent:  confidence <- low
-    RUL    <- cycles until fade crosses EOL threshold
     return SOH, R, RUL, confidence, band, refusals
 \end{verbatim}
 \end{footnotesize}
 
-The reference $Q_{\mathrm{ref}}$ is the declared rated capacity when the source gives one, or the cell's own early capacity otherwise, and the source of the reference is returned with the result. The error band attached to each output is the measured error of that output on the validation data and is not a quantity computed from the cell being scored.
+Remaining life is taken from the capacity of complete discharges only: extrapolating the windowed health of partial discharges was tested and is not accurate enough to report (Chapter~\ref{ch:results}). The reference $Q_{\mathrm{ref}}$ is the declared rated capacity when the source gives one, or the cell's own early capacity otherwise, and the source of the reference is returned with the result. The error band attached to each output is the measured error of that output on the validation data and is not a quantity computed from the cell being scored.
 
 \section{VALIDATION PROTOCOL}
 \label{sec:protocol}
@@ -434,11 +437,11 @@ The estimators have few parameters, and each was fixed on the development data b
 		\hline
 		Length of trailing resistance median & 11 steps & Ohmic correction \\
 		\hline
-		Rest or charge current threshold & $\pm$0.02~A & Mode inference \\
+		Rest threshold of mode inference & $\pm$0.02~A & Schema-level operating mode \\
 		\hline
 		Serial sampling period (rig) & 1~s & Rig firmware \\
 		\hline
-		End-of-life threshold & 80\% & Conventional RUL target \\
+		Default end-of-life threshold & 90\% & RUL target (80\% is the convention but is seldom reached on CALCE) \\
 		\hline
 	\end{tabular}
 	\label{tab:params}

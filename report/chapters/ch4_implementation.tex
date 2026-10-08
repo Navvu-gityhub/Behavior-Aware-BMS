@@ -71,13 +71,13 @@ The core package \texttt{src/bms} is divided into packages with one responsibili
 		\hline
 		\texttt{telemetry} & CAN capture and replay, serial ingestion and protocol, cycle segmentation, and the shared scoring function \\
 		\hline
-		\texttt{io} & Dataset loaders (NASA, CALCE, Oxford), DBC examples, unified schema \\
+		\texttt{io} & Dataset loaders (NASA, CALCE, Oxford) and DBC examples; the unified schema is in \texttt{preprocessing} \\
 		\hline
 		\texttt{features}, \texttt{preprocessing} & Behaviour features and data conditioning \\
 		\hline
-		\texttt{risk}, \texttt{health} & Rule-based risk score, aging budget and health index (heuristic layer) \\
+		\texttt{risk}, \texttt{health} & Rule-based risk and health index (heuristic layer); measured field SOH, voltage-window, evidence and error-band estimators \\
 		\hline
-		\texttt{rul} & Fade-extrapolation remaining useful life \\
+		\texttt{rul} & Fade-extrapolation remaining useful life, and the earlier heuristic estimate \\
 		\hline
 		\texttt{guardian}, \texttt{digital\_twin} & Human-readable diagnosis and the state-machine twin \\
 		\hline
@@ -139,7 +139,7 @@ The single-file adapter is generalised by a registry in which several vehicles' 
 
 \subsection{Limits of the Adapter}
 
-The adapter proves the pattern, a CAN frame becomes decoded signals and then a unified frame, against real vehicle protocol data. It does not prove broad coverage of manufacturers. Most vehicles supported by community projects are decoded by hand-written code and not by a portable DBC file, and manufacturer files are proprietary. The documented message carries current and state of charge but no voltage or temperature, so the validator correctly reports that it cannot be scored on its own. Reading a live bus would be the task of a separate library layered under the decoder and has not been built.
+The adapter proves the pattern, a CAN frame becomes decoded signals and then a unified frame, against real vehicle protocol data. It does not prove broad coverage of manufacturers. Most vehicles supported by community projects are decoded by hand-written code and not by a portable DBC file, and manufacturer files are proprietary. The documented message carries current and state of charge but no voltage or temperature, so the validator correctly reports that it cannot be scored on its own. Reading a live bus is implemented as a separate source built on the \texttt{python-can} library, layered under the decoder and exposed through a live-capture route, but it has not been exercised on a physical vehicle.
 
 \section{SERIAL WIRE PROTOCOL}
 \label{sec:impl-protocol}
@@ -213,7 +213,7 @@ A request through the serial path passes the following stages. The route validat
 		\hline
 		SOC given as a 0--1 fraction & A value that passes the range check but means the wrong thing. Caught per capture, because a fraction lies inside the 0--100 range. \\
 		\hline
-		Reversed current sign & A rig reporting discharge as positive yields no discharge phases and no SOH while appearing to stream perfectly. \\
+		Reversed current sign & A rig reporting discharge as positive is flagged as a likely cause; the run is refused because no complete discharge is found, although the stream looks perfect. \\
 		\hline
 		Time running backwards & A brown-out restarts \texttt{millis()} at zero, and coulomb counting would cancel the second session against the first. Sorting would hide it. \\
 		\hline
@@ -315,7 +315,7 @@ Protection must be in hardware in series with the cell, never in the monitoring 
 
 \subsection{Firmware}
 
-The firmware is one board-agnostic Arduino sketch. The sensors sit behind four replaceable functions (\texttt{readVoltageV}, \texttt{readCurrentA}, \texttt{readTemperatureC} and \texttt{readSocPercent}), so a board with only some sensors can still run. At boot it probes each sensor, emits a status record naming what failed, and declares in its \texttt{HELLO} only the channels it can actually supply, together with the rated capacity. The host then scores the channels present and refuses the rest by name. The sketch compiles for three targets on every push (Table~\ref{tab:compile}), and a test compares its declared field set, as a set, against the schema.
+The firmware is one board-agnostic Arduino sketch. The sensors sit behind four replaceable functions (\texttt{readVoltageV}, \texttt{readCurrentA}, \texttt{readTemperatureC} and \texttt{readSocPercent}), so a board with only some sensors can still run. At boot it probes each sensor, emits a status record naming what failed, and declares in its \texttt{HELLO} only the channels it can actually supply, together with the rated capacity. The host then scores the channels present and refuses the rest by name. The sketch compiles for three targets on every push (Table~\ref{tab:compile}); the continuous-integration build is the stub configuration without the sensor libraries, and a test compares its declared field set, as a set, against the schema.
 
 \begin{table}[htbp]
 	\caption{Firmware Compilation Record (\texttt{arduino-cli}, all warnings enabled)}
@@ -377,7 +377,7 @@ The principal endpoints are listed below, together with the telemetry routes for
 \end{itemize}
 The \texttt{/healthz} endpoint is explicitly service liveness and not battery health: in a battery-monitoring system the naming collision is a real hazard and is called out at its definition. The container health check polls it.
 
-The React client is a single-surface dashboard. It shows the fleet of batteries with health, risk and remaining life for each, a battery detail view, a digital-twin sheet with the twin state and its transitions, and a banner stating where the run's data came from. An earlier version had separate tabs for fleet, CAN replay, thermal and transfer views. They were removed because two parallel dashboards meant two provenance banners that could disagree about the same run. A Guardian explanation is shown next to the run it explains, and refusals are rendered as results and not as errors.
+The React client is a single-surface dashboard. It shows the fleet of batteries with health, risk and remaining life for each, a battery detail view, a bench-rig panel, a digital-twin sheet, and a banner stating where the run's data came from. An earlier version had separate tabs for fleet, CAN replay, thermal and transfer views. They were removed because two parallel dashboards meant two provenance banners that could disagree about the same run. The twin sheet is present but displays ``not available'' for the observed and predicted state, because the twin module does not yet emit its state into the dashboard payload, and no substitute trajectory is drawn. A Guardian explanation is shown next to the run it explains, and refusals are rendered as results and not as errors.
 
 Fig.~\ref{fig:uioverview} and Fig.~\ref{fig:uihealth} show the dashboard. Both are screenshots of the running system, taken on a synthetic fleet, which the interface labels as simulated data; the bench-rig panel below the fleet summary is the only part backed by a physical measurement.
 
@@ -405,10 +405,10 @@ The twin also carries a field called evidence confidence, which takes one of fou
 
 \section{API REFERENCE}
 
-Table~\ref{tab:api} lists the routes of the Python service, grouped by purpose. The interactive documentation generated by FastAPI from the same code is served at \texttt{/docs}, so it cannot drift from the code in the way a hand-written reference can.
+Table~\ref{tab:api} lists the principal routes of the Python service. Further routes cover live CAN capture, serial emulation, live serial capture, latest and live state, thermal and twin views, transfer feasibility and the dataset listing. The interactive documentation generated by FastAPI from the same code is served at \texttt{/docs}, so it cannot drift from the code in the way a hand-written reference can.
 
 \begin{table}[htbp]
-	\caption{Routes of the Python Service}
+	\caption{Principal Routes of the Python Service}
 	\centering
 	\small
 	\renewcommand{\arraystretch}{1.15}
@@ -477,35 +477,33 @@ The service has no authentication, no rate limiting, no transport security and n
 
 \section{DASHBOARD COMPONENTS}
 
-The dashboard is a React application made of small components, each with one view. Table~\ref{tab:components} lists them. The panels that display a measured result carry the provenance of the value, so a reader can tell whether a figure comes from a vehicle, a rig, a dataset or a simulation.
+The dashboard is a React application with one surface, rendered from the pipeline output. Table~\ref{tab:components} lists its views. (The repository also keeps earlier per-panel components that the current surface no longer uses.) The panels that display a measured result carry the provenance of the value, so a reader can tell whether a figure comes from a vehicle, a rig, a dataset or a simulation.
 
 \begin{table}[htbp]
-	\caption{Components of the Dashboard}
+	\caption{Views of the Dashboard}
 	\centering
 	\small
 	\renewcommand{\arraystretch}{1.15}
 	\setlength{\tabcolsep}{4pt}
 	\begin{tabular}{|L{0.3\linewidth}|L{0.44\linewidth}|}
 		\hline
-		\textbf{Component} & \textbf{View} \\
+		\textbf{View} & \textbf{Content} \\
 		\hline
-		Fleet table & Health, risk and remaining life of every battery \\
+		Fleet risk distribution & Risk category of every battery \\
 		\hline
-		Battery detail & Health over cycles and attribution of the health index \\
+		Behaviour flag incidence & How often each flagged behaviour occurs \\
 		\hline
-		Guardian panel & Plain-language report of the causes found \\
+		Battery health & Stress score over cycles, risk and health-index attribution \\
 		\hline
-		Twin panel & Twin state and its transitions \\
+		Aggregate parameters & Usage parameters of the selected battery \\
 		\hline
-		Telemetry replay & Replay of a CAN log or serial capture \\
+		Guardian explanation & Plain-language report of the causes found \\
 		\hline
-		Thermal map & Temperature across the pack \\
+		Bench rig panel & Measured readings, with refusals shown where a channel is missing \\
 		\hline
-		Validation panel & Measured error of each estimator \\
+		Twin sheet & Observed and predicted state; shows not available until the twin is wired in \\
 		\hline
-		Transfer panel & Result of transfer between datasets \\
-		\hline
-		Provenance & Source of the displayed values \\
+		Provenance banner & Source of the displayed values \\
 		\hline
 	\end{tabular}
 	\label{tab:components}
@@ -547,7 +545,7 @@ Table~\ref{tab:tests} lists some of the test modules and the behaviour each one 
 		\hline
 		\texttt{test\_api} & Route behaviour, repeated identical seeded run produces no new twin transitions \\
 		\hline
-		\texttt{test\_api\_path\_containment} & Out-of-root, relative and symbolic paths are rejected before any existence check \\
+		\texttt{test\_api\_path\_containment} & Absolute sensitive paths, parent-directory traversal and empty paths are rejected before any existence check; the environment-variable override is covered \\
 		\hline
 		\texttt{test\_can\_dbc} & Decoded values match the published worked example; missing voltage and temperature reported by the validator \\
 		\hline

@@ -6,7 +6,7 @@ This chapter reports what the system measured and interprets each result where i
 \section{PERFORMANCE OF FITTED MODELS UNDER PROTOCOL SHIFT}
 \label{sec:res-bench}
 
-On the NASA benchmark (31 cells, nine cohorts; the isotonic signal ceiling for the target SOH is 0.569), every one of twelve published methods lost skill from leave-one-cell-out (LOBO) to leave-one-cohort-out (LOCO) validation (Table~\ref{tab:bench}). LOBO rank carried almost no information about LOCO rank (Spearman $\rho = +0.084$, $p = 0.795$, $n = 12$). Across fourteen scored methods, the spread of LOCO point estimates (2.06 in $R^2$) was smaller than the width of the best method's own interval (3.66).
+On the NASA benchmark (31 cells, nine cohorts; the isotonic signal ceiling for the target SOH is 0.569), eleven of the twelve methods lost skill, and the twelfth, a train-mean baseline, cannot lose it by construction, from leave-one-cell-out (LOBO) to leave-one-cohort-out (LOCO) validation (Table~\ref{tab:bench}). LOBO rank carried almost no information about LOCO rank (Spearman $\rho = +0.084$, $p = 0.795$, $n = 12$). Across fourteen scored methods, the spread of LOCO point estimates (2.06 in $R^2$) was smaller than the width of the best method's own interval (3.66).
 
 \begin{table}[htbp]
 	\caption{Benchmark on 31 NASA Cells in Nine Cohorts (Six of the Methods Shown); LOCO Intervals Are 95\% Bootstrap Over Folds}
@@ -72,7 +72,7 @@ An ablation isolates where the skill comes from (Table~\ref{tab:ablation}). XGBo
 	\label{tab:ablation}
 \end{table}
 
-Temperature was the only usage factor with a consistent, correctly signed within-protocol relationship to fade (seven of seven cells), and its magnitude did not transfer between protocols. The rule-based risk score did not track measured fade either ($\rho = -0.27$, $p = 0.12$ on 33 cells), so it is labelled a heuristic.
+Temperature was the only usage factor with a consistent, correctly signed within-protocol relationship to fade (seven of seven cells in the two cohorts where it was significant), and its magnitude did not transfer between protocols. The rule-based risk score did not track measured fade either ($\rho = -0.27$, $p = 0.12$, on the 33 cells of the earlier health-index ranking), so it is labelled a heuristic.
 
 \textbf{Interpretation.} No fitted method retains reliable skill under a change of protocol, and no method can be distinguished from another. This is the result that motivates the rest of the project: the estimators that ship fit nothing across cells.
 
@@ -117,7 +117,7 @@ The denominators differ because a correction can only be scored on cells for whi
     \label{fig:cells}
 \end{figure}
 
-\textbf{Interpretation.} Identifying resistance from the load step took the median error from 4.3\% to 1.7\% and the coverage from 12 to 17 cells, without any quantity the cycler computed. Two earlier figures were corrected downward by this work: an earlier 3.3\% SOH figure and an 88\% RUL figure had been scored against a reference capacity taken from each cell's whole life, which uses the future and which no BMS can hold.
+\textbf{Interpretation.} Identifying resistance from the load step took the median error from 4.3\% to 1.7\% and the coverage from 12 to 17 cells, without any quantity the cycler computed. Two earlier figures were corrected downward by this work: an earlier SOH figure and an 88\% RUL figure had been scored against a reference capacity taken from each cell's whole life, which uses the future and which no BMS can hold.
 
 \section{PARTIAL DISCHARGES}
 \label{sec:res-partial}
@@ -194,7 +194,7 @@ Scored against a reference capacity taken as the 95th percentile of the cell's w
 \section{RUL ESTIMATION UNDER SPARSE COMPLETE DISCHARGES}
 \label{sec:res-sparse}
 
-A driver who seldom fully discharges produces few complete discharges (CS2\_24 has 18 in 1,617). Four methods were evaluated on the same sparse evidence (Table~\ref{tab:sparse}). Sparsity is real on the partial-cycling cells and emulated as one complete discharge in 50 on the constant-current cells.
+A driver who seldom fully discharges produces few complete discharges (on the partial-cycling cell CS2\_24 they are rare). Four methods were evaluated on the same sparse evidence (Table~\ref{tab:sparse}). Sparsity is real on the partial-cycling cells and emulated as one complete discharge in 50 on the constant-current cells.
 
 \begin{table}[htbp]
 	\caption{RUL from Sparse Complete Discharges; None Is Accurate Enough to Report}
@@ -290,7 +290,7 @@ For contrast, a gradient-boosted model on three window features, the setting whe
 
 \subsection{Bench Rig Captures}
 
-Three captures are committed (Table~\ref{tab:captures}). The first is a counter-example: a board with no sensors attached, whose synthetic profile still scores, and which is kept and labelled as such.
+Three captures are discussed here (Table~\ref{tab:captures}); the repository holds further bring-up files, including one garbled capture from the baud-rate fault and one longer synthetic run. The first is a counter-example: a board with no sensors attached, whose synthetic profile still scores, and which is kept and labelled as such.
 
 \begin{table}[htbp]
 	\caption{Bench Rig Captures}
@@ -488,10 +488,10 @@ The results are bounded by the way they were obtained, and the bounds are stated
 	\item \textbf{Reference definition.} Two results moved when the reference was changed to the capacity the cell's own first discharges measure, which is what a BMS can know. A figure is therefore tied to the reference named with it.
 	\item \textbf{Small numbers of cells.} Several results rest on a few cells, for example the partial-discharge result on two cells. They are reported as validated on those cells, and no claim is made beyond them.
 	\item \textbf{Hardware.} The rig validates the data-acquisition path. No discharge has been recorded on it, so no health figure from the rig is claimed.
-	\item \textbf{Heuristic layer.} The behaviour risk score was not significantly related to measured fade ($\rho=-0.27$, $p=0.12$ on 33 NASA cells) and is labelled a heuristic wherever it appears.
+	\item \textbf{Heuristic layer.} The behaviour risk score was not significantly related to measured fade ($\rho=-0.27$, $p=0.12$ on the 33 cells of the earlier health-index ranking of the project, a slightly larger set than the 31-cell benchmark) and is labelled a heuristic wherever it appears.
 \end{itemize}
 
 \section{ROBUSTNESS AND SECURITY CHECKS}
 
-Beyond estimation accuracy, the system was checked for the behaviour of its interfaces under bad input. The serial parser ignores lines without the sentinel as noise, counts and discards malformed lines, rejects out-of-range, non-finite and checksum-failed values instead of clamping them, and refuses a capture whose accepted fraction falls below a configured threshold. These behaviours are exercised by tests with truncated lines, corrupted checksums, non-finite values, out-of-range fields and unknown record types. The path-containment fix was verified by thirteen tests, and a repository search found no key, secret or external language-model call. Continuous integration runs with no key, no hardware and no external service beyond the package registries, so the checks run the same way on every commit.
+Beyond estimation accuracy, the system was checked for the behaviour of its interfaces under bad input. The serial parser ignores lines without the sentinel as noise, counts and discards malformed lines, rejects out-of-range, non-finite and checksum-failed values instead of clamping them, and refuses a capture whose accepted fraction falls below a configured threshold. These behaviours are exercised by tests with truncated lines, corrupted checksums, non-finite values, out-of-range fields and unknown record types. The path-containment fix was verified by thirteen tests, and a search of the source files for keys, secrets and language-model clients found none, apart from a benign file name in a test. Continuous integration runs with no key, no hardware and no external service beyond the package registries, so the checks run the same way on every commit.
 

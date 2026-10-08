@@ -11,11 +11,11 @@
 \contentsline {section}{\numberline {1.5}OBJECTIVES}{3}{section.1.5}%
 \contentsline {section}{\numberline {1.6}BATTERY HEALTH INDICATORS}{3}{section.1.6}%
 \contentsline {subsection}{\numberline {1.6.1}State of Health}{3}{subsection.1.6.1}%
-\contentsline {subsection}{\numberline {1.6.2}Internal Resistance}{3}{subsection.1.6.2}%
+\contentsline {subsection}{\numberline {1.6.2}Internal Resistance}{4}{subsection.1.6.2}%
 \contentsline {subsection}{\numberline {1.6.3}Remaining Useful Life}{4}{subsection.1.6.3}%
 \contentsline {section}{\numberline {1.7}PROPOSED APPROACH IN BRIEF}{4}{section.1.7}%
 \contentsline {section}{\numberline {1.8}SIGNIFICANCE OF THE WORK}{4}{section.1.8}%
-\contentsline {section}{\numberline {1.9}SCOPE AND ORGANISATION OF THE REPORT}{4}{section.1.9}%
+\contentsline {section}{\numberline {1.9}SCOPE AND ORGANISATION OF THE REPORT}{5}{section.1.9}%
 \contentsline {chapter}{\numberline {2}LITERATURE REVIEW}{6}{chapter.2}%
 \contentsline {section}{\numberline {2.1}STATE ESTIMATION IN THE BATTERY MANAGEMENT SYSTEM}{6}{section.2.1}%
 \contentsline {section}{\numberline {2.2}DATA-DRIVEN SOH ESTIMATION AND HOW IT IS VALIDATED}{6}{section.2.2}%
@@ -48,14 +48,14 @@
 \contentsline {subsection}{\numberline {3.6.1}Derived Fields}{15}{subsection.3.6.1}%
 \contentsline {subsection}{\numberline {3.6.2}Validation of the Schema}{16}{subsection.3.6.2}%
 \contentsline {section}{\numberline {3.7}DATA FLOW AND PROCESSING SEQUENCE}{16}{section.3.7}%
-\contentsline {section}{\numberline {3.8}FROM TELEMETRY TO DISCHARGES}{16}{section.3.8}%
+\contentsline {section}{\numberline {3.8}FROM TELEMETRY TO DISCHARGES}{17}{section.3.8}%
 \contentsline {section}{\numberline {3.9}VOLTAGE-WINDOW STATE OF HEALTH}{17}{section.3.9}%
-\contentsline {section}{\numberline {3.10}RESISTANCE FROM THE LOAD STEP AND OHMIC CORRECTION}{18}{section.3.10}%
+\contentsline {section}{\numberline {3.10}RESISTANCE FROM THE LOAD STEP AND OHMIC CORRECTION}{17}{section.3.10}%
 \contentsline {section}{\numberline {3.11}REFUSAL GATES AND DATA-QUALITY CHECKS}{18}{section.3.11}%
-\contentsline {section}{\numberline {3.12}LEARNED VOLTAGE WINDOWS FOR PARTIAL DISCHARGES}{18}{section.3.12}%
+\contentsline {section}{\numberline {3.12}LEARNED VOLTAGE WINDOWS FOR PARTIAL DISCHARGES}{19}{section.3.12}%
 \contentsline {section}{\numberline {3.13}REMAINING USEFUL LIFE ESTIMATION FROM CELL-SPECIFIC FADE}{19}{section.3.13}%
 \contentsline {section}{\numberline {3.14}EVIDENCE SUFFICIENCY}{19}{section.3.14}%
-\contentsline {section}{\numberline {3.15}BEHAVIOUR SCORING LAYER (HEURISTIC)}{19}{section.3.15}%
+\contentsline {section}{\numberline {3.15}BEHAVIOUR SCORING LAYER (HEURISTIC)}{20}{section.3.15}%
 \contentsline {section}{\numberline {3.16}DIGITAL-TWIN STATE MODEL}{20}{section.3.16}%
 \contentsline {section}{\numberline {3.17}DESIGN DECISIONS}{21}{section.3.17}%
 \contentsline {section}{\numberline {3.18}ALGORITHM SUMMARY}{21}{section.3.18}%
@@ -64,81 +64,79 @@
 \contentsline {paragraph}{Pre-Declared Configurations.}{22}{paragraph*.20}%
 \contentsline {paragraph}{Benchmark.}{22}{paragraph*.21}%
 \contentsline {paragraph}{Aggregation.}{22}{paragraph*.22}%
-\contentsline {section}{\numberline {3.20}PARAMETERS OF THE ESTIMATORS}{22}{section.3.20}%
+\contentsline {section}{\numberline {3.20}PARAMETERS OF THE ESTIMATORS}{23}{section.3.20}%
 \contentsline {section}{\numberline {3.21}EVALUATION METRICS}{23}{section.3.21}%
-\contentsline {section}{\numberline {3.22}EXPERIMENTAL CONTROLS AND REPRODUCIBILITY}{23}{section.3.22}%
-\contentsline {chapter}{\numberline {4}IMPLEMENTATION AND DEPLOYMENT}{24}{chapter.4}%
-\contentsline {section}{\numberline {4.1}IMPLEMENTATION OVERVIEW}{24}{section.4.1}%
-\contentsline {section}{\numberline {4.2}DEVELOPMENT ENVIRONMENT AND TOOLS}{24}{section.4.2}%
-\contentsline {section}{\numberline {4.3}CODE ORGANISATION}{24}{section.4.3}%
+\contentsline {section}{\numberline {3.22}EXPERIMENTAL CONTROLS AND REPRODUCIBILITY}{24}{section.3.22}%
+\contentsline {chapter}{\numberline {4}IMPLEMENTATION AND DEPLOYMENT}{25}{chapter.4}%
+\contentsline {section}{\numberline {4.1}IMPLEMENTATION OVERVIEW}{25}{section.4.1}%
+\contentsline {section}{\numberline {4.2}DEVELOPMENT ENVIRONMENT AND TOOLS}{25}{section.4.2}%
+\contentsline {section}{\numberline {4.3}CODE ORGANISATION}{25}{section.4.3}%
 \contentsline {section}{\numberline {4.4}TELEMETRY ACQUISITION AND THE UNIFIED FRAME}{26}{section.4.4}%
 \contentsline {subsection}{\numberline {4.4.1}Interface Between Acquisition and Scoring}{26}{subsection.4.4.1}%
-\contentsline {section}{\numberline {4.5}UNIFIED SCHEMA IMPLEMENTATION}{26}{section.4.5}%
-\contentsline {section}{\numberline {4.6}CAN AND DBC ADAPTER}{26}{section.4.6}%
-\contentsline {subsection}{\numberline {4.6.1}Vehicle Registry}{27}{subsection.4.6.1}%
-\contentsline {subsection}{\numberline {4.6.2}Limits of the Adapter}{27}{subsection.4.6.2}%
-\contentsline {section}{\numberline {4.7}SERIAL WIRE PROTOCOL}{27}{section.4.7}%
-\contentsline {subsection}{\numberline {4.7.1}Frame Delimitation}{28}{subsection.4.7.1}%
-\contentsline {subsection}{\numberline {4.7.2}Error Detection}{28}{subsection.4.7.2}%
-\contentsline {subsection}{\numberline {4.7.3}Channel Utilisation}{28}{subsection.4.7.3}%
-\contentsline {section}{\numberline {4.8}REFUSAL GATES}{28}{section.4.8}%
-\contentsline {section}{\numberline {4.9}HARDWARE BENCH RIG}{29}{section.4.9}%
-\contentsline {subsection}{\numberline {4.9.1}Requirement and Design Calculations}{29}{subsection.4.9.1}%
-\contentsline {subsection}{\numberline {4.9.2}As-Built Rig}{30}{subsection.4.9.2}%
-\contentsline {subsection}{\numberline {4.9.3}Firmware}{31}{subsection.4.9.3}%
-\contentsline {subsection}{\numberline {4.9.4}Bring-Up Procedure}{31}{subsection.4.9.4}%
-\contentsline {section}{\numberline {4.10}SERVICE TIER: REST API, GATEWAY AND DASHBOARD}{32}{section.4.10}%
-\contentsline {section}{\numberline {4.11}DIGITAL TWIN AND FLEET STORE}{33}{section.4.11}%
-\contentsline {section}{\numberline {4.12}API REFERENCE}{34}{section.4.12}%
-\contentsline {section}{\numberline {4.13}SECURITY CONSIDERATIONS}{35}{section.4.13}%
-\contentsline {subsection}{\numberline {4.13.1}What Is Deliberately Not Defended}{36}{subsection.4.13.1}%
-\contentsline {section}{\numberline {4.14}DASHBOARD COMPONENTS}{36}{section.4.14}%
-\contentsline {section}{\numberline {4.15}HEALTH REPORT CARD}{37}{section.4.15}%
-\contentsline {section}{\numberline {4.16}TESTING, CONTINUOUS INTEGRATION AND REPRODUCIBILITY}{37}{section.4.16}%
-\contentsline {subsection}{\numberline {4.16.1}Test Modules by Subsystem}{37}{subsection.4.16.1}%
-\contentsline {section}{\numberline {4.17}CONTAINERISATION AND DEPLOYMENT}{38}{section.4.17}%
-\contentsline {section}{\numberline {4.18}OPERATIONAL WORKFLOW}{38}{section.4.18}%
-\contentsline {section}{\numberline {4.19}CHAPTER SUMMARY}{39}{section.4.19}%
-\contentsline {chapter}{\numberline {5}RESULTS AND DISCUSSION}{40}{chapter.5}%
-\contentsline {section}{\numberline {5.1}PERFORMANCE OF FITTED MODELS UNDER PROTOCOL SHIFT}{40}{section.5.1}%
-\contentsline {section}{\numberline {5.2}FIELD STATE-OF-HEALTH ESTIMATION}{41}{section.5.2}%
-\contentsline {section}{\numberline {5.3}PARTIAL DISCHARGES}{43}{section.5.3}%
-\contentsline {section}{\numberline {5.4}INTERNAL RESISTANCE ESTIMATION}{43}{section.5.4}%
-\contentsline {section}{\numberline {5.5}REMAINING USEFUL LIFE}{44}{section.5.5}%
-\contentsline {section}{\numberline {5.6}RUL ESTIMATION UNDER SPARSE COMPLETE DISCHARGES}{45}{section.5.6}%
-\contentsline {section}{\numberline {5.7}EVIDENCE SUFFICIENCY ANALYSIS}{45}{section.5.7}%
-\contentsline {section}{\numberline {5.8}EXTERNAL VALIDATION ON A SECOND DATASET}{46}{section.5.8}%
-\contentsline {paragraph}{Drive-Cycle Discharge.}{46}{paragraph*.52}%
-\contentsline {paragraph}{Remaining Life at the 80\% Threshold.}{46}{paragraph*.53}%
-\contentsline {section}{\numberline {5.9}VALIDATION ON A THIRD DATASET AND REFUSAL BEHAVIOUR}{47}{section.5.9}%
-\contentsline {section}{\numberline {5.10}SYSTEM AND HARDWARE RESULTS}{47}{section.5.10}%
-\contentsline {subsection}{\numberline {5.10.1}Bench Rig Captures}{47}{subsection.5.10.1}%
-\contentsline {subsection}{\numberline {5.10.2}Fault Injection}{48}{subsection.5.10.2}%
-\contentsline {subsection}{\numberline {5.10.3}What the Hardware Result Does and Does Not Show}{48}{subsection.5.10.3}%
-\contentsline {section}{\numberline {5.11}ILLUSTRATIVE EXAMPLE: THE HEALTH REPORT CARD}{48}{section.5.11}%
-\contentsline {section}{\numberline {5.12}DISCUSSION}{50}{section.5.12}%
-\contentsline {paragraph}{Effect of Conditioning Versus Model Choice.}{50}{paragraph*.58}%
-\contentsline {paragraph}{Dependence on the Reference Definition.}{50}{paragraph*.59}%
-\contentsline {paragraph}{Sensitivity of Threshold Crossings to Bias.}{50}{paragraph*.60}%
-\contentsline {paragraph}{Quantifying Evidence Sufficiency.}{50}{paragraph*.61}%
-\contentsline {paragraph}{Limitations of the Findings.}{50}{paragraph*.62}%
-\contentsline {section}{\numberline {5.13}IMPLICATIONS FOR BMS SOFTWARE DESIGN}{51}{section.5.13}%
-\contentsline {paragraph}{Validate on the Unit of Deployment.}{51}{paragraph*.63}%
-\contentsline {paragraph}{Prefer Measurement to Fitting Where Measurement Is Possible.}{51}{paragraph*.64}%
-\contentsline {paragraph}{Make Refusal a Normal Output.}{51}{paragraph*.65}%
-\contentsline {paragraph}{Keep One Scoring Path.}{51}{paragraph*.66}%
-\contentsline {section}{\numberline {5.14}VALIDATION SUMMARY}{51}{section.5.14}%
-\contentsline {section}{\numberline {5.15}ASSESSMENT AGAINST THE OBJECTIVES}{52}{section.5.15}%
-\contentsline {section}{\numberline {5.16}THREATS TO VALIDITY}{53}{section.5.16}%
-\contentsline {section}{\numberline {5.17}ROBUSTNESS AND SECURITY CHECKS}{53}{section.5.17}%
-\contentsline {chapter}{\numberline {6}CONCLUSION AND FUTURE WORK}{54}{chapter.6}%
-\contentsline {section}{\numberline {6.1}SUMMARY OF THE WORK}{55}{section.6.1}%
-\contentsline {section}{\numberline {6.2}LIMITATIONS}{55}{section.6.2}%
-\contentsline {section}{\numberline {6.3}FUTURE WORK}{55}{section.6.3}%
-\contentsline {section}{\numberline {6.4}PRACTICAL IMPLICATIONS}{56}{section.6.4}%
-\contentsline {section}{\numberline {6.5}LESSONS LEARNED}{56}{section.6.5}%
-\contentsline {section}{\numberline {6.6}RECOMMENDATIONS FOR DEPLOYMENT}{56}{section.6.6}%
-\contentsline {section}{\numberline {6.7}CONCLUDING REMARKS}{57}{section.6.7}%
+\contentsline {section}{\numberline {4.5}UNIFIED SCHEMA IMPLEMENTATION}{27}{section.4.5}%
+\contentsline {section}{\numberline {4.6}CAN AND DBC ADAPTER}{28}{section.4.6}%
+\contentsline {subsection}{\numberline {4.6.1}Vehicle Registry}{28}{subsection.4.6.1}%
+\contentsline {subsection}{\numberline {4.6.2}Limits of the Adapter}{28}{subsection.4.6.2}%
+\contentsline {section}{\numberline {4.7}SERIAL WIRE PROTOCOL}{28}{section.4.7}%
+\contentsline {subsection}{\numberline {4.7.1}Frame Delimitation}{29}{subsection.4.7.1}%
+\contentsline {subsection}{\numberline {4.7.2}Error Detection}{29}{subsection.4.7.2}%
+\contentsline {subsection}{\numberline {4.7.3}Channel Utilisation}{29}{subsection.4.7.3}%
+\contentsline {section}{\numberline {4.8}REFUSAL GATES}{29}{section.4.8}%
+\contentsline {section}{\numberline {4.9}HARDWARE BENCH RIG}{31}{section.4.9}%
+\contentsline {subsection}{\numberline {4.9.1}Requirement and Design Calculations}{31}{subsection.4.9.1}%
+\contentsline {subsection}{\numberline {4.9.2}As-Built Rig}{31}{subsection.4.9.2}%
+\contentsline {subsection}{\numberline {4.9.3}Firmware}{32}{subsection.4.9.3}%
+\contentsline {subsection}{\numberline {4.9.4}Bring-Up Procedure}{33}{subsection.4.9.4}%
+\contentsline {section}{\numberline {4.10}SERVICE TIER: REST API, GATEWAY AND DASHBOARD}{33}{section.4.10}%
+\contentsline {section}{\numberline {4.11}DIGITAL TWIN AND FLEET STORE}{35}{section.4.11}%
+\contentsline {section}{\numberline {4.12}API REFERENCE}{36}{section.4.12}%
+\contentsline {section}{\numberline {4.13}SECURITY CONSIDERATIONS}{36}{section.4.13}%
+\contentsline {subsection}{\numberline {4.13.1}What Is Deliberately Not Defended}{37}{subsection.4.13.1}%
+\contentsline {section}{\numberline {4.14}DASHBOARD COMPONENTS}{37}{section.4.14}%
+\contentsline {section}{\numberline {4.15}HEALTH REPORT CARD}{38}{section.4.15}%
+\contentsline {section}{\numberline {4.16}TESTING, CONTINUOUS INTEGRATION AND REPRODUCIBILITY}{38}{section.4.16}%
+\contentsline {subsection}{\numberline {4.16.1}Test Modules by Subsystem}{39}{subsection.4.16.1}%
+\contentsline {section}{\numberline {4.17}CONTAINERISATION AND DEPLOYMENT}{39}{section.4.17}%
+\contentsline {section}{\numberline {4.18}OPERATIONAL WORKFLOW}{40}{section.4.18}%
+\contentsline {section}{\numberline {4.19}CHAPTER SUMMARY}{40}{section.4.19}%
+\contentsline {chapter}{\numberline {5}RESULTS AND DISCUSSION}{41}{chapter.5}%
+\contentsline {section}{\numberline {5.1}PERFORMANCE OF FITTED MODELS UNDER PROTOCOL SHIFT}{41}{section.5.1}%
+\contentsline {section}{\numberline {5.2}FIELD STATE-OF-HEALTH ESTIMATION}{42}{section.5.2}%
+\contentsline {section}{\numberline {5.3}PARTIAL DISCHARGES}{44}{section.5.3}%
+\contentsline {section}{\numberline {5.4}INTERNAL RESISTANCE ESTIMATION}{44}{section.5.4}%
+\contentsline {section}{\numberline {5.5}REMAINING USEFUL LIFE}{45}{section.5.5}%
+\contentsline {section}{\numberline {5.6}RUL ESTIMATION UNDER SPARSE COMPLETE DISCHARGES}{46}{section.5.6}%
+\contentsline {section}{\numberline {5.7}EVIDENCE SUFFICIENCY ANALYSIS}{46}{section.5.7}%
+\contentsline {section}{\numberline {5.8}EXTERNAL VALIDATION ON A SECOND DATASET}{47}{section.5.8}%
+\contentsline {paragraph}{Drive-Cycle Discharge.}{47}{paragraph*.52}%
+\contentsline {paragraph}{Remaining Life at the 80\% Threshold.}{47}{paragraph*.53}%
+\contentsline {section}{\numberline {5.9}VALIDATION ON A THIRD DATASET AND REFUSAL BEHAVIOUR}{48}{section.5.9}%
+\contentsline {section}{\numberline {5.10}SYSTEM AND HARDWARE RESULTS}{48}{section.5.10}%
+\contentsline {subsection}{\numberline {5.10.1}Bench Rig Captures}{48}{subsection.5.10.1}%
+\contentsline {subsection}{\numberline {5.10.2}Fault Injection}{49}{subsection.5.10.2}%
+\contentsline {subsection}{\numberline {5.10.3}What the Hardware Result Does and Does Not Show}{49}{subsection.5.10.3}%
+\contentsline {section}{\numberline {5.11}ILLUSTRATIVE EXAMPLE: THE HEALTH REPORT CARD}{49}{section.5.11}%
+\contentsline {section}{\numberline {5.12}DISCUSSION}{51}{section.5.12}%
+\contentsline {paragraph}{Effect of Conditioning Versus Model Choice.}{51}{paragraph*.58}%
+\contentsline {paragraph}{Dependence on the Reference Definition.}{51}{paragraph*.59}%
+\contentsline {paragraph}{Sensitivity of Threshold Crossings to Bias.}{51}{paragraph*.60}%
+\contentsline {paragraph}{Quantifying Evidence Sufficiency.}{51}{paragraph*.61}%
+\contentsline {paragraph}{Limitations of the Findings.}{51}{paragraph*.62}%
+\contentsline {section}{\numberline {5.13}IMPLICATIONS FOR BMS SOFTWARE DESIGN}{52}{section.5.13}%
+\contentsline {paragraph}{Validate on the Unit of Deployment.}{52}{paragraph*.63}%
+\contentsline {paragraph}{Prefer Measurement to Fitting Where Measurement Is Possible.}{52}{paragraph*.64}%
+\contentsline {paragraph}{Make Refusal a Normal Output.}{52}{paragraph*.65}%
+\contentsline {paragraph}{Keep One Scoring Path.}{52}{paragraph*.66}%
+\contentsline {section}{\numberline {5.14}VALIDATION SUMMARY}{52}{section.5.14}%
+\contentsline {section}{\numberline {5.15}ASSESSMENT AGAINST THE OBJECTIVES}{53}{section.5.15}%
+\contentsline {section}{\numberline {5.16}THREATS TO VALIDITY}{54}{section.5.16}%
+\contentsline {section}{\numberline {5.17}ROBUSTNESS AND SECURITY CHECKS}{54}{section.5.17}%
+\contentsline {chapter}{\numberline {6}CONCLUSION AND FUTURE WORK}{55}{chapter.6}%
+\contentsline {section}{\numberline {6.1}SUMMARY OF THE WORK}{56}{section.6.1}%
+\contentsline {section}{\numberline {6.2}LIMITATIONS}{56}{section.6.2}%
+\contentsline {section}{\numberline {6.3}FUTURE WORK}{56}{section.6.3}%
+\contentsline {section}{\numberline {6.4}LESSONS LEARNED}{57}{section.6.4}%
+\contentsline {section}{\numberline {6.5}RECOMMENDATIONS FOR DEPLOYMENT}{57}{section.6.5}%
 \contentsline {chapter}{REFERENCES}{58}{chapter*.69}%
 \contentsline {chapter}{APPENDIX A}{61}{appendix*.70}%
 \contentsline {chapter}{APPENDIX B}{62}{appendix*.72}%
