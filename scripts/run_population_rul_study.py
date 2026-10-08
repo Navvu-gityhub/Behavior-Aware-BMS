@@ -149,7 +149,7 @@ def main() -> int:
                 s = estimate_rul(t["x"], t["soh"], int(a), threshold=THRESHOLD)
                 rows.append({"held_out": held, "cell_id": t["cell_id"], "f": f, "arm": "shipped",
                              "true_rul": true, "pred": s.rul_cycles, "lower": np.nan, "upper": np.nan,
-                             "n_readings": s.n_points})
+                             "n_readings": s.n_history})
     r = pd.DataFrame(rows)
     r["rel_error"] = (r["pred"] - r["true_rul"]).abs() / r["true_rul"]
     r["covered"] = (r["lower"] <= r["true_rul"]) & (r["true_rul"] <= r["upper"])

@@ -1,0 +1,13 @@
+arm,f,coverage_80
+cell_only,0.1,0.07
+cell_only,0.25,0.3
+cell_only,0.5,0.22
+cell_only,0.75,0.11
+hybrid,0.1,0.24
+hybrid,0.25,0.33
+hybrid,0.5,0.22
+hybrid,0.75,0.11
+population,0.1,0.72
+population,0.25,0.72
+population,0.5,0.72
+population,0.75,0.72
