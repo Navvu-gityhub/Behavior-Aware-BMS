@@ -361,6 +361,22 @@ The \texttt{/healthz} endpoint is explicitly service liveness and not battery he
 
 The React client is a single-surface dashboard. It shows the fleet of batteries with health, risk and remaining life for each, a battery detail view, a digital-twin sheet with the twin state and its transitions, and a banner stating where the run's data came from. An earlier version had separate tabs for fleet, CAN replay, thermal and transfer views. They were removed because two parallel dashboards meant two provenance banners that could disagree about the same run. A Guardian explanation is shown next to the run it explains, and refusals are rendered as results and not as errors.
 
+Fig.~\ref{fig:uioverview} and Fig.~\ref{fig:uihealth} show the dashboard. Both are screenshots of the running system, taken on a synthetic fleet, which the interface labels as simulated data; the bench-rig panel below the fleet summary is the only part backed by a physical measurement.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\linewidth,height=0.5\textheight,keepaspectratio]{images/ui_overview.png}
+    \caption{Overview screen of the BEACON dashboard on a synthetic fleet. The banner marks the values as simulated, and the panel at the bottom shows the measured bench-rig readings, with the health index and remaining life refused because no temperature channel exists.}
+    \label{fig:uioverview}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\linewidth,height=0.5\textheight,keepaspectratio]{images/ui_health.png}
+    \caption{Battery health screen: state of health over cycles for one battery, the attribution of its health index to behaviour terms, and its aggregate usage parameters (synthetic fleet).}
+    \label{fig:uihealth}
+\end{figure}
+
 There are two deliberate absences. There is no database: the fleet store is in memory, and adding a database to the compose file would imply a persistence layer that does not exist, so the compose file says so. Persistence is the next substantial piece of work.
 
 \section{HEALTH REPORT CARD}

@@ -935,6 +935,22 @@ The \texttt{/healthz} endpoint is explicitly service liveness and not battery he
 
 The React client is a single-surface dashboard. It shows the fleet of batteries with health, risk and remaining life for each, a battery detail view, a digital-twin sheet with the twin state and its transitions, and a banner stating where the run's data came from. An earlier version had separate tabs for fleet, CAN replay, thermal and transfer views. They were removed because two parallel dashboards meant two provenance banners that could disagree about the same run. A Guardian explanation is shown next to the run it explains, and refusals are rendered as results and not as errors.
 
+Fig.~\ref{fig:uioverview} and Fig.~\ref{fig:uihealth} show the dashboard. Both are screenshots of the running system, taken on a synthetic fleet, which the interface labels as simulated data; the bench-rig panel below the fleet summary is the only part backed by a physical measurement.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\linewidth,height=0.5\textheight,keepaspectratio]{images/ui_overview.png}
+    \caption{Overview screen of the BEACON dashboard on a synthetic fleet. The banner marks the values as simulated, and the panel at the bottom shows the measured bench-rig readings, with the health index and remaining life refused because no temperature channel exists.}
+    \label{fig:uioverview}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\linewidth,height=0.5\textheight,keepaspectratio]{images/ui_health.png}
+    \caption{Battery health screen: state of health over cycles for one battery, the attribution of its health index to behaviour terms, and its aggregate usage parameters (synthetic fleet).}
+    \label{fig:uihealth}
+\end{figure}
+
 There are two deliberate absences. There is no database: the fleet store is in memory, and adding a database to the compose file would imply a persistence layer that does not exist, so the compose file says so. Persistence is the next substantial piece of work.
 
 \section{HEALTH REPORT CARD}
@@ -1007,6 +1023,16 @@ On the NASA benchmark (31 cells, nine cohorts; the isotonic signal ceiling for t
 	\end{tabular}
 	\label{tab:bench}
 \end{table}
+
+Fig.~\ref{fig:benchbar} shows the same comparison for all fourteen scored methods: nearly every bar drops from the blue (LOBO) to the red (LOCO) value when the held-out unit changes from a cell to a whole protocol cohort.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\linewidth,height=0.35\textheight,keepaspectratio]{images/bench_lobo_loco.png}
+    \caption{LOBO and LOCO $R^2$ for SOH for every scored method on the 31-cell NASA benchmark (data: \texttt{benchmark\_results.csv}). Skill measured across cells does not carry over to a new protocol.}
+    \label{fig:benchbar}
+\end{figure}
+
 
 An ablation isolates where the skill comes from (Table~\ref{tab:ablation}). XGBoost on cycle number alone scored a LOCO $R^2$ of $-0.27$, and on behaviour features alone $-0.29$. Only their combination reached 0.459, while a straight line on cycle number reached 0.406. Shuffling each cell's capacity in time placed every LOCO interval at or below zero, so the harness does not manufacture skill. Usage features therefore added about 0.05 in $R^2$ over counting cycles, within the intervals.
 
@@ -1277,6 +1303,23 @@ Three captures are committed (Table~\ref{tab:captures}). The first is a counter-
 \end{table}
 
 In both real captures the cadence held at 1.000~s with no gaps and a monotonic time base. Every measured voltage is an exact multiple of the INA219's 4~mV bus LSB, which is what a genuine read from that part looks like and what a fabricated one would not. The sensor-complement declaration worked as designed: the firmware named the sensor that failed at boot, declared only the channels it could supply, and the host scored those and refused the rest by name. The first real board also exposed a baud-rate fault (the CH340 bridge accepts only 9600 and 19200 baud), which the refusal wording named as a cause and which led to the fix.
+
+Fig.~\ref{fig:rigcapture} plots the Stage B capture and Fig.~\ref{fig:uievidence} shows how the dashboard presents it.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\linewidth,height=0.35\textheight,keepaspectratio]{images/rig_capture.png}
+    \caption{Stage B capture from the bench rig (83 frames over 82~s, one cell at rest). Voltage moves between 3.984 and 3.992~V in steps of the INA219's 4~mV LSB, and current stays at the $\pm$0.4~mA noise floor.}
+    \label{fig:rigcapture}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\linewidth,height=0.45\textheight,keepaspectratio]{images/ui_evidence.png}
+    \caption{Evidence view of the BEACON dashboard for the bench rig: 83 of 83 records accepted, voltage and current as measured, temperature reported as not supplied, and the health index, remaining life and state of health refused because coverage is incomplete.}
+    \label{fig:uievidence}
+\end{figure}
+
 
 \subsection{Fault Injection}
 
