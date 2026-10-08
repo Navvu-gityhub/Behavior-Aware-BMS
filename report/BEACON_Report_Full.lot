@@ -1,0 +1,29 @@
+\addvspace {10\p@ }
+\addvspace {10\p@ }
+\contentsline {table}{\numberline {2.1}{\ignorespaces Approach Families and the Properties That Matter for a Deployed Layer}}{6}{table.caption.6}%
+\addvspace {10\p@ }
+\contentsline {table}{\numberline {3.1}{\ignorespaces Data Sources and Their Role}}{9}{table.caption.8}%
+\contentsline {table}{\numberline {3.2}{\ignorespaces Risk Categories of the Rule-Based Layer}}{12}{table.caption.10}%
+\contentsline {table}{\numberline {3.3}{\ignorespaces Health Index, Battery State and Digital-Twin State}}{13}{table.caption.11}%
+\addvspace {10\p@ }
+\contentsline {table}{\numberline {4.1}{\ignorespaces Software Components Used}}{16}{table.caption.16}%
+\contentsline {table}{\numberline {4.2}{\ignorespaces Organisation of the Core Package}}{16}{table.caption.17}%
+\contentsline {table}{\numberline {4.3}{\ignorespaces Frame Size and Link Performance of the JSON Codec}}{18}{table.caption.19}%
+\contentsline {table}{\numberline {4.4}{\ignorespaces Gates and What Each Prevents}}{19}{table.caption.20}%
+\contentsline {table}{\numberline {4.5}{\ignorespaces Shunt Sizing for the INA219 (320~mV Full Scale, 10~$\mu $V LSB)}}{20}{table.caption.21}%
+\contentsline {table}{\numberline {4.6}{\ignorespaces Design Document Versus As-Built Rig}}{20}{table.caption.22}%
+\contentsline {table}{\numberline {4.7}{\ignorespaces Firmware Compilation Record (\texttt {arduino-cli}, all warnings enabled)}}{21}{table.caption.24}%
+\contentsline {table}{\numberline {4.8}{\ignorespaces Services}}{22}{table.caption.25}%
+\addvspace {10\p@ }
+\contentsline {table}{\numberline {5.1}{\ignorespaces Benchmark on 31 NASA Cells in Nine Cohorts (Six of the Methods Shown); LOCO Intervals Are 95\% Bootstrap Over Folds}}{26}{table.caption.28}%
+\contentsline {table}{\numberline {5.2}{\ignorespaces Feature Ablation and Shuffle Control (NASA SOH, LOCO)}}{27}{table.caption.30}%
+\contentsline {table}{\numberline {5.3}{\ignorespaces Field SOH at the 3.90--3.60~V Window; Median Per-Cell Absolute Error Against Cycler Capacity, 95\% Bootstrap Interval Over Cells}}{28}{table.caption.31}%
+\contentsline {table}{\numberline {5.4}{\ignorespaces SOH from Real Partial Cycling (CALCE CS2 Types 5 and 6)}}{29}{table.caption.34}%
+\contentsline {table}{\numberline {5.5}{\ignorespaces RUL to 90\% Capacity. Left: By True Cycles to End of Life. Right: By Predicted Cycles, With the 90\% Range of (True $-$ Predicted)}}{30}{table.caption.35}%
+\contentsline {table}{\numberline {5.6}{\ignorespaces RUL from Sparse Complete Discharges; None Is Accurate Enough to Report}}{31}{table.caption.37}%
+\contentsline {table}{\numberline {5.7}{\ignorespaces Error by the Consistency Criterion of Eq.~\eqref {eq:u}}}{31}{table.caption.38}%
+\contentsline {table}{\numberline {5.8}{\ignorespaces External Validation on Eight Oxford Cells: Median and Worst Per-Cell Mean Absolute SOH Error}}{32}{table.caption.39}%
+\contentsline {table}{\numberline {5.9}{\ignorespaces Bench Rig Captures}}{33}{table.caption.42}%
+\contentsline {table}{\numberline {5.10}{\ignorespaces Status of the Main Outputs}}{37}{table.caption.51}%
+\addvspace {10\p@ }
+\contentsline {table}{\numberline {A.1}{\ignorespaces Artifacts and Scripts Behind Each Results Section}}{42}{table.caption.54}%

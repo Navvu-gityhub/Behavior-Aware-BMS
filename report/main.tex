@@ -24,6 +24,13 @@
 \makeatother
 \setlength{\cftbeforetabskip}{3pt}
 \setlength{\cftbeforefigskip}{3pt}
+% ---------- Float placement and caption alignment ----------
+\renewcommand{\topfraction}{0.9}
+\renewcommand{\bottomfraction}{0.9}
+\renewcommand{\textfraction}{0.1}
+\renewcommand{\floatpagefraction}{0.75}
+\captionsetup[table]{justification=centering,skip=6pt}
+\captionsetup[figure]{justification=justified,singlelinecheck=true,skip=6pt}
 \newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
 \newcolumntype{C}[1]{>{\centering\arraybackslash}p{#1}}
 

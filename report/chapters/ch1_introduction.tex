@@ -43,23 +43,6 @@ The objectives of the project are:
     \item To build and bring up a physical data-acquisition rig, and to serve all results through a REST API and a web dashboard.
 \end{enumerate}
 
-\section{KEY CONTRIBUTIONS}
-\label{sec:contributions}
-
-The main contributions of this work are as follows.
-
-\begin{enumerate}
-    \item \textbf{A three-tier telemetry system} (CAN/serial/dataset ingestion, a shared scoring pipeline, and a FastAPI, Express and React service tier) in which every output is labelled measured, estimated or heuristic and carries its error band, or is refused with a reason.
-    \item \textbf{A field-realisable SOH estimator} validated from voltage, current and time alone, in which the ohmic correction uses a resistance identified from the voltage step at each load onset. Relative to no correction, it raises coverage from 12 to 17 of 22 cells and lowers median error from 4.3\% to 1.7\%.
-    \item \textbf{Resistance as a validated second health quantity:} the step resistance tracks the laboratory instrument on 19 of 20 cells.
-    \item \textbf{SOH from partial discharges} via a window learned from the cell's own early discharges, with a physical refusal rule for windows on the discharge knee whose threshold is not tuned.
-    \item \textbf{RUL accuracy reported as a user meets it}, indexed by the prediction, together with a measured correction (88\% to 73\%) caused by a reference capacity that used the future.
-    \item \textbf{Evidence sufficiency measured rather than asserted:} confidence follows the consistency of readings, which predicts error, and not the number of discharges, which does not.
-    \item \textbf{External validation without re-tuning} on a second dataset of a different chemistry, manufacturer, format and temperature, and a documented failure on a third.
-    \item \textbf{A working bench rig and software contract:} a serial wire protocol with checksums and refusal gates, firmware, and a physical bring-up on an ESP8266 board, with fault injection tests.
-    \item \textbf{Negative results retained:} fitted models across protocols and four routes to RUL from sparse complete discharges.
-\end{enumerate}
-
 \section{SCOPE AND ORGANISATION OF THE REPORT}
 
 Development and primary validation use single lithium cobalt oxide (LCO) cells at constant current (CALCE). External validation uses NMC/LCO blend pouch cells at 40~$^\circ$C (Oxford), which also supply one real drive-cycle discharge. A third dataset (NASA) is used for the benchmark and for a cross-dataset test. The project makes no claim about packs, lithium iron phosphate, or temperature-dependent capacity correction. The bench rig validates data acquisition, not health estimation: no discharge has yet been recorded on it.
