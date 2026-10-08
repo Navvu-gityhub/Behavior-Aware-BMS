@@ -1,0 +1,7 @@
+temperature_c,arm,cells,median_cell_mae
+10,anchored,3,0.0075
+10,shipped,3,0.0042
+25,anchored,2,0.0285
+25,shipped,2,0.0284
+40,anchored,3,0.0227
+40,shipped,3,0.0231
