@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023/Debian) (preloaded format=pdflatex 2026.10.2)  8 OCT 2026 10:34
+This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023/Debian) (preloaded format=pdflatex 2026.10.2)  8 OCT 2026 11:58
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -994,11 +994,11 @@ File: images/ui_overview.png Graphic file (type png)
 <use images/ui_overview.png>
 Package pdftex.def Info: images/ui_overview.png  used on input line 1389.
 (pdftex.def)             Requested size: 408.0616pt x 350.25287pt.
-<images/ui_health.png, id=1161, 1445.4pt x 1146.2825pt>
+<images/ui_health.png, id=1161, 1445.4pt x 1161.33875pt>
 File: images/ui_health.png Graphic file (type png)
 <use images/ui_health.png>
 Package pdftex.def Info: images/ui_health.png  used on input line 1396.
-(pdftex.def)             Requested size: 416.81744pt x 330.55939pt.
+(pdftex.def)             Requested size: 416.81744pt x 334.90123pt.
  [34 <./images/ui_overview.png (PNG copy)>] [35 <./images/ui_health.png (PNG co
 py)>] [36] [37] [38] [39] [40]
 Chapter 5.
@@ -1086,7 +1086,7 @@ re/texlive/texmf-dist/fonts/type1/urw/courier/ucrr8a.pfb></usr/share/texlive/te
 xmf-dist/fonts/type1/urw/times/utmb8a.pfb></usr/share/texlive/texmf-dist/fonts/
 type1/urw/times/utmbi8a.pfb></usr/share/texlive/texmf-dist/fonts/type1/urw/time
 s/utmr8a.pfb></usr/share/texlive/texmf-dist/fonts/type1/urw/times/utmri8a.pfb>
-Output written on BEACON_Report_Full.pdf (78 pages, 1717103 bytes).
+Output written on BEACON_Report_Full.pdf (78 pages, 1789019 bytes).
 PDF statistics:
  1530 PDF objects out of 1728 (max. 8388607)
  1382 compressed objects within 14 object streams
