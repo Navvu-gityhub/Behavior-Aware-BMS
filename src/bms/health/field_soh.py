@@ -258,15 +258,17 @@ def curves_from_telemetry(
         }))
 
         r_step = float("nan")
+        v_rest = float("nan")
         j = a - 1
         if j >= 0 and abs(current[j]) < rest_threshold_a and (t[a] - t[j]) <= MAX_STEP_GAP_S:
+            v_rest = float(voltage[j])
             d_i = abs(current[a] - current[j])
             d_v = voltage[j] - voltage[a]
             if d_i >= MIN_STEP_CURRENT_A and np.isfinite(d_v) and d_v > 0:
                 r_step = d_v / d_i
         steps.append({
             "cell_id": cell_id, "cycle": cycle, "r_step_ohm": r_step,
-            "mean_current_a": float(row.mean_current_a),
+            "v_rest_v": v_rest, "mean_current_a": float(row.mean_current_a),
         })
 
     curves = pd.concat(blocks, ignore_index=True) if blocks else pd.DataFrame(
@@ -284,6 +286,108 @@ def step_overpotential(steps: pd.DataFrame) -> pd.DataFrame:
     )
     steps["ir_drop_v"] = steps["mean_current_a"].abs() * steps["r_trailing_ohm"]
     return steps[["cell_id", "cycle", "ir_drop_v", "r_trailing_ohm"]]
+
+
+# ANCHORED OVERPOTENTIAL
+# ----------------------
+# The step resistance sees the sag one logger sample after the load starts.
+# The rest of the polarisation - charge transfer and diffusion - builds over
+# the discharge, grows with age, and grows much faster in the cold. On NASA
+# cells at 4 and 22 C it moved the curve through the window and the window
+# ratio erred by 12-14% (reports/metrics/cross_dataset/).
+#
+# A discharge that starts from full charge offers a measurement of that total
+# sag with no model: early in the discharge the cell is at nearly the same
+# state of charge as it was in its reference discharges, so the voltage
+# difference from them over the same charge drawn is overpotential growth,
+# not capacity. Over 5-15% of the reference charge the state-of-charge
+# mismatch from capacity loss is about 0.02 at 30% fade, worth ~10 mV on the
+# upper plateau, against the 50-300 mV of overpotential growth it corrects.
+#
+# Applicability: the cycle must start from full (rest voltage within
+# ANCHOR_REST_TOLERANCE_V of the reference cycles') and cover the band. A
+# cycle that does not is not anchored - it is left out, never scored with a
+# different correction.
+ANCHOR_BAND = (0.05, 0.15)
+ANCHOR_REST_TOLERANCE_V = 0.03
+ANCHOR_GRID_POINTS = 21
+#
+# MEASURED (reports/metrics/temperature_fix/, criteria fixed in advance): Oxford
+# 3.0% -> 0.9%, NASA cold cohorts 13.0% -> 9.7%, but CALCE 1.7% -> 2.7% and
+# three NASA cohorts worse. The preset criteria were not met, so the shipped
+# estimator keeps the step correction; this stays available, not default.
+
+
+def _curve_on_grid(block: pd.DataFrame, grid: np.ndarray) -> np.ndarray | None:
+    """Voltage at each grid charge, or None if the curve does not span it."""
+    q = block["capacity_ah_curve"].to_numpy(float)
+    v = block["voltage_v"].to_numpy(float)
+    ok = np.isfinite(q) & np.isfinite(v)
+    q, v = q[ok], v[ok]
+    if len(q) < 3 or q.max() < grid[-1] or q.min() > grid[0]:
+        return None
+    order = np.argsort(q, kind="stable")
+    return np.interp(grid, q[order], v[order])
+
+
+def anchored_overpotential(
+    curves: pd.DataFrame,
+    base: pd.DataFrame | None = None,
+    rest: pd.DataFrame | None = None,
+    reference_cycles: int = DEFAULT_REFERENCE_CYCLES,
+    band: tuple[float, float] = ANCHOR_BAND,
+) -> pd.DataFrame:
+    """Per-cycle window offset: the reference's ohmic sag plus the measured
+    growth of total overpotential since the reference.
+
+    `base` (cell_id, cycle, ir_drop_v) is the step-resistance correction; the
+    median over the reference cycles fixes the absolute level, so a reference
+    discharge reads exactly as the shipped estimator reads it. Without `base`
+    the level is zero. `rest` (cell_id, cycle, v_rest_v) enables the
+    starts-from-full check; where it is absent the check cannot run, and that
+    is the caller's assumption to state.
+
+    Returns cell_id, cycle, ir_drop_v, anchor_offset_v, with NaN offset for
+    cycles that are not anchorable.
+    """
+    out: list[dict] = []
+    lo, hi = band
+    for cell_id, cell in curves.groupby("cell_id", sort=True):
+        cycles = sorted(int(c) for c in cell["cycle"].unique())
+        blocks = {c: cell[cell["cycle"] == c] for c in cycles}
+        totals = {c: float(b["capacity_ah_curve"].max()) for c, b in blocks.items()}
+        rest_v: dict[int, float] = {}
+        if rest is not None and not rest.empty:
+            r = rest[rest["cell_id"] == cell_id]
+            rest_v = {int(c): float(v) for c, v in zip(r["cycle"], r["v_rest_v"], strict=True)}
+        c_ref = float(np.median([totals[c] for c in cycles[:reference_cycles]])) if cycles else float("nan")
+        if not np.isfinite(c_ref) or c_ref <= 0:
+            continue
+        grid = np.linspace(lo, hi, ANCHOR_GRID_POINTS) * c_ref
+        on_grid = {c: _curve_on_grid(blocks[c], grid) for c in cycles}
+
+        ref = [c for c in cycles if on_grid[c] is not None][:reference_cycles]
+        if not ref:
+            continue
+        v_ref = np.median(np.vstack([on_grid[c] for c in ref]), axis=0)
+        ref_rest = [rest_v[c] for c in ref if np.isfinite(rest_v.get(c, np.nan))]
+        rest_floor = (float(np.median(ref_rest)) - ANCHOR_REST_TOLERANCE_V) if ref_rest else None
+        level = 0.0
+        if base is not None and not base.empty:
+            bb = base[(base["cell_id"] == cell_id) & base["cycle"].isin(ref)]["ir_drop_v"].dropna()
+            if bb.empty:
+                continue
+            level = float(bb.median())
+        for c in cycles:
+            offset = float("nan")
+            v_now = on_grid[c]
+            from_full = rest_floor is None or (np.isfinite(rest_v.get(c, np.nan))
+                                               and rest_v[c] >= rest_floor)
+            if v_now is not None and from_full:
+                offset = float(np.median(v_ref - v_now))
+            out.append({"cell_id": cell_id, "cycle": c, "anchor_offset_v": offset,
+                        "ir_drop_v": level + offset})
+    return pd.DataFrame(out, columns=["cell_id", "cycle", "ir_drop_v", "anchor_offset_v"])
 
 
 def field_soh_table(

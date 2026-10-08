@@ -1,0 +1,9 @@
+group,arm,cells,median_cell_mae
+CALCE,anchored,16,0.0267
+CALCE,shipped,17,0.0168
+NASA cold,anchored,10,0.0974
+NASA cold,shipped,10,0.1303
+NASA warm,anchored,16,0.0577
+NASA warm,shipped,17,0.0567
+Oxford,anchored,8,0.0089
+Oxford,shipped,8,0.0299

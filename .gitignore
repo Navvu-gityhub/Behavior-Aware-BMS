@@ -122,4 +122,5 @@ build/
 data/interim/calce_curves/
 data/interim/calce_telemetry/
 data/interim/cross_dataset_checks.parquet
+data/interim/temperature_fix_rows.parquet
 dashboard.html

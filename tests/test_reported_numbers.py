@@ -696,6 +696,25 @@ CLAIMS: tuple[Claim, ...] = (
         quoted_in=(("docs/validation_matrix.md", "row 26", r"6\.7% on NASA"),),
         tol=0.05,
     ),
+    # -- cold-temperature fix (scripts/run_temperature_fix_study.py) --------
+    Claim(
+        id="tfix-oxford-anchored",
+        value=0.89,
+        extract=lambda: pct(float(_csv("temperature_fix/summary.csv").query(
+            "group == 'Oxford' and arm == 'anchored'")["median_cell_mae"].iloc[0])),
+        source="temperature_fix/summary.csv[Oxford, anchored]",
+        quoted_in=(("docs/validation_matrix.md", "row 27", r"3\.0% → 0\.9%"),),
+        tol=0.05,
+    ),
+    Claim(
+        id="tfix-nasa-cold-anchored",
+        value=9.74,
+        extract=lambda: pct(float(_csv("temperature_fix/summary.csv").query(
+            "group == 'NASA cold' and arm == 'anchored'")["median_cell_mae"].iloc[0])),
+        source="temperature_fix/summary.csv[NASA cold, anchored]",
+        quoted_in=(("docs/validation_matrix.md", "row 27", r"13\.0% → \*\*9\.7%\*\*"),),
+        tol=0.05,
+    ),
 )
 
 

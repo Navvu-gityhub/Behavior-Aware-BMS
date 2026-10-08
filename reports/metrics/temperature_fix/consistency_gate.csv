@@ -1,0 +1,13 @@
+group,arm,side,points,median_cell_median_error
+CALCE,anchored,u <= 0.01,9982,0.0239
+CALCE,anchored,u > 0.01,4063,0.0238
+CALCE,shipped,u <= 0.01,42204,0.0141
+CALCE,shipped,u > 0.01,4018,0.0462
+NASA cold,anchored,u <= 0.01,121,0.0413
+NASA cold,anchored,u > 0.01,292,0.1012
+NASA cold,shipped,u <= 0.01,143,0.0464
+NASA cold,shipped,u > 0.01,459,0.1409
+NASA warm,anchored,u <= 0.01,640,0.0152
+NASA warm,anchored,u > 0.01,145,0.0749
+NASA warm,shipped,u <= 0.01,797,0.0334
+NASA warm,shipped,u > 0.01,224,0.129

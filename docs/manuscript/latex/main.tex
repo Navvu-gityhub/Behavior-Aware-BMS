@@ -777,8 +777,12 @@ because every estimate is relative to the cell's own first discharges.
 
 \begin{itemize}
 \item \emph{Temperature.} On NASA cells at 4 and 22~$^\circ$C the estimator
-erred by 12--14\%; its low-confidence label marked most of these readings, but
-a temperature-aware correction is future work.
+erred by 12--14\%; its low-confidence label marked most of these readings. A
+correction anchoring the total overpotential to each cell's own early
+discharge, with criteria fixed in advance, reduced the cold-cohort error to
+9.7\% and the Oxford error from 3.0\% to 0.9\%, but raised CALCE from 1.7\% to
+2.7\% and missed its targets, so it is not the default
+(\texttt{run\_temperature\_fix\_study.py}).
 \item \emph{Two cathode families, single cells, one real drive cycle.} Packs add
 cell-to-cell imbalance, thermal gradients and balancing currents. Dynamic drive
 cycles would challenge both the window read and the step-resistance estimate.

@@ -1,0 +1,15 @@
+cohort,arm,cells,median_cell_mae
+22C_2.0A,anchored,3,0.1124
+22C_2.0A,shipped,3,0.1335
+24C_2.0A,anchored,5,0.051
+24C_2.0A,shipped,5,0.0919
+24C_4.0A,anchored,4,0.1753
+24C_4.0A,shipped,5,0.0567
+43C_4.0A,anchored,4,0.0086
+43C_4.0A,shipped,4,0.0173
+44C_1.0A,anchored,3,0.1603
+44C_1.0A,shipped,3,0.0923
+4C_1.0A,anchored,4,0.0721
+4C_1.0A,shipped,4,0.1185
+4C_2.0A,anchored,3,0.1655
+4C_2.0A,shipped,3,0.1378

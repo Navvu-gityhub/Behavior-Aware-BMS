@@ -83,8 +83,8 @@ def discharges_to_frames(discharges: list[NasaDischarge]) -> tuple[pd.DataFrame,
 
     curves: cell_id, cycle, voltage_v, capacity_ah_curve - the loaded portion
             of each discharge, charge integrated from its start.
-    steps:  cell_id, cycle, r_step_ohm, mean_current_a - the rest-to-load step
-            at the head of each record.
+    steps:  cell_id, cycle, r_step_ohm, v_rest_v, mean_current_a - the
+            rest-to-load step at the head of each record.
     """
     curve_rows, step_rows = [], []
     for d in discharges:
@@ -97,13 +97,14 @@ def discharges_to_frames(discharges: list[NasaDischarge]) -> tuple[pd.DataFrame,
         curve_rows.append(pd.DataFrame({"cell_id": d.cell_id, "cycle": d.index,
                                         "voltage_v": v, "capacity_ah_curve": q}))
         r = float("nan")
+        v_rest = float(d.voltage_v[a - 1]) if a >= 1 else float("nan")
         if a >= 1:
             di = abs(d.current_a[a] - d.current_a[a - 1])
             dv = d.voltage_v[a - 1] - d.voltage_v[a]
             if di >= 0.05 and dv > 0:
                 r = dv / di
         step_rows.append({"cell_id": d.cell_id, "cycle": d.index, "r_step_ohm": r,
-                          "mean_current_a": float(np.mean(i))})
+                          "v_rest_v": v_rest, "mean_current_a": float(np.mean(i))})
     curves = pd.concat(curve_rows, ignore_index=True) if curve_rows else pd.DataFrame(
         columns=["cell_id", "cycle", "voltage_v", "capacity_ah_curve"])
     return curves, pd.DataFrame(step_rows)
