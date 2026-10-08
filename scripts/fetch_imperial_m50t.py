@@ -19,6 +19,7 @@ Written to data/raw/imperial_m50t/ (gitignored).
 
 from __future__ import annotations
 
+import http.client
 import io
 import re
 import sys
@@ -66,7 +67,7 @@ class _RangeFile(io.RawIOBase):
                 with urllib.request.urlopen(req, timeout=180) as r:
                     data = r.read()
                 break
-            except OSError:
+            except (OSError, http.client.HTTPException):
                 if attempt == 7:
                     raise
         b[:len(data)] = data
