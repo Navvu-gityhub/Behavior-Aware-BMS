@@ -39,6 +39,7 @@ from src.bms.adaptive.dataset_specs import (
     predict_transfer_feasibility,
 )
 from src.bms.api.paths import resolve_request_path
+from src.bms.api.profile_routes import remember
 from src.bms.api.telemetry_schemas import (
     AxisVerdictOut,
     CapacityYieldOut,
@@ -90,6 +91,12 @@ from src.bms.telemetry import (
 )
 
 router = APIRouter()
+
+
+def _record(battery_id: str, result: TelemetryResult, signal_map: Mapping[str, str]) -> None:
+    """Keep the run for the per-run views, and teach the battery's profile."""
+    _last_run[battery_id] = (result, signal_map)
+    remember(battery_id, result.telemetry)
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 DEFAULT_DBC = REPO_ROOT / "src/bms/io/dbc_examples/beacon_reference_pack.dbc"
@@ -348,7 +355,7 @@ def telemetry_replay(request: ReplayRequest) -> TelemetryRunOut:
         # Malformed telemetry is a property of the request's file.
         raise HTTPException(status_code=422, detail=str(exc)) from exc
 
-    _last_run[request.battery_id] = (result, signal_map)
+    _record(request.battery_id, result, signal_map)
     return _run_out(result, request.battery_id, signal_map)
 
 
@@ -384,7 +391,7 @@ def telemetry_live(request: LiveCaptureRequest) -> TelemetryRunOut:
             ),
         ) from exc
 
-    _last_run[request.battery_id] = (result, signal_map)
+    _record(request.battery_id, result, signal_map)
     return _run_out(result, request.battery_id, signal_map)
 
 
@@ -473,7 +480,7 @@ def serial_emulate(request: SerialEmulateRequest) -> TelemetryRunOut:
         min_accepted_fraction=request.min_accepted_fraction,
         twin_history=_twin_history,
     )
-    _last_run[request.battery_id] = (result, SERIAL_CHANNEL_MAP)
+    _record(request.battery_id, result, SERIAL_CHANNEL_MAP)
     return _run_out(result, request.battery_id, SERIAL_CHANNEL_MAP)
 
 
@@ -498,7 +505,7 @@ def serial_replay(request: SerialReplayRequest) -> TelemetryRunOut:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
 
     battery_id = _resolved_battery_id(result, request.battery_id)
-    _last_run[battery_id] = (result, SERIAL_CHANNEL_MAP)
+    _record(battery_id, result, SERIAL_CHANNEL_MAP)
     return _run_out(result, battery_id, SERIAL_CHANNEL_MAP)
 
 
@@ -546,7 +553,7 @@ def serial_live(request: SerialLiveRequest) -> TelemetryRunOut:
         ) from exc
 
     battery_id = _resolved_battery_id(result, request.battery_id)
-    _last_run[battery_id] = (result, SERIAL_CHANNEL_MAP)
+    _record(battery_id, result, SERIAL_CHANNEL_MAP)
     return _run_out(result, battery_id, SERIAL_CHANNEL_MAP)
 
 

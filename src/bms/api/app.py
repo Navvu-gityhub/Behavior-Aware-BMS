@@ -33,6 +33,7 @@ from fastapi.responses import FileResponse
 
 from main import run_pipeline
 from src.bms.api.dashboard_routes import router as dashboard_router
+from src.bms.api.profile_routes import router as profile_router
 from src.bms.api.schemas import (
     BatteryDetailOut,
     BatterySummaryOut,
@@ -68,6 +69,7 @@ app.include_router(validation_router)
 # The BEACON dashboard payload, served from the same builder the static
 # renderer used, so the React client cannot drift from it.
 app.include_router(dashboard_router)
+app.include_router(profile_router)
 
 _DASHBOARD_PATH = Path(__file__).parent.parent / "dashboard" / "live_dashboard.html"
 

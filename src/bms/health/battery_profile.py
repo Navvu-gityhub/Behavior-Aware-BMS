@@ -58,6 +58,18 @@ _ROW_FIELDS = ("cycle", "capacity_ah", "r_step_ohm", "mean_current_a", "r_traili
                "ir_drop_v", "window_charge_ah", "cycle_charge_ah", "temperature_c")
 
 
+def fingerprint(telemetry: pd.DataFrame) -> str:
+    """A content key for one piece of telemetry: its size, span and sums."""
+    import hashlib
+
+    parts = [str(len(telemetry))]
+    for col in ("test_time_s", "current_a", "voltage_v"):
+        if col in telemetry.columns and len(telemetry):
+            v = pd.to_numeric(telemetry[col], errors="coerce").to_numpy(float)
+            parts += [f"{np.nanmin(v):.6g}", f"{np.nanmax(v):.6g}", f"{np.nansum(v):.9g}"]
+    return hashlib.sha1("|".join(parts).encode()).hexdigest()
+
+
 @dataclass
 class BatteryProfile:
     battery_id: str
@@ -66,6 +78,9 @@ class BatteryProfile:
     v_low: float = WindowSpec().v_low
     reference_cycles: int = DEFAULT_REFERENCE_CYCLES
     rows: list[dict] = field(default_factory=list)
+    # Fingerprints of telemetry already absorbed: replaying the same log twice
+    # must not count its discharges twice.
+    sources: list[str] = field(default_factory=list)
 
     @property
     def spec(self) -> WindowSpec:
@@ -77,7 +92,14 @@ class BatteryProfile:
 
     # -- learning ---------------------------------------------------------
     def update(self, telemetry: pd.DataFrame) -> int:
-        """Absorb the discharges in a new piece of telemetry; return how many."""
+        """Absorb the discharges in a new piece of telemetry; return how many.
+
+        Telemetry this profile has already absorbed is recognised and skipped.
+        """
+        key = fingerprint(telemetry)
+        if key in self.sources:
+            return 0
+        self.sources.append(key)
         d = cycles_to_frame(measure_cycles(telemetry, self.battery_id,
                                            rest_threshold_a=self.rest_threshold_a),
                             complete_only=False)
@@ -163,7 +185,7 @@ class BatteryProfile:
             return None if isinstance(v, float) and not np.isfinite(v) else v
         return {"version": PROFILE_VERSION, "battery_id": self.battery_id,
                 "rest_threshold_a": self.rest_threshold_a, "v_high": self.v_high, "v_low": self.v_low,
-                "reference_cycles": self.reference_cycles,
+                "reference_cycles": self.reference_cycles, "sources": list(self.sources),
                 "rows": [{k: clean(v) for k, v in r.items()} for r in self.rows]}
 
     @classmethod
@@ -172,7 +194,7 @@ class BatteryProfile:
             raise ValueError(f"BatteryProfile: unsupported profile version {data.get('version')!r}")
         rows = [{k: (float("nan") if v is None else v) for k, v in r.items()} for r in data["rows"]]
         return cls(data["battery_id"], data["rest_threshold_a"], data["v_high"], data["v_low"],
-                   data["reference_cycles"], rows)
+                   data["reference_cycles"], rows, list(data.get("sources", [])))
 
     def save(self, path: str | Path) -> None:
         Path(path).write_text(json.dumps(self.to_dict()), encoding="utf-8")
