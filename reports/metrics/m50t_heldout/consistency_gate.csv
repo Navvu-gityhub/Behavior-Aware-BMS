@@ -1,0 +1,7 @@
+temperature_c,arm,side,points,median_cell_median_error
+10,shipped,u <= 0.01,172,0.0027
+10,shipped,u > 0.01,0,
+25,shipped,u <= 0.01,540,0.0261
+25,shipped,u > 0.01,15,0.2054
+40,shipped,u <= 0.01,843,0.0256
+40,shipped,u > 0.01,21,0.1701
