@@ -138,3 +138,6 @@
 \contentsline {section}{\numberline {6.4}LESSONS LEARNED}{57}{section.6.4}%
 \contentsline {section}{\numberline {6.5}RECOMMENDATIONS FOR DEPLOYMENT}{57}{section.6.5}%
 \contentsline {chapter}{REFERENCES}{58}{chapter*.69}%
+\contentsline {chapter}{APPENDIX A}{61}{appendix*.70}%
+\contentsline {chapter}{APPENDIX B}{62}{appendix*.71}%
+\contentsline {chapter}{APPENDIX C}{63}{appendix*.73}%
