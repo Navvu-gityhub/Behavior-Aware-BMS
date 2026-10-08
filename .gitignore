@@ -24,6 +24,9 @@ data/raw/**/*.zip
 data/raw/**/*.mat
 data/raw/**/*.csv
 data/raw/**/*.xlsx
+data/raw/**/*.mpr
+data/raw/**/*.part
+data/raw/**/*.docx
 data/raw/**/*.xls
 data/raw/nasa/cleaned_dataset/
 data/interim/**/*.csv
