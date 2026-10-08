@@ -220,7 +220,7 @@
   \ifnum\value{numcandidates}=1
     \renewcommand{\@candidatelist}{%
       {\large\bfseries #1\par}{\large\bfseries (#2)\par}}%
-    \renewcommand{\@candnamestext}{#1\ (\mbox{#2})}%
+    \renewcommand{\@candnamestext}{#1\ (\seqsplit{#2})}%
     \renewcommand{\@candsigblocks}{%
       \textbf{SIGNATURE}\\[0.5cm]
       \textbf{#1}\\
@@ -231,7 +231,7 @@
   \else
     \g@addto@macro\@candidatelist{%
       \vspace{0.3cm}{\large\bfseries #1\par}{\large\bfseries (#2)\par}}%
-    \g@addto@macro\@candnamestext{, #1\ (\mbox{#2})}%
+    \g@addto@macro\@candnamestext{, #1\ (\seqsplit{#2})}%
     \g@addto@macro\@candsigblocks{%
       \vspace{2.5cm}\\
       \textbf{SIGNATURE}\\[0.5cm]
@@ -258,24 +258,23 @@
 \begin{center}
 \onehalfspacing
 {\fontsize{18}{22}\selectfont\bfseries \@reporttitle \par}
-\vspace{0.7cm}
+\vspace{1.1cm}
 {\large\bfseries A PROJECT REPORT\par}
-\vspace{0.7cm}
+\vspace{1.1cm}
 {\large\itshape Submitted by\par}
 \@candidatelist
 \vspace{0.8cm}
 {\large\itshape\bfseries in partial fulfillment for the award of the degree of\par}
 \vspace{0.8cm}
 {\large\bfseries \@degreename \par}
-\vspace{0.7cm}
+\vspace{1.1cm}
 {\large\itshape Under the guidance of\par}
 \vspace{0.3cm}
 {\large\bfseries \@supervisorname \par}
-\vspace{0.7cm}
+\vspace{1.1cm}
 {\large\itshape Submitted to\par}
 \vspace{0.3cm}
 \ifdefempty{\@universitylogo}{}{\includegraphics[width=6cm]{\@universitylogo}\\[0.2cm]}
-{\normalsize\bfseries DEPARTMENT OF ELECTRONICS AND COMMUNICATION ENGINEERING\par}
 {\large\bfseries AMRITA SCHOOL OF ENGINEERING\par}
 {\large\bfseries AMRITA VISHWA VIDYAPEETHAM\par}
 {\large\bfseries CHENNAI -- 601103\par}
@@ -290,24 +289,23 @@
 \begin{center}
 \onehalfspacing
 {\fontsize{18}{22}\selectfont\bfseries \@reporttitle \par}
-\vspace{0.7cm}
+\vspace{1.1cm}
 {\large\bfseries A PROJECT REPORT\par}
-\vspace{0.7cm}
+\vspace{1.1cm}
 {\large\itshape Submitted by\par}
 \@candidatelist
 \vspace{0.8cm}
 {\large\itshape\bfseries in partial fulfillment for the award of the degree of\par}
 \vspace{0.8cm}
 {\large\bfseries \@degreename \par}
-\vspace{0.7cm}
+\vspace{1.1cm}
 {\large\itshape Under the guidance of\par}
 \vspace{0.3cm}
 {\large\bfseries \@supervisorname \par}
-\vspace{0.7cm}
+\vspace{1.1cm}
 {\large\itshape Submitted to\par}
 \vspace{0.3cm}
 \ifdefempty{\@universitylogo}{}{\includegraphics[width=6cm]{\@universitylogo}\\[0.2cm]}
-{\normalsize\bfseries DEPARTMENT OF ELECTRONICS AND COMMUNICATION ENGINEERING\par}
 {\large\bfseries AMRITA SCHOOL OF ENGINEERING\par}
 {\large\bfseries AMRITA VISHWA VIDYAPEETHAM\par}
 {\large\bfseries CHENNAI -- 601103\par}

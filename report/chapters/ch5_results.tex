@@ -266,7 +266,7 @@ All eight cells were measured (Table~\ref{tab:oxford}). The near-equilibrium C/1
 
 \paragraph{Remaining life at 80\%.} The Oxford trajectories cross the 80\% convention, so the shipped RUL estimator was scored there unchanged. When it predicted fewer than 500 cycles to 80\%, the cell lasted at least that long in 97\% of cases (36 estimates, 5 cells). Precision is low: the median miss is 385 cycles against characterisations 100 cycles apart. The guarantee also weakens with distance, since predictions of 500 to 1,000 cycles were met or exceeded only 79\% of the time (24 estimates, 5 cells).
 
-\section{A THIRD DATASET, TEMPERATURE, AND KNOWING WHEN TO REFUSE}
+\section{A THIRD DATASET AND KNOWING WHEN TO REFUSE}
 \label{sec:res-xds}
 
 The NASA files (18650 cells, ambient 4--44~$^\circ$C) were read from their original MATLAB form and scored the same way, unchanged. The estimator was poor on NASA overall, with a median per-cell error of 9.2\% over 27 cells, and it depended on temperature: 1.7\% in the 43~$^\circ$C cohort and 12--14\% at 4 and 22~$^\circ$C. The step resistance captures only the ohmic part of the overpotential, and at low temperature the charge-transfer and diffusion parts, which grow with age, move the curve through the window.

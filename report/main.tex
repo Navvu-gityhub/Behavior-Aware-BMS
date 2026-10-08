@@ -15,6 +15,13 @@
 \usetikzlibrary{shapes.geometric, arrows.meta, positioning, fit, calc}
 \setlength{\emergencystretch}{3em}
 \usepackage{xurl}
+% The class ends a paragraph with \fussy placed BEFORE the paragraph break, so the
+% certificate and declaration paragraphs are broken with strict tolerance and
+% overflow the margin. Defer \fussy until after those paragraphs are finished.
+\makeatletter
+\let\beaconfussy\fussy
+\let\fussy\relax
+\makeatother
 \newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
 \newcolumntype{C}[1]{>{\centering\arraybackslash}p{#1}}
 
@@ -34,6 +41,10 @@
 % For group projects, call \addcandidate once per member.
 \addcandidate{V NAVEEN}{CH.EN.U4CCE23054}
 \addcandidate{SANJAY P}{CH.EN.U4CCE23042}
+% let the names on the bonafide certificate wrap between members, never inside a roll number
+\makeatletter
+\renewcommand{\@candnamestext}{V NAVEEN (\mbox{CH.EN.U4CCE23054}), SANJAY P (\mbox{CH.EN.U4CCE23042})}
+\makeatother
 
 % TODO: fill in the supervisor's designation (HOD taken from the department template).
 \supervisor{Dr. M GAYATHRI}{[DESIGNATION]}
@@ -49,7 +60,9 @@
 \pagenumbering{roman}
 \maketitlepage
 \makebonafidecertificate
+\beaconfussy
 \makedeclaration
+\beaconfussy
 \reportabstract{
 A battery management system (BMS) measures terminal voltage, current and temperature, but whether software above it can turn these into a trustworthy state of health (SOH) and remaining useful life (RUL) is usually answered by fitting a model. This project builds BEACON, a three-tier telemetry and health-monitoring system, and tests that question with measured evidence. BEACON ingests data from a CAN bus, a USB serial bench rig or research datasets, converges all three on one schema, and scores them through one shared pipeline that is served over a REST API to a React dashboard. On 31 NASA cells in nine protocol cohorts, twelve published methods all lost skill under leave-one-cohort-out validation, so the system's two working estimators fit nothing across cells. SOH is the ratio of charge delivered within a fixed voltage window to the same quantity on the cell's own first discharges, with ohmic sag corrected by a resistance identified from the voltage step at each load onset. From voltage, current and time alone, on 22 CALCE lithium cobalt oxide cells, the median per-cell error was 1.7\% (95\% CI 1.4--4.3\%) on 17 cells, with five refused for stated causes, and the step resistance tracked the cycler's resistance on 19 of 20 cells. Unchanged, the estimator measured all eight cells of an independent Oxford dataset at 3.0\% median error. RUL extrapolated from each cell's own fade was within $\pm$20 cycles 73\% of the time in the last 25 cycles before 90\% capacity. The system refuses to output a number it cannot justify: every output is validated, banded by its measured error, or refused with a reason. A bench rig built on a NodeMCU ESP8266 with an INA219 and an LM35 streamed 83 of 83 checksummed frames at a measured 1.000~s cadence, which validates data acquisition but not health estimation.
 
