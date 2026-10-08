@@ -13,7 +13,7 @@ The objective is a software layer above a BMS that converts voltage, current and
     \item \textbf{Refuse what cannot be justified.} Every output is validated, banded by its measured error, or refused with a stated cause. A refusal is a correct outcome that the system knows, so it is returned as a value, rendered, and reflected in the process exit code.
 \end{enumerate}
 
-\subsection{RESEARCH VARIABLES}
+\subsection{Research Variables}
 
 \begin{itemize}
     \item \textbf{Independent variables:} the ohmic correction used (none, cycler resistance, resistance from the load step), the voltage window (fixed or learned), the reference size, the RUL threshold, and the dataset (CALCE, Oxford, NASA).
@@ -52,7 +52,7 @@ BEACON ingests telemetry from three transports, converges them on one schema, an
     \label{fig:framework}
 \end{figure}
 
-\subsection{ONE SCORING PATH, EXTRACTED RATHER THAN COPIED}
+\subsection{One Scoring Path, Extracted Rather Than Copied}
 
 The function \texttt{score\_telemetry\_frame} contains everything downstream of acquisition: segmentation, coulomb counting, features, risk, health, RUL, the Guardian explanation and the digital twin. It was extracted from the CAN pipeline when serial ingestion was added, instead of being copied. A second segmentation or feature extractor would mean that a disagreement between a CAN run and a serial run over the same battery could not be traced to either the data or the code. With the tail shared, a difference in output is a difference in the telemetry.
 
@@ -100,7 +100,7 @@ For a window $[V_\mathrm{low}, V_\mathrm{high}]$, the window charge $\Qw(n)$ is 
 \end{equation}
 and the reported value is the median of the latest five accepted readings. The primary window, 3.90--3.60~V, was fixed before any validation run. The windows 4.05--3.55 and 3.85--3.55~V are reported as sensitivity analyses and not selected between.
 
-Equation~\eqref{eq:soh} assumes the discharge curve scales approximately uniformly with capacity. Loss of lithium inventory shifts the curve, which the ratio partly absorbs. Loss of active material and resistance growth change its shape and position, which it does not. This is the method's principal approximation, and Section~\ref{sec:res-suff} measures how it drifts with age. Figure~\ref{fig:sohflow} summarises the estimator.
+Equation~\eqref{eq:soh} assumes the discharge curve scales approximately uniformly with capacity. Loss of lithium inventory shifts the curve, which the ratio partly absorbs. Loss of active material and resistance growth change its shape and position, which it does not. This is the method's principal approximation, and Section~\ref{sec:res-suff} measures how it drifts with age. Fig.~\ref{fig:sohflow} summarises the estimator.
 
 \begin{figure}[htbp]
     \centering

@@ -119,7 +119,7 @@ The three transports converge on one unified telemetry frame with the columns \t
     \item \textbf{Research datasets.} Loaders read the NASA MATLAB files and the CALCE and Oxford records into the same frame.
 \end{itemize}
 
-\subsection{THE SEAM IS NARROW}
+\subsection{The Seam Is Narrow}
 
 A serial source is a protocol with one method, \texttt{lines()}. A physical port, a recorded text file, a list in a test and the deterministic emulator are interchangeable, so the demo path and the hardware path differ in one constructor call. The emulator deliberately generates \emph{wire-format text} and not record objects. Emitting objects would have been less code but would have proved nothing, because the parser, the checksum, the schema validation and the coverage gate would all be bypassed in exactly the path the tests exercise. The emulator even prints an ESP32 boot banner, so the sentinel filter runs on every test. Recording composes at the same seam: one decorator makes a live port, a replay or the emulator recordable, and the file on disk is exactly the bytes that produced the result.
 
@@ -138,15 +138,15 @@ BEACON1 D {"t":12.5,"v":3.91,"i":-1.48,"tc":27.4,"soc":82.1}*06
     \label{fig:frame}
 \end{figure}
 
-\subsection{FRAMING BY SENTINEL}
+\subsection{Framing by Sentinel}
 
 Framing is by sentinel and not by length. Every microcontroller prints boot banners and debugging text, so a length-prefixed parser would resynchronise after such noise only by luck. A sentinel parser discards anything not beginning with \texttt{BEACON1} as counted noise and continues, which makes the protocol self-synchronising: it recovers at the next newline after any corruption, with a loss of at most one frame.
 
-\subsection{ERROR DETECTION}
+\subsection{Error Detection}
 
 The checksum is an 8-bit XOR over the body (a longitudinal redundancy check). It detects all single-bit errors, but it cannot detect an even number of bit errors in the same bit position, any reordering of bytes, or corruption of the sentinel and kind fields, which lie outside the body. Under a random-corruption model, 0.39\% of corrupted frames would pass. A CRC-8 occupies the same eight bits and detects all bursts up to eight bits and byte transpositions, so it is recorded as the protocol's clearest improvement. It was not adopted for the first bring-up because the XOR form is three lines of C and legible in a serial monitor.
 
-\subsection{CHANNEL UTILISATION}
+\subsection{Channel Utilisation}
 
 Table~\ref{tab:channel} gives the measured frame sizes and the derived link performance. At 1~Hz the link is over-provisioned by more than two orders of magnitude, so the verbose JSON codec is the default: it costs 39\% more bandwidth than the compact codec and buys human-legible frames during bring-up.
 
@@ -216,7 +216,7 @@ Two properties of this design are load-bearing. First, range checks \emph{reject
 \section{HARDWARE BENCH RIG}
 \label{sec:impl-hw}
 
-\subsection{REQUIREMENT AND DESIGN CALCULATIONS}
+\subsection{Requirement and Design Calculations}
 
 The rig must measure one lithium-ion cell during charge and discharge and supply the five schema channels (terminal voltage, signed current, temperature, state of charge and elapsed time). State of charge is derived, not measured. The binding accuracy requirement is on capacity, with an acceptance criterion of within 5\% of an independent reference.
 
@@ -246,7 +246,7 @@ Three consequences are recorded. Discharge must stay below 3.2~A with the 0.1~$\
 
 The error budget carries the component errors through to capacity. Combining the INA219 gain error (about 0.5\%), the shunt tolerance (1\%) and shunt self-heating (about 0.2\%) in quadrature gives about 1.14\% of reading, and because capacity is the integral of current, a gain error on current is a gain error on capacity. The expected capacity accuracy is about 1.2\%, dominated by the shunt tolerance, against the 5\% acceptance criterion. A 0.1\% shunt would roughly halve it. Offset and timing contribute negligibly. These are datasheet-based design figures, and measurement against a reference meter has not been done.
 
-\subsection{AS-BUILT RIG}
+\subsection{As-Built Rig}
 
 The rig that was physically brought up differs from the design document in two components, and that difference is stated here and not hidden (Table~\ref{tab:asbuilt}, Fig.~\ref{fig:rig}).
 
@@ -295,7 +295,7 @@ The rig that was physically brought up differs from the design document in two c
 
 Protection must be in hardware in series with the cell, never in the monitoring firmware, because a firmware hang must not leave the cell unprotected. The monitoring electronics are powered from USB, not from the cell. The design power budget is about 48~mA typical against 500~mA available from USB, and the firmware keeps the radios disabled, not to save power but because transmit current spikes can brown out a weakly supplied board, which would restart the time base.
 
-\subsection{FIRMWARE}
+\subsection{Firmware}
 
 The firmware is one board-agnostic Arduino sketch. The sensors sit behind four replaceable functions (\texttt{readVoltageV}, \texttt{readCurrentA}, \texttt{readTemperatureC} and \texttt{readSocPercent}), so a board with only some sensors can still run. At boot it probes each sensor, emits a status record naming what failed, and declares in its \texttt{HELLO} only the channels it can actually supply, together with the rated capacity. The host then scores the channels present and refuses the rest by name. The sketch compiles for three targets on every push (Table~\ref{tab:compile}), and a test compares its declared field set, as a set, against the schema.
 
@@ -319,7 +319,7 @@ The firmware is one board-agnostic Arduino sketch. The sensors sit behind four r
 	\label{tab:compile}
 \end{table}
 
-\subsection{BRING-UP PROCEDURE}
+\subsection{Bring-Up Procedure}
 
 Bring-up was done in two stages that must not be combined. Stage~A proves the transport with nothing at risk: no battery and no sensors. Stage~B adds one cell and the sensors, replacing the four read functions one at a time. Doing both at once would make a wiring fault and a protocol fault indistinguishable with a lithium cell connected. Stage~A passes when the accepted fraction is at least 0.99, a \texttt{HELLO} was seen, there are no time reversals, and the C-rate basis names the capacity the sketch declared, and when replaying the saved capture reproduces the live numbers.
 

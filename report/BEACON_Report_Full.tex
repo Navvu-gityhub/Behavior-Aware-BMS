@@ -22,6 +22,8 @@
 \let\beaconfussy\fussy
 \let\fussy\relax
 \makeatother
+\setlength{\cftbeforetabskip}{3pt}
+\setlength{\cftbeforefigskip}{3pt}
 % ---------- Fixes applied on top of the stock amritareport.cls ----------
 % (the unmodified class from the department template is used as it is)
 \makeatletter
@@ -242,29 +244,29 @@ The remainder of the report is organised as follows. Chapter~\ref{ch:lit} review
 \chapter{LITERATURE REVIEW}
 \label{ch:lit}
 
-\section{State Estimation in the Battery Management System}
+\section{STATE ESTIMATION IN THE BATTERY MANAGEMENT SYSTEM}
 
 A BMS protects the pack and estimates its state of charge from the terminal measurements it already holds. Reviews of monitoring methods for electric and hybrid vehicles \cite{waag2014} and of SOH estimation for real applications \cite{berecibar2016} distinguish direct measurement (capacity or resistance tests), model-based estimation and data-driven approaches. Ageing mechanisms and their effect on capacity and resistance are reviewed by Vetter \emph{et al.}\ \cite{vetter2005} and, for automotive applications, by Barr\'e \emph{et al.}\ \cite{barre2013}. Recursive estimation of cell parameters within the BMS, including internal resistance, is established \cite{plett2004}, and monitoring of resistance is part of the methods reviewed by Waag \emph{et al.}\ \cite{waag2014}.
 
 In this project, resistance serves two roles: it corrects the ohmic sag that would otherwise make a fixed voltage window slide along the discharge curve, and it is reported as a second health output, validated against the laboratory instrument (Section~\ref{sec:res-r}).
 
-\section{Data-Driven SOH Estimation and How It Is Validated}
+\section{DATA-DRIVEN SOH ESTIMATION AND HOW IT IS VALIDATED}
 
 Data-driven estimators trained on cycling features are widespread. Severson \emph{et al.}\ \cite{severson2019} showed that features of the capacity--voltage curve, such as the variance of the difference between cycles, predict cycle life from early data. Such models are commonly assessed under random or leave-one-cell-out splits.
 
 How they are validated changes what they appear to achieve. Group-wise splitting by cell reduces reported skill substantially \cite{maher2025}, and a large gap between random and cell-wise splits has been reported on NASA data \cite{le2026}. This project extends the hold-out from the cell to the test protocol, using leave-one-cohort-out validation with a bootstrap interval over folds, and finds that the interval on any single method is wider than the spread between methods (Section~\ref{sec:res-bench}).
 
-\section{Discharge-Curve Analysis}
+\section{DISCHARGE-CURVE ANALYSIS}
 
 Differential voltage analysis \cite{bloom2005} and incremental capacity analysis, including on-board use \cite{weng2013}, read degradation from the shape of the voltage--charge curve, and their features can be mapped to degradation modes \cite{dubarry2012,birkl2017}. Estimators using partial charging curves have also been reported \cite{tian2021}.
 
 The window estimator used here belongs to this curve-based family. It differs in four ways: it uses no cross-cell fitting, it applies an online resistance correction from the load step, it uses gates that refuse rather than extrapolate, and it is validated from raw telemetry rather than from laboratory summaries.
 
-\section{Remaining Useful Life Prognostics}
+\section{REMAINING USEFUL LIFE PROGNOSTICS}
 
 Remaining-useful-life methods and their uncertainty are reviewed by Hu \emph{et al.}\ \cite{hu2020}. Accuracy is often summarised as a single error figure over all predictions. This project reports RUL error indexed by the prediction a user actually sees, for example ``when the system predicts fewer than 25 cycles, how often did the cell last at least that long'', and records which routes to RUL failed (Sections~\ref{sec:res-rul} and~\ref{sec:res-sparse}).
 
-\section{Public Datasets Used}
+\section{PUBLIC DATASETS USED}
 
 Three public datasets are used, chosen because they differ in chemistry, format, temperature and protocol.
 
@@ -274,11 +276,11 @@ Three public datasets are used, chosen because they differ in chemistry, format,
     \item \textbf{Oxford Battery Degradation Dataset 1} \cite{howey2017oxford,birkl2017thesis}: eight Kokam pouch cells aged at 40~$^\circ$C with an Artemis urban drive-cycle discharge. Used for external validation.
 \end{itemize}
 
-\section{Telemetry Acquisition in Vehicles and on the Bench}
+\section{TELEMETRY ACQUISITION IN VEHICLES AND ON THE BENCH}
 
 In a vehicle, BMS data is carried on a CAN bus, and a DBC file describes how signals are packed into frames. A research dataset arrives as files, and a bench rig typically streams text over a serial port. Each source has its own failure modes: a CAN decode can silently miss a signal, a serial link can drop or corrupt bytes, and a research file can store a quantity with a different sign or scale. The review above does not address how these three sources are made to agree, and this project treats it as a design question (Chapter~\ref{ch:method}): one schema, one scoring function, and explicit refusals when a capture's shape is wrong.
 
-\section{Positioning of This Work}
+\section{POSITIONING OF THIS WORK}
 
 Table~\ref{tab:positioning} summarises the three families of approach in this review by the properties that matter for a deployed software layer. It is a statement about the families as categories and not about any individual cited study.
 
@@ -306,7 +308,7 @@ Table~\ref{tab:positioning} summarises the three families of approach in this re
 	\label{tab:positioning}
 \end{table}
 
-\section{Summary}
+\section{SUMMARY}
 
 The literature establishes the measurements, the curve-based family of methods, online resistance estimation and the importance of validation splits. What it leaves open, and what this project addresses, is a software layer that is validated from raw telemetry across protocols and datasets, that fits nothing across cells, and that returns a refusal instead of a number when its evidence is insufficient.
 
@@ -326,7 +328,7 @@ The objective is a software layer above a BMS that converts voltage, current and
     \item \textbf{Refuse what cannot be justified.} Every output is validated, banded by its measured error, or refused with a stated cause. A refusal is a correct outcome that the system knows, so it is returned as a value, rendered, and reflected in the process exit code.
 \end{enumerate}
 
-\subsection{RESEARCH VARIABLES}
+\subsection{Research Variables}
 
 \begin{itemize}
     \item \textbf{Independent variables:} the ohmic correction used (none, cycler resistance, resistance from the load step), the voltage window (fixed or learned), the reference size, the RUL threshold, and the dataset (CALCE, Oxford, NASA).
@@ -365,7 +367,7 @@ BEACON ingests telemetry from three transports, converges them on one schema, an
     \label{fig:framework}
 \end{figure}
 
-\subsection{ONE SCORING PATH, EXTRACTED RATHER THAN COPIED}
+\subsection{One Scoring Path, Extracted Rather Than Copied}
 
 The function \texttt{score\_telemetry\_frame} contains everything downstream of acquisition: segmentation, coulomb counting, features, risk, health, RUL, the Guardian explanation and the digital twin. It was extracted from the CAN pipeline when serial ingestion was added, instead of being copied. A second segmentation or feature extractor would mean that a disagreement between a CAN run and a serial run over the same battery could not be traced to either the data or the code. With the tail shared, a difference in output is a difference in the telemetry.
 
@@ -413,7 +415,7 @@ For a window $[V_\mathrm{low}, V_\mathrm{high}]$, the window charge $\Qw(n)$ is 
 \end{equation}
 and the reported value is the median of the latest five accepted readings. The primary window, 3.90--3.60~V, was fixed before any validation run. The windows 4.05--3.55 and 3.85--3.55~V are reported as sensitivity analyses and not selected between.
 
-Equation~\eqref{eq:soh} assumes the discharge curve scales approximately uniformly with capacity. Loss of lithium inventory shifts the curve, which the ratio partly absorbs. Loss of active material and resistance growth change its shape and position, which it does not. This is the method's principal approximation, and Section~\ref{sec:res-suff} measures how it drifts with age. Figure~\ref{fig:sohflow} summarises the estimator.
+Equation~\eqref{eq:soh} assumes the discharge curve scales approximately uniformly with capacity. Loss of lithium inventory shifts the curve, which the ratio partly absorbs. Loss of active material and resistance growth change its shape and position, which it does not. This is the method's principal approximation, and Section~\ref{sec:res-suff} measures how it drifts with age. Fig.~\ref{fig:sohflow} summarises the estimator.
 
 \begin{figure}[htbp]
     \centering
@@ -691,7 +693,7 @@ The three transports converge on one unified telemetry frame with the columns \t
     \item \textbf{Research datasets.} Loaders read the NASA MATLAB files and the CALCE and Oxford records into the same frame.
 \end{itemize}
 
-\subsection{THE SEAM IS NARROW}
+\subsection{The Seam Is Narrow}
 
 A serial source is a protocol with one method, \texttt{lines()}. A physical port, a recorded text file, a list in a test and the deterministic emulator are interchangeable, so the demo path and the hardware path differ in one constructor call. The emulator deliberately generates \emph{wire-format text} and not record objects. Emitting objects would have been less code but would have proved nothing, because the parser, the checksum, the schema validation and the coverage gate would all be bypassed in exactly the path the tests exercise. The emulator even prints an ESP32 boot banner, so the sentinel filter runs on every test. Recording composes at the same seam: one decorator makes a live port, a replay or the emulator recordable, and the file on disk is exactly the bytes that produced the result.
 
@@ -710,15 +712,15 @@ BEACON1 D {"t":12.5,"v":3.91,"i":-1.48,"tc":27.4,"soc":82.1}*06
     \label{fig:frame}
 \end{figure}
 
-\subsection{FRAMING BY SENTINEL}
+\subsection{Framing by Sentinel}
 
 Framing is by sentinel and not by length. Every microcontroller prints boot banners and debugging text, so a length-prefixed parser would resynchronise after such noise only by luck. A sentinel parser discards anything not beginning with \texttt{BEACON1} as counted noise and continues, which makes the protocol self-synchronising: it recovers at the next newline after any corruption, with a loss of at most one frame.
 
-\subsection{ERROR DETECTION}
+\subsection{Error Detection}
 
 The checksum is an 8-bit XOR over the body (a longitudinal redundancy check). It detects all single-bit errors, but it cannot detect an even number of bit errors in the same bit position, any reordering of bytes, or corruption of the sentinel and kind fields, which lie outside the body. Under a random-corruption model, 0.39\% of corrupted frames would pass. A CRC-8 occupies the same eight bits and detects all bursts up to eight bits and byte transpositions, so it is recorded as the protocol's clearest improvement. It was not adopted for the first bring-up because the XOR form is three lines of C and legible in a serial monitor.
 
-\subsection{CHANNEL UTILISATION}
+\subsection{Channel Utilisation}
 
 Table~\ref{tab:channel} gives the measured frame sizes and the derived link performance. At 1~Hz the link is over-provisioned by more than two orders of magnitude, so the verbose JSON codec is the default: it costs 39\% more bandwidth than the compact codec and buys human-legible frames during bring-up.
 
@@ -788,7 +790,7 @@ Two properties of this design are load-bearing. First, range checks \emph{reject
 \section{HARDWARE BENCH RIG}
 \label{sec:impl-hw}
 
-\subsection{REQUIREMENT AND DESIGN CALCULATIONS}
+\subsection{Requirement and Design Calculations}
 
 The rig must measure one lithium-ion cell during charge and discharge and supply the five schema channels (terminal voltage, signed current, temperature, state of charge and elapsed time). State of charge is derived, not measured. The binding accuracy requirement is on capacity, with an acceptance criterion of within 5\% of an independent reference.
 
@@ -818,7 +820,7 @@ Three consequences are recorded. Discharge must stay below 3.2~A with the 0.1~$\
 
 The error budget carries the component errors through to capacity. Combining the INA219 gain error (about 0.5\%), the shunt tolerance (1\%) and shunt self-heating (about 0.2\%) in quadrature gives about 1.14\% of reading, and because capacity is the integral of current, a gain error on current is a gain error on capacity. The expected capacity accuracy is about 1.2\%, dominated by the shunt tolerance, against the 5\% acceptance criterion. A 0.1\% shunt would roughly halve it. Offset and timing contribute negligibly. These are datasheet-based design figures, and measurement against a reference meter has not been done.
 
-\subsection{AS-BUILT RIG}
+\subsection{As-Built Rig}
 
 The rig that was physically brought up differs from the design document in two components, and that difference is stated here and not hidden (Table~\ref{tab:asbuilt}, Fig.~\ref{fig:rig}).
 
@@ -867,7 +869,7 @@ The rig that was physically brought up differs from the design document in two c
 
 Protection must be in hardware in series with the cell, never in the monitoring firmware, because a firmware hang must not leave the cell unprotected. The monitoring electronics are powered from USB, not from the cell. The design power budget is about 48~mA typical against 500~mA available from USB, and the firmware keeps the radios disabled, not to save power but because transmit current spikes can brown out a weakly supplied board, which would restart the time base.
 
-\subsection{FIRMWARE}
+\subsection{Firmware}
 
 The firmware is one board-agnostic Arduino sketch. The sensors sit behind four replaceable functions (\texttt{readVoltageV}, \texttt{readCurrentA}, \texttt{readTemperatureC} and \texttt{readSocPercent}), so a board with only some sensors can still run. At boot it probes each sensor, emits a status record naming what failed, and declares in its \texttt{HELLO} only the channels it can actually supply, together with the rated capacity. The host then scores the channels present and refuses the rest by name. The sketch compiles for three targets on every push (Table~\ref{tab:compile}), and a test compares its declared field set, as a set, against the schema.
 
@@ -891,7 +893,7 @@ The firmware is one board-agnostic Arduino sketch. The sensors sit behind four r
 	\label{tab:compile}
 \end{table}
 
-\subsection{BRING-UP PROCEDURE}
+\subsection{Bring-Up Procedure}
 
 Bring-up was done in two stages that must not be combined. Stage~A proves the transport with nothing at risk: no battery and no sensors. Stage~B adds one cell and the sensors, replacing the four read functions one at a time. Doing both at once would make a wiring fault and a protocol fault indistinguishable with a lithium cell connected. Stage~A passes when the accepted fraction is at least 0.99, a \texttt{HELLO} was seen, there are no time reversals, and the C-rate basis names the capacity the sketch declared, and when replaying the saved capture reproduces the live numbers.
 
@@ -1063,7 +1065,7 @@ Table~\ref{tab:field} compares three ohmic treatments at the primary window on 2
 	\label{tab:field}
 \end{table}
 
-The denominators differ because a correction can only be scored on cells for which it exists: one cell never rests before discharging, so no step resistance exists for it, which gives 17 of 21 cells for the field arm and 17 of 22 once that cell is counted as refused. The three worst cells (6.4--10.3\%) are all Type~3, whose discharge switches rate within a cycle. Every refusal carries a stated cause: four storage and partial-protocol cells delivered 80--155 equivalent full cycles before any constant-current discharge crossed the window, so the reference gate refused them, and one cell never rests before discharging. Figure~\ref{fig:track} tracks the estimate against every laboratory capacity test, and Fig.~\ref{fig:cells} shows every measured cell.
+The denominators differ because a correction can only be scored on cells for which it exists: one cell never rests before discharging, so no step resistance exists for it, which gives 17 of 21 cells for the field arm and 17 of 22 once that cell is counted as refused. The three worst cells (6.4--10.3\%) are all Type~3, whose discharge switches rate within a cycle. Every refusal carries a stated cause: four storage and partial-protocol cells delivered 80--155 equivalent full cycles before any constant-current discharge crossed the window, so the reference gate refused them, and one cell never rests before discharging. Fig.~\ref{fig:track} tracks the estimate against every laboratory capacity test, and Fig.~\ref{fig:cells} shows every measured cell.
 
 \begin{figure}[htbp]
     \centering
@@ -1142,7 +1144,7 @@ At threshold 0.90, referenced to each cell's first cycles (17 cells), Table~\ref
 	\label{tab:rul}
 \end{table}
 
-Scored against a reference capacity taken as the 95th percentile of the cell's whole record, the same estimator was within $\pm$20 cycles 88\% of the time near end of life. That reference uses the future, which no BMS can hold. Against the cell's own early capacity the figure is 73\%, and that is the figure reported. Figure~\ref{fig:rul} summarises the result.
+Scored against a reference capacity taken as the 95th percentile of the cell's whole record, the same estimator was within $\pm$20 cycles 88\% of the time near end of life. That reference uses the future, which no BMS can hold. Against the cell's own early capacity the figure is 73\%, and that is the figure reported. Fig.~\ref{fig:rul} summarises the result.
 
 \begin{figure}[htbp]
     \centering
@@ -1250,7 +1252,7 @@ For contrast, a gradient-boosted model on three window features, the setting whe
 \section{SYSTEM AND HARDWARE RESULTS}
 \label{sec:res-system}
 
-\subsection{BENCH RIG CAPTURES}
+\subsection{Bench Rig Captures}
 
 Three captures are committed (Table~\ref{tab:captures}). The first is a counter-example: a board with no sensors attached, whose synthetic profile still scores, and which is kept and labelled as such.
 
@@ -1276,18 +1278,18 @@ Three captures are committed (Table~\ref{tab:captures}). The first is a counter-
 
 In both real captures the cadence held at 1.000~s with no gaps and a monotonic time base. Every measured voltage is an exact multiple of the INA219's 4~mV bus LSB, which is what a genuine read from that part looks like and what a fabricated one would not. The sensor-complement declaration worked as designed: the firmware named the sensor that failed at boot, declared only the channels it could supply, and the host scored those and refused the rest by name. The first real board also exposed a baud-rate fault (the CH340 bridge accepts only 9600 and 19200 baud), which the refusal wording named as a cause and which led to the fix.
 
-\subsection{FAULT INJECTION}
+\subsection{Fault Injection}
 
 Faults injected into a real capture behaved as designed: a corrupted byte failed its checksum, a NaN field was rejected, a reversed timestamp refused the capture, and a missing sensor was refused by name. The injection also exposed one defect, since corrected: a 999~V reading passed the field range, which is wide so that packs are admissible. Records outside 0--5~V are now rejected when the source declares a single cell.
 
-\subsection{WHAT THE HARDWARE RESULT DOES AND DOES NOT SHOW}
+\subsection{What the Hardware Result Does and Does Not Show}
 
 The captures demonstrate that the transport, the protocol, the gate and the refusal path work against real silicon. They are one cell, at rest, for under 90~s, with no load step and no charge or discharge cycle. They are \emph{not} a validation of the health, RUL or risk models, which were fitted on cycled research cells and cannot be confirmed or refuted by a cell that was never cycled. Sensor accuracy against a reference meter was not measured, and no discharge has yet been recorded on the rig.
 
 \section{A WORKED EXAMPLE: THE REPORT CARD}
 \label{sec:res-card}
 
-Figure~\ref{fig:card} abridges the report card for CALCE cell CS2\_35 as it would have read at cycle 90. The pipeline saw voltage, current and time only.
+Fig.~\ref{fig:card} abridges the report card for CALCE cell CS2\_35 as it would have read at cycle 90. The pipeline saw voltage, current and time only.
 
 \begin{figure}[htbp]
     \centering

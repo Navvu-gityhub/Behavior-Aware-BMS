@@ -91,7 +91,7 @@ Table~\ref{tab:field} compares three ohmic treatments at the primary window on 2
 	\label{tab:field}
 \end{table}
 
-The denominators differ because a correction can only be scored on cells for which it exists: one cell never rests before discharging, so no step resistance exists for it, which gives 17 of 21 cells for the field arm and 17 of 22 once that cell is counted as refused. The three worst cells (6.4--10.3\%) are all Type~3, whose discharge switches rate within a cycle. Every refusal carries a stated cause: four storage and partial-protocol cells delivered 80--155 equivalent full cycles before any constant-current discharge crossed the window, so the reference gate refused them, and one cell never rests before discharging. Figure~\ref{fig:track} tracks the estimate against every laboratory capacity test, and Fig.~\ref{fig:cells} shows every measured cell.
+The denominators differ because a correction can only be scored on cells for which it exists: one cell never rests before discharging, so no step resistance exists for it, which gives 17 of 21 cells for the field arm and 17 of 22 once that cell is counted as refused. The three worst cells (6.4--10.3\%) are all Type~3, whose discharge switches rate within a cycle. Every refusal carries a stated cause: four storage and partial-protocol cells delivered 80--155 equivalent full cycles before any constant-current discharge crossed the window, so the reference gate refused them, and one cell never rests before discharging. Fig.~\ref{fig:track} tracks the estimate against every laboratory capacity test, and Fig.~\ref{fig:cells} shows every measured cell.
 
 \begin{figure}[htbp]
     \centering
@@ -170,7 +170,7 @@ At threshold 0.90, referenced to each cell's first cycles (17 cells), Table~\ref
 	\label{tab:rul}
 \end{table}
 
-Scored against a reference capacity taken as the 95th percentile of the cell's whole record, the same estimator was within $\pm$20 cycles 88\% of the time near end of life. That reference uses the future, which no BMS can hold. Against the cell's own early capacity the figure is 73\%, and that is the figure reported. Figure~\ref{fig:rul} summarises the result.
+Scored against a reference capacity taken as the 95th percentile of the cell's whole record, the same estimator was within $\pm$20 cycles 88\% of the time near end of life. That reference uses the future, which no BMS can hold. Against the cell's own early capacity the figure is 73\%, and that is the figure reported. Fig.~\ref{fig:rul} summarises the result.
 
 \begin{figure}[htbp]
     \centering
@@ -278,7 +278,7 @@ For contrast, a gradient-boosted model on three window features, the setting whe
 \section{SYSTEM AND HARDWARE RESULTS}
 \label{sec:res-system}
 
-\subsection{BENCH RIG CAPTURES}
+\subsection{Bench Rig Captures}
 
 Three captures are committed (Table~\ref{tab:captures}). The first is a counter-example: a board with no sensors attached, whose synthetic profile still scores, and which is kept and labelled as such.
 
@@ -304,18 +304,18 @@ Three captures are committed (Table~\ref{tab:captures}). The first is a counter-
 
 In both real captures the cadence held at 1.000~s with no gaps and a monotonic time base. Every measured voltage is an exact multiple of the INA219's 4~mV bus LSB, which is what a genuine read from that part looks like and what a fabricated one would not. The sensor-complement declaration worked as designed: the firmware named the sensor that failed at boot, declared only the channels it could supply, and the host scored those and refused the rest by name. The first real board also exposed a baud-rate fault (the CH340 bridge accepts only 9600 and 19200 baud), which the refusal wording named as a cause and which led to the fix.
 
-\subsection{FAULT INJECTION}
+\subsection{Fault Injection}
 
 Faults injected into a real capture behaved as designed: a corrupted byte failed its checksum, a NaN field was rejected, a reversed timestamp refused the capture, and a missing sensor was refused by name. The injection also exposed one defect, since corrected: a 999~V reading passed the field range, which is wide so that packs are admissible. Records outside 0--5~V are now rejected when the source declares a single cell.
 
-\subsection{WHAT THE HARDWARE RESULT DOES AND DOES NOT SHOW}
+\subsection{What the Hardware Result Does and Does Not Show}
 
 The captures demonstrate that the transport, the protocol, the gate and the refusal path work against real silicon. They are one cell, at rest, for under 90~s, with no load step and no charge or discharge cycle. They are \emph{not} a validation of the health, RUL or risk models, which were fitted on cycled research cells and cannot be confirmed or refuted by a cell that was never cycled. Sensor accuracy against a reference meter was not measured, and no discharge has yet been recorded on the rig.
 
 \section{A WORKED EXAMPLE: THE REPORT CARD}
 \label{sec:res-card}
 
-Figure~\ref{fig:card} abridges the report card for CALCE cell CS2\_35 as it would have read at cycle 90. The pipeline saw voltage, current and time only.
+Fig.~\ref{fig:card} abridges the report card for CALCE cell CS2\_35 as it would have read at cycle 90. The pipeline saw voltage, current and time only.
 
 \begin{figure}[htbp]
     \centering
