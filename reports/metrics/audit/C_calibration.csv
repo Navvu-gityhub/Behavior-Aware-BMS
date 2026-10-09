@@ -1,0 +1,5 @@
+dataset,points,median_u,median_error,share_within_2u,median_error_over_u
+M50T,1603,0.0008,0.0226,0.055,28.9
+CALCE,34195,0.0018,0.04,0.125,31.5
+NASA,1623,0.0082,0.0575,0.212,5.3
+Oxford,447,0.0022,0.0393,0.0,16.5

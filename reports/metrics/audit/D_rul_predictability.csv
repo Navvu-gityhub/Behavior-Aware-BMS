@@ -1,0 +1,6 @@
+dataset,cells,life_median,var_log_life_total,var_log_life_within,share_between_datasets,spearman_early_fade_vs_life
+ALL,46,164.0,3.168,0.897,0.72,
+CALCE,16,217.0,1.952,,,-0.02
+M50T,8,197.0,0.633,,,0.99
+NASA,12,36.0,0.184,,,0.76
+Oxford,8,2900.0,0.029,,,0.39
