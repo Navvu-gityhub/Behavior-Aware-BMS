@@ -40,9 +40,52 @@ from __future__ import annotations
 import math
 from dataclasses import dataclass, field
 
+import numpy as np
 import pandas as pd
 
 HIGH, MEDIUM, LOW = "HIGH", "MEDIUM", "LOW"
+
+# OUTSIDE THE VALIDATED CONDITIONS
+# --------------------------------
+# Consistency measures how much readings scatter, not how far they are from
+# the truth: in the audit, errors were 5-30x the consistency uncertainty and
+# only 0-21% of estimates lay within two of it (reports/metrics/audit/). Two
+# conditions are where large errors were MEASURED, and a reading taken in
+# either is reported LOW with the reason, whatever its consistency:
+#
+#   cold     - cell below COLD_BELOW_C during the discharges: NASA cells at
+#              4 C erred 11-14 points.
+#   mismatch - cell more than TEMPERATURE_MISMATCH_C away from its temperature
+#              when the reference was formed: NASA cells run at both 4 and
+#              22 C erred 25 points across the change vs 4.9 without it.
+#
+# This is a warning from evidence, not a fix: it changes no number. Whether
+# the thresholds hold on other cells is untested (docs/weaknesses_audit_and_plan.md).
+COLD_BELOW_C = 15.0
+TEMPERATURE_MISMATCH_C = 5.0
+
+
+def temperature_flag(reference_temps, recent_temps) -> str:
+    """Why a reading lies outside the validated conditions, or "" if it does not.
+
+    `reference_temps`: cell temperature of the discharges the reference was
+    formed from. `recent_temps`: of the discharges the reported value comes
+    from. Unknown temperatures give "": no channel, no claim either way.
+    """
+    def med(values) -> float:
+        arr = np.asarray(list(values), dtype=float)
+        arr = arr[np.isfinite(arr)]
+        return float(np.median(arr)) if len(arr) else float("nan")
+
+    ref, now = med(reference_temps), med(recent_temps)
+    reasons = []
+    if math.isfinite(now) and now < COLD_BELOW_C:
+        reasons.append(f"cell at {now:.0f} C, below {COLD_BELOW_C:.0f} C, where errors of 11-14 "
+                       f"points were measured (NASA cells at 4 C)")
+    if math.isfinite(now) and math.isfinite(ref) and abs(now - ref) > TEMPERATURE_MISMATCH_C:
+        reasons.append(f"cell at {now:.0f} C now but {ref:.0f} C when its reference was formed; "
+                       f"across such a change errors of about 25 points were measured")
+    return "; ".join(reasons)
 SUFFICIENT_DISCHARGES = 30
 
 
@@ -117,7 +160,7 @@ def evidence_from_result(result, rated_capacity_known: bool) -> Evidence:
                  else "this log's first discharges (the cell may not have been new)")
 
     outputs = [
-        _capacity_status(soh, bol),
+        _capacity_status(soh, bol, _condition_from_cycles(result.cycles, soh)),
         _resistance_status(soh),
         _rul_status(result.rul_estimate),
         OutputStatus(
@@ -143,13 +186,16 @@ def evidence_from_result(result, rated_capacity_known: bool) -> Evidence:
     )
 
 
-def _capacity_status(soh, bol: bool) -> OutputStatus:
+def _capacity_status(soh, bol: bool, condition: str = "") -> OutputStatus:
     name = "capacity health"
     if soh is None or not soh.available:
         return OutputStatus(name, False, reason=soh.refusal if soh is not None else "not computed")
+    if condition:
+        return OutputStatus(name, True, LOW, f"outside the validated conditions: {condition}")
     if not soh.consistent:
         u = soh.uncertainty
-        detail = f"+/-{u * 100:.1f} points" if math.isfinite(u) else "too few recent readings to judge"
+        detail = (f"readings scatter by {u * 100:.1f} points, which is a spread, not an error bound"
+                  if math.isfinite(u) else "too few recent readings to judge")
         return OutputStatus(name, True, LOW,
                             f"readings inconsistent ({detail}); in validation, error was "
                             f"about 4x larger in this state - keep observing")
@@ -159,6 +205,16 @@ def _capacity_status(soh, bol: bool) -> OutputStatus:
     if not bol:
         why.append("reference may not be the cell as new")
     return OutputStatus(name, True, HIGH if not why else MEDIUM, "; ".join(why))
+
+
+def _condition_from_cycles(cycles: pd.DataFrame, soh) -> str:
+    """temperature_flag from the run's discharge table (its avg_temp column)."""
+    if soh is None or not soh.available or cycles is None or cycles.empty \
+            or "avg_temp" not in cycles.columns or "cycle" not in cycles.columns:
+        return ""
+    c = cycles.sort_values("cycle")
+    upto = c[c["cycle"] <= soh.at_cycle] if soh.at_cycle is not None else c
+    return temperature_flag(c["avg_temp"].head(5), upto["avg_temp"].tail(5))
 
 
 def _resistance_status(soh) -> OutputStatus:

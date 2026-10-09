@@ -152,7 +152,7 @@ function renderDetail(p) {
     <div class="head"><span class="id">${esc(p.battery_id)}</span><span class="badge ${p.confidence}">${p.confidence} confidence</span></div>
     <div class="stats">
       <div class="stat"><div class="label">Capacity health</div><div class="value">${p.soh == null ? '—' : pct(p.soh)}</div>
-        <div class="sub">${p.soh == null ? '' : 'at discharge ' + p.at_discharge}${p.uncertainty == null ? '' : ' · ± ' + (p.uncertainty * 100).toFixed(1) + ' pts'}</div></div>
+        <div class="sub">${p.soh == null ? '' : 'at discharge ' + p.at_discharge}${p.validated_error_p90 == null ? '' : ' · validated ±' + (p.validated_error_p90 * 100).toFixed(1) + ' pts (90%)'}</div></div>
       <div class="stat"><div class="label">Resistance growth</div><div class="value">${growth}</div>
         <div class="sub">${p.resistance_now_ohm == null ? '' : (p.resistance_now_ohm * 1000).toFixed(1) + ' mΩ now'}</div></div>
       <div class="stat"><div class="label">Discharges remembered</div><div class="value">${p.discharges_remembered}</div>
@@ -161,6 +161,8 @@ function renderDetail(p) {
         <div class="sub">${temps.length ? 'measured, per discharge' : 'no temperature channel'}</div></div>
     </div>
     ${note}
+    <div class="note" style="font-size:11.5px;color:var(--text-dim)">The ± is how far readings like this were from the lab's capacity test in validation (90% of readings, CALCE lab cells) - a lower bound elsewhere.
+      ${p.uncertainty == null ? '' : 'Readings scatter by ' + (p.uncertainty * 100).toFixed(1) + ' pts about their trend; that is a spread, not an accuracy.'}</div>
     <div class="chart-block"><div class="chart-label"><span>Capacity health, each accepted discharge</span><span>relative to its first discharges</span></div>
       ${chart(p.readings, 'soh', css('--accent'), v => (v * 100).toFixed(0) + '%', true)}</div>
     <div class="chart-block"><div class="chart-label"><span>Resistance from the load step (trailing median)</span><span>mΩ</span></div>

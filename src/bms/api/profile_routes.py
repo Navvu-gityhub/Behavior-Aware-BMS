@@ -24,7 +24,8 @@ from pydantic import BaseModel
 
 from src.bms.api.paths import resolve_request_path
 from src.bms.health.battery_profile import BatteryProfile
-from src.bms.health.evidence import _capacity_status, _resistance_status
+from src.bms.health.error_bands import soh_band
+from src.bms.health.evidence import _capacity_status, _resistance_status, temperature_flag
 from src.bms.telemetry.pipeline import REST_THRESHOLD_A
 
 router = APIRouter()
@@ -104,7 +105,12 @@ class ProfileOut(BaseModel):
     confidence: str
     confidence_reason: str
     resistance_confidence: str
+    # How much the readings scatter about their own trend (consistency). A
+    # spread, not an accuracy: measured errors were 5-30x this.
     uncertainty: float | None
+    # How far readings like this were off in validation: 90% of readings within
+    # this many SOH (fraction) of the lab's capacity, on CALCE lab cells.
+    validated_error_p90: float | None
     resistance_reference_ohm: float | None
     resistance_now_ohm: float | None
     resistance_growth: float | None
@@ -119,18 +125,29 @@ def _num(v) -> float | None:
     return v if np.isfinite(v) else None
 
 
+def _capacity(result, readings: pd.DataFrame):
+    """Capacity confidence with the health card's rules, including the
+    validated-conditions check on the temperatures of the accepted readings
+    the reference and the reported value come from."""
+    condition = ""
+    if result.available:
+        acc = readings.dropna(subset=["soh"]).sort_values("cycle")
+        condition = temperature_flag(acc["temperature_c"].head(5), acc["temperature_c"].tail(5))
+    return _capacity_status(result, bol=False, condition=condition)
+
+
 @router.get("/batteries/{battery_id}/profile", response_model=ProfileOut, tags=["batteries"])
 def battery_profile(battery_id: str) -> ProfileOut:
     profile = get_profile(battery_id)
     if profile is None:
         raise HTTPException(status_code=404, detail=f"no telemetry has been seen for battery {battery_id!r}")
     result = profile.current()
+    rd = profile.readings()
     # The same rules as the health card (health/evidence.py). The reference is
     # the first discharges this service saw, not necessarily the cell as new,
     # so capacity confidence is at most MEDIUM until a BOL reference exists.
-    cap = _capacity_status(result, bol=False)
+    cap = _capacity(result, rd)
     res = _resistance_status(result)
-    rd = profile.readings()
     at = int(result.at_cycle) if result.at_cycle is not None else None
     since = profile.n_discharges - at if at is not None else None
     later = ""
@@ -149,6 +166,8 @@ def battery_profile(battery_id: str) -> ProfileOut:
         at_discharge=at, discharges_since_reading=since, later_refusal=later,
         confidence=cap.confidence or "NONE", confidence_reason=cap.reason,
         resistance_confidence=res.confidence or "NONE", uncertainty=_num(result.uncertainty),
+        validated_error_p90=soh_band(result.window_mode, consistent=result.consistent
+                                     or not np.isfinite(result.uncertainty)) if result.available else None,
         resistance_reference_ohm=_num(result.resistance_reference_ohm),
         resistance_now_ohm=_num(result.resistance_now_ohm),
         resistance_growth=_num(result.resistance_growth), readings=readings)
@@ -179,7 +198,7 @@ def list_profiles() -> list[ProfileSummaryOut]:
         if profile is None:
             continue
         result = profile.current()
-        cap = _capacity_status(result, bol=False)
+        cap = _capacity(result, profile.readings())
         out.append(ProfileSummaryOut(battery_id=battery_id, discharges_remembered=profile.n_discharges,
                                      soh=_num(result.soh), confidence=cap.confidence or "NONE",
                                      refusal=result.refusal))
