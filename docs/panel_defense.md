@@ -80,14 +80,13 @@ Everything the running system shows is calculation- or rule-derived. SOH is a ra
 All reproducible from the repo; see `docs/validation_matrix.md`.
 
 **12. Limitations?**
-- Single cells only; no packs.
-- Two cathode families (LCO, NMC/LCO blend); no LFP.
-- One real drive-cycle discharge only; the rest is constant current.
-- RUL is only useful near end of life; at 80% it is a conservative bound with low precision.
+- **Cold:** NASA cells at 4 °C erred 11–14 points. Part of that (25 vs 4.9 points) came from comparing readings across a temperature change; cells held at 4 °C still erred 11–12. BEACON now labels such readings LOW, with the reason, but that is a warning, not a fix.
+- **Confidence measures scatter, not accuracy:** errors were 5–30× the consistency figure. A steady bias (+2.3% on the LG 21700 cells) is invisible to it. A two-window check failed its deciding test.
+- **Early remaining life is refused:** two pre-registered attempts failed. 72% of lifetime variation is between datasets.
+- Single cells only; no packs, no LFP.
+- One real drive-cycle discharge; the rest is constant current.
 - The rig has never measured a discharge.
 - Partial-discharge SOH rests on 2 cells per band.
-- RUL for partial-only logs is refused (four methods tested, none accurate enough).
-- API persistence is opt-in (`BEACON_STATE_FILE`); the default is in memory.
 
 **13. Why lithium-ion?**
 It is the chemistry used in EVs and the one the public ageing datasets (NASA, CALCE) cover.
@@ -1809,10 +1808,15 @@ SOH from voltage, current and time only: 1.7% median error on 17 real cells, tra
 Partial-discharge SOH: real, but only 2 cells per band. And the hardware, which has never measured a discharge.
 
 **528. Biggest limitation?**
-Single cells of one chemistry, at constant current. Nothing on packs, other chemistries or real drive cycles.
+Cold-temperature accuracy. Around 4 °C the estimate erred 11–14 points, and the confidence label measures scatter, so it cannot see a steady error. BEACON now flags cold and temperature-changed readings as LOW with the reason, but a real fix needs fresh cold data, which we have not yet tested on.
 
 **529. With six more months, what first?**
-A bench discharge series on the rig: measure capacity and resistance repeatedly on one cell, then compare the field SOH against a direct capacity measurement on our own hardware.
+In order:
+1. A fresh cold test (KIT 0/10 °C cells, Michigan −5 °C cells, or our rig in a cold chamber), with acceptance criteria written before the data is opened.
+2. Error bands calibrated from measured errors per condition, replacing scatter.
+3. Comparing readings only with reference discharges at a similar temperature.
+4. Remaining life from sibling cells of the same type, reported as a conservative "at least X cycles" bound.
+5. A bench discharge series on the rig.
 
 **530. Which experiment would most improve confidence?**
 Same as 529, then a second chemistry (LFP), where the flat voltage plateau is a real test of the window method.

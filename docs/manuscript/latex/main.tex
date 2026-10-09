@@ -713,6 +713,35 @@ Oxford and 1.2\% within CALCE, but 6.7\% when moved from Oxford to NASA and
 5.5\% from CALCE to Oxford. Validation inside one dataset overstated
 transferable accuracy four- to tenfold.
 
+\subsection{A fourth dataset, held out: LG M50T 21700 cells}
+\label{sec:res-m50t}
+
+The dataset, cell subset, arms and acceptance criteria were committed before any
+of the data was read. Eight LG M50T cells (NMC811 / graphite-SiO$_x$, 5~Ah,
+21700) aged with 1C discharges on cooling plates at 10, 25 and
+40~$^\circ$C \citep{kirkaldy2024}. The plate is not the cell: self-heating
+held the cells at about 23, 32 and 46~$^\circ$C during discharge, and none
+below about 14~$^\circ$C. This is therefore not a cold test.
+
+The first run did not measure. In 556 of 570 discharges the cycler went straight
+from the constant-voltage charge tail (about 50~mA) to the 5~A load, with no rest.
+Most of the few steps found were logger artefacts (0.3~m$\Omega$ against a real
+27.7~m$\Omega$). That run is kept as invalid. Two changes followed, both from
+physics rather than from results:
+\begin{itemize}
+\item a step counts when the preceding current is at most 5\% of the load step,
+because $R = \Delta V/\Delta I$ needs a change in current, not a rest;
+\item a step below a quarter of the median of the cell's first five accepted
+steps is dropped as implausible.
+\end{itemize}
+Neither changed any CALCE validation figure.
+
+The rerun, with criteria unchanged, measured all eight cells, with step
+resistance 28--35~m$\Omega$. The shipped estimator, untouched, erred 2.8\% on
+the cells at about 32~$^\circ$C and 2.3\% at about 46~$^\circ$C. The error is a
+steady bias: on one cell the estimate read high by a median 2.3 points over 259
+full discharges. The anchored correction gave no benefit and is not used.
+
 \subsection{System integration and refusals}
 \label{sec:res-system}
 
@@ -777,7 +806,14 @@ because every estimate is relative to the cell's own first discharges.
 
 \begin{itemize}
 \item \emph{Temperature.} On NASA cells at 4 and 22~$^\circ$C the estimator
-erred by 12--14\%; its low-confidence label marked most of these readings. A
+erred by 12--14\%. An audit separates two causes. The cells labelled 22~$^\circ$C
+ran at both 4 and 22~$^\circ$C: readings at a different temperature from the
+reference erred by 25 points, against 4.9 at the same temperature. Cells
+held at 4~$^\circ$C throughout still erred 11--12 points. Truth labels were
+ruled out: scoring against charge integrated from each cell's own current gave
+the same error. BEACON now reports a reading as low confidence, with the
+reason, when the cell is below 15~$^\circ$C or more than 5~$^\circ$C from its
+reference temperature. These thresholds come from these cells only. A
 correction anchoring the total overpotential to each cell's own early
 discharge, with criteria fixed in advance, reduced the cold-cohort error to
 9.7\% and the Oxford error from 3.0\% to 0.9\%, but raised CALCE from 1.7\% to
@@ -788,10 +824,22 @@ cell-to-cell imbalance, thermal gradients and balancing currents. Dynamic drive
 cycles would challenge both the window read and the step-resistance estimate.
 The flat plateau of lithium iron phosphate would challenge the window method
 directly.
+\item \emph{Confidence measures scatter, not accuracy.} The consistency
+uncertainty predicts which readings err more, but it is not an error bound. Across
+the four datasets, errors were typically 5--30 times larger, and only 0--21\% of
+estimates fell within twice its value. A steady bias, such as the 2.3-point
+offset on the M50T cells, produces no scatter and is invisible to it. A check
+comparing two voltage windows separated errors on three datasets but failed its
+deciding test on M50T, catching 7\% of errors over 3 points, and is not used.
+Reported error bands are therefore the empirical ones from validation, a lower
+bound outside the validated conditions.
+\item \emph{Early remaining life.} Two pre-registered attempts to predict
+remaining life early, from fade rates learned on other datasets, failed. 72\% of
+the variance in log life lies between datasets, so a population prior mostly
+encodes the laboratory and protocol. Within one cell type, early fade did
+correlate with life (Spearman 0.76--0.99 on NASA and M50T). BEACON refuses early
+RUL.
 \item \emph{Two cells per partial-cycling band.}
-\item \emph{No temperature correction}, since CALCE cycling carries no
-temperature channel. A cold cell would read low SOH and high resistance without
-having aged.
 \item \emph{End of life:} validated at 90\% on CALCE; at 80\% on Oxford only
 as a conservative bound, with low precision.
 \item \emph{Apparent resistance.} $R_\mathrm{step}$ depends on the logger's
@@ -799,6 +847,31 @@ sample interval; it is comparable within a record, not across loggers.
 \item \emph{Drift with age.} Window charge does not scale exactly with capacity,
 and error grows over life.
 \item \emph{No hardware discharge} has yet been recorded on the bench rig.
+\end{itemize}
+
+%% ===========================================================================
+\section{Future work}
+\label{sec:future}
+
+Each item is stated with the test it must pass, fixed before its data is read.
+\begin{itemize}
+\item \emph{Cold validation.} The temperature thresholds above, and an empirically
+calibrated error band per condition, need cells that discharge below
+10~$^\circ$C and were not used here. Candidates are the KIT LG HG2 study at 0,
+10, 25 and 40~$^\circ$C \citep{luh2024}, the Michigan pouch cells at
+$-5$~$^\circ$C, and the bench rig in a cold chamber. Acceptance for the band: 90\%
+nominal coverage within 0.80--0.97 overall and at least 0.75 in the cold.
+\item \emph{Temperature-matched reference.} Compare each reading only with
+reference discharges within 5~$^\circ$C of it, and refuse otherwise. This
+targets the 25-point cross-temperature error. It is confirmed on three cells
+only.
+\item \emph{Location of capacity loss.} The M50T bias is consistent with capacity
+lost at the low-voltage end, outside the window. A lower window would test this.
+\item \emph{Remaining life from sibling cells.} Within one cell type and protocol,
+learn early fade to life by leave-one-cell-out. Report a conservative lower bound
+(``at least $X$ cycles with 90\% probability'') judged by one-sided coverage,
+rather than a point estimate. Test whether equivalent full cycles reduce the
+between-dataset share of variance.
 \end{itemize}
 
 %% ===========================================================================
@@ -817,6 +890,8 @@ physical rule that refuses the knee;
 \item unchanged, 3.0\% on all eight cells of an independent NMC/LCO dataset at
 40~$^\circ$C, and a drive-cycle discharge read within 1.4\% of a
 constant-current one;
+\item unchanged, 2.3--2.8\% on eight held-out LG M50T 21700 cells at cell
+temperatures of 32--46~$^\circ$C;
 \item a remaining-life estimate that, near end of life, behaves as a safe lower
 bound.
 \end{itemize}
@@ -872,6 +947,8 @@ Section & Artifact (\texttt{reports/metrics/}) & Script (\texttt{scripts/}) \\
 \ref{sec:res-sparse} & \texttt{calce\_field\_rul/} & \texttt{run\_field\_rul\_study.py} \\
 \ref{sec:res-suff} & \texttt{calce\_sufficiency/} & \texttt{run\_sufficiency\_study.py} \\
 \ref{sec:res-xds} & \texttt{cross\_dataset/} & \texttt{run\_cross\_dataset\_study.py} \
+\ref{sec:res-m50t} & \texttt{m50t\_heldout/} & \texttt{run\_m50t\_heldout\_study.py} \\
+\ref{sec:limits} & \texttt{audit/}, \texttt{window\_agreement/} & \texttt{audit\_weaknesses.py}, \texttt{run\_window\_agreement\_study.py} \\
 \ref{sec:res-oxford} & \texttt{oxford/} & \texttt{run\_oxford\_study.py}, \texttt{run\_oxford\_drive\_cycle.py} \\
 Figs.~\ref{fig:track}--\ref{fig:rul} & \texttt{reports/figures/results\_*.png} & \texttt{export\_results.py} \\
 \bottomrule
