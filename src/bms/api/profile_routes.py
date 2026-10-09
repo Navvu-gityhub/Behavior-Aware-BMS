@@ -19,8 +19,10 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 from fastapi import APIRouter, HTTPException
+from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
+from src.bms.api.paths import resolve_request_path
 from src.bms.health.battery_profile import BatteryProfile
 from src.bms.health.evidence import _capacity_status, _resistance_status
 from src.bms.telemetry.pipeline import REST_THRESHOLD_A
@@ -83,6 +85,7 @@ class ReadingOut(BaseModel):
     discharge: int
     soh: float | None
     resistance_ohm: float | None
+    resistance_trailing_ohm: float | None
     mean_current_a: float | None
     temperature_c: float | None
 
@@ -93,6 +96,11 @@ class ProfileOut(BaseModel):
     telemetry_pieces: int
     soh: float | None
     refusal: str
+    # The discharge the reported health comes from, and how many discharges
+    # since then could not be measured: a reading is only as current as this.
+    at_discharge: int | None
+    discharges_since_reading: int | None
+    later_refusal: str
     confidence: str
     confidence_reason: str
     resistance_confidence: str
@@ -122,14 +130,98 @@ def battery_profile(battery_id: str) -> ProfileOut:
     # so capacity confidence is at most MEDIUM until a BOL reference exists.
     cap = _capacity_status(result, bol=False)
     res = _resistance_status(result)
+    rd = profile.readings()
+    at = int(result.at_cycle) if result.at_cycle is not None else None
+    since = profile.n_discharges - at if at is not None else None
+    later = ""
+    if since:
+        tail = profile.table()
+        tail = tail[(tail["cycle"] > at) & tail["refusal"].astype(bool)] if not tail.empty else tail
+        later = str(tail["refusal"].mode().iloc[0]) if len(tail) else (
+            "later discharges did not cross the measurement window")
     readings = [ReadingOut(discharge=int(r["cycle"]), soh=_num(r["soh"]), resistance_ohm=_num(r["r_step_ohm"]),
+                           resistance_trailing_ohm=_num(r["r_trailing_ohm"]),
                            mean_current_a=_num(r["mean_current_a"]), temperature_c=_num(r["temperature_c"]))
-                for r in profile.readings().to_dict("records")]
+                for r in rd.to_dict("records")]
     return ProfileOut(
         battery_id=battery_id, discharges_remembered=profile.n_discharges,
         telemetry_pieces=len(profile.sources), soh=_num(result.soh), refusal=result.refusal,
+        at_discharge=at, discharges_since_reading=since, later_refusal=later,
         confidence=cap.confidence or "NONE", confidence_reason=cap.reason,
         resistance_confidence=res.confidence or "NONE", uncertainty=_num(result.uncertainty),
         resistance_reference_ohm=_num(result.resistance_reference_ohm),
         resistance_now_ohm=_num(result.resistance_now_ohm),
         resistance_growth=_num(result.resistance_growth), readings=readings)
+
+
+class ProfileSummaryOut(BaseModel):
+    battery_id: str
+    discharges_remembered: int
+    soh: float | None
+    confidence: str
+    refusal: str
+
+
+def _known_ids() -> list[str]:
+    ids = set(_profiles)
+    d = _profile_dir()
+    if d is not None and d.exists():
+        ids |= {f.stem for f in d.glob("*.json") if _SAFE_ID.match(f.stem)}
+    return sorted(ids)
+
+
+@router.get("/profiles", response_model=list[ProfileSummaryOut], tags=["batteries"])
+def list_profiles() -> list[ProfileSummaryOut]:
+    """Every battery with a memory, in memory or persisted."""
+    out = []
+    for battery_id in _known_ids():
+        profile = get_profile(battery_id)
+        if profile is None:
+            continue
+        result = profile.current()
+        cap = _capacity_status(result, bol=False)
+        out.append(ProfileSummaryOut(battery_id=battery_id, discharges_remembered=profile.n_discharges,
+                                     soh=_num(result.soh), confidence=cap.confidence or "NONE",
+                                     refusal=result.refusal))
+    return out
+
+
+class IngestRequest(BaseModel):
+    csv_path: str
+
+
+class IngestOut(BaseModel):
+    battery_id: str
+    discharges_added: int
+    discharges_remembered: int
+
+
+@router.post("/profiles/{battery_id}/ingest", response_model=IngestOut, tags=["batteries"])
+def ingest_log(battery_id: str, request: IngestRequest) -> IngestOut:
+    """Teach a battery's memory from a CSV log: test_time_s, current_a, voltage_v
+    (discharge current negative), optionally temperature_c. The route for real
+    logs that arrive as files rather than over CAN or serial."""
+    if not _SAFE_ID.match(battery_id):
+        raise HTTPException(status_code=422, detail="battery_id must be 1-64 of A-Z a-z 0-9 _ . -")
+    path = resolve_request_path(request.csv_path, "csv_path")
+    if not path.exists():
+        raise HTTPException(status_code=404, detail=f"log not found: {path}")
+    try:
+        tel = pd.read_csv(path)
+    except (OSError, ValueError) as exc:
+        raise HTTPException(status_code=422, detail=f"could not read {path.name} as CSV: {exc}") from exc
+    missing = {"test_time_s", "current_a", "voltage_v"} - set(tel.columns)
+    if missing:
+        raise HTTPException(status_code=422, detail=f"log is missing columns {sorted(missing)}")
+    added = remember(battery_id, tel)
+    return IngestOut(battery_id=battery_id, discharges_added=added,
+                     discharges_remembered=get_profile(battery_id).n_discharges)
+
+
+_MEMORY_PAGE = Path(__file__).resolve().parents[1] / "dashboard" / "memory_dashboard.html"
+
+
+@router.get("/memory", include_in_schema=False)
+def memory_dashboard() -> FileResponse:
+    """Each battery's memory: health, resistance, confidence and conditions."""
+    return FileResponse(_MEMORY_PAGE)

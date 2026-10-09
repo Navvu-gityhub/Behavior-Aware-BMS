@@ -78,3 +78,42 @@ def test_a_serial_run_teaches_the_profile(client):
                     json={"battery_id": "RIG_P", "n_cycles": 2, "sample_period_s": 120.0})
     assert r.status_code == 200
     assert client.get("/batteries/RIG_P/profile").status_code == 200
+
+
+def test_profiles_are_listed(client):
+    tel, _ = _cell(n_cycles=12)
+    remember("LISTED", tel)
+    rows = client.get("/profiles").json()
+    assert [r["battery_id"] for r in rows] == ["LISTED"]
+    assert rows[0]["discharges_remembered"] == 12
+
+
+def test_a_csv_log_can_be_ingested(client, tmp_path):
+    tel, _ = _cell(n_cycles=12)
+    path = tmp_path / "log.csv"
+    tel[["test_time_s", "current_a", "voltage_v"]].to_csv(path, index=False)
+    r = client.post("/profiles/CSV1/ingest", json={"csv_path": str(path)})
+    assert r.status_code == 200, r.text
+    assert r.json()["discharges_added"] == 12
+
+
+def test_a_csv_without_voltage_is_rejected(client, tmp_path):
+    path = tmp_path / "bad.csv"
+    path.write_text("test_time_s,current_a\n0,0\n", encoding="utf-8")
+    r = client.post("/profiles/CSV2/ingest", json={"csv_path": str(path)})
+    assert r.status_code == 422
+    assert "voltage_v" in r.json()["detail"]
+
+
+def test_the_reading_says_which_discharge_it_is_from(client):
+    tel, _ = _cell(n_cycles=20)
+    remember("AGE", tel)
+    body = client.get("/batteries/AGE/profile").json()
+    assert body["at_discharge"] == 20
+    assert body["discharges_since_reading"] == 0
+
+
+def test_the_memory_page_is_served(client):
+    r = client.get("/memory")
+    assert r.status_code == 200
+    assert "Battery Memory" in r.text

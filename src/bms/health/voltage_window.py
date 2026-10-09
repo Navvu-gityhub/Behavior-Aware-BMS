@@ -398,8 +398,9 @@ def soh_table_from_charges(
     ).fillna(False)
     table["refusal"] = ""
     table.loc[table["partial_discharge"], "refusal"] = (
-        f"cycle delivered under {MIN_DISCHARGE_FRACTION:.0%} of the reference "
-        f"discharge; a truncated cycle is not a faded cell"
+        f"discharge delivered under {MIN_DISCHARGE_FRACTION:.0%} of the reference "
+        f"charge: either it was cut short or the cell has lost more than half its "
+        f"capacity, and the window cannot tell which"
     )
     table.loc[table["implausible"], "refusal"] = (
         f"window ratio below {MIN_PLAUSIBLE_SOH}; a cell at that charge would "

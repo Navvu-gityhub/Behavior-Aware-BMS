@@ -322,7 +322,8 @@ def test_a_truncated_cycle_is_refused_as_partial_not_as_fade():
     assert np.isnan(last["soh_window"]), (
         "a truncated cycle must yield no state of health at all"
     )
-    assert "truncated cycle is not a faded cell" in last["refusal"]
+    # It must not be reported as fade; the reason names both readings of it.
+    assert "cut short" in last["refusal"] and "cannot tell" in last["refusal"]
 
 
 def test_real_fade_above_the_floor_is_still_measured():

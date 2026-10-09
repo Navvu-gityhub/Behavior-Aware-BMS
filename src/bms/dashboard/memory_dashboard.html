@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BEACON — Battery Memory</title>
+<style>
+  :root {
+    --bg: #10131A; --panel: #171B23; --panel-2: #1D222C; --border: #262C38;
+    --text: #E7EAEE; --text-dim: #8B93A1; --text-faint: #5B6270;
+    --accent: #4FD8C4; --accent-dim: rgba(79, 216, 196, 0.14);
+    --high: #33D17A; --medium: #F0B429; --low: #F2823C; --none: #5B6270; --refuse: #F0463C;
+    --res: #5B9DF0; --temp: #F2823C;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    --mono: ui-monospace, "SF Mono", "Cascadia Code", "Roboto Mono", Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--sans); -webkit-font-smoothing: antialiased; }
+  header { display: flex; align-items: center; justify-content: space-between; padding: 18px 28px; border-bottom: 1px solid var(--border); flex-wrap: wrap; gap: 12px; }
+  .brand h1 { font-size: 18px; margin: 0; font-weight: 700; }
+  .brand .tagline { color: var(--text-faint); font-size: 12px; font-family: var(--mono); margin-top: 2px; }
+  .links { font-family: var(--mono); font-size: 12px; }
+  .links a { color: var(--accent); margin-left: 14px; }
+  button { font-family: var(--sans); font-size: 12px; font-weight: 600; background: var(--accent-dim); color: var(--accent);
+           border: 1px solid rgba(79,216,196,0.35); border-radius: 6px; padding: 7px 12px; cursor: pointer; }
+  button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  main { display: grid; grid-template-columns: minmax(280px, 360px) 1fr; gap: 16px; padding: 16px 28px 28px; align-items: start; }
+  @media (max-width: 860px) { main { grid-template-columns: 1fr; padding: 16px; } header { padding: 16px; } }
+  .panel { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+  .panel-title { font-family: var(--mono); font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-faint);
+                 padding: 12px 16px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { text-align: left; font-family: var(--mono); font-size: 10.5px; color: var(--text-faint); text-transform: uppercase; padding: 8px 12px; font-weight: 500; }
+  td { padding: 9px 12px; border-top: 1px solid var(--border); }
+  tbody tr { cursor: pointer; } tbody tr:hover { background: var(--panel-2); } tbody tr.selected { background: var(--accent-dim); }
+  .mono { font-family: var(--mono); }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-family: var(--mono); font-weight: 700; white-space: nowrap; }
+  .badge.HIGH { color: var(--high); background: rgba(51,209,122,0.13); }
+  .badge.MEDIUM { color: var(--medium); background: rgba(240,180,41,0.13); }
+  .badge.LOW { color: var(--low); background: rgba(242,130,60,0.13); }
+  .badge.NONE { color: var(--text-dim); background: var(--panel-2); }
+  .empty { padding: 40px 20px; text-align: center; color: var(--text-dim); font-size: 13px; line-height: 1.6; }
+  .empty code { font-family: var(--mono); color: var(--text); background: var(--panel-2); padding: 1px 5px; border-radius: 3px; }
+  .head { padding: 16px 18px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+  .head .id { font-family: var(--mono); font-size: 15px; font-weight: 700; }
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 1px; background: var(--border); border-bottom: 1px solid var(--border); }
+  .stat { background: var(--panel); padding: 12px 18px; }
+  .stat .label { font-family: var(--mono); font-size: 10px; text-transform: uppercase; color: var(--text-faint); letter-spacing: 0.05em; }
+  .stat .value { font-size: 20px; font-weight: 700; font-family: var(--mono); margin-top: 3px; font-variant-numeric: tabular-nums; }
+  .stat .sub { font-size: 11px; color: var(--text-dim); margin-top: 2px; }
+  .note { margin: 14px 18px; padding: 10px 12px; border-radius: 4px; font-size: 12.5px; line-height: 1.55; background: var(--panel-2); border-left: 2px solid var(--accent); }
+  .note.refuse { border-left-color: var(--refuse); }
+  .chart-block { padding: 6px 18px 14px; }
+  .chart-label { font-family: var(--mono); font-size: 11px; color: var(--text-dim); display: flex; justify-content: space-between; padding: 8px 0 4px; }
+  svg.chart { width: 100%; height: 150px; display: block; }
+  .axis { fill: var(--text-faint); font-family: var(--mono); font-size: 10px; }
+  .grid { stroke: var(--border); stroke-width: 1; }
+  .legend { display: flex; gap: 14px; font-family: var(--mono); font-size: 10.5px; color: var(--text-dim); padding: 0 18px 10px; flex-wrap: wrap; }
+  .legend span::before { content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 5px; vertical-align: middle; background: var(--c); }
+  footer { padding: 16px 28px 28px; font-size: 11.5px; color: var(--text-faint); font-family: var(--mono); border-top: 1px solid var(--border); line-height: 1.7; }
+  .toast { position: fixed; bottom: 20px; right: 20px; background: var(--panel); border: 1px solid var(--refuse); color: var(--refuse);
+           padding: 12px 16px; border-radius: 8px; font-size: 13px; max-width: 340px; display: none; font-family: var(--mono); }
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">
+    <h1>BEACON — Battery Memory</h1>
+    <div class="tagline">each battery's own record, measured from voltage, current and time</div>
+  </div>
+  <div class="links"><button id="refresh">Refresh</button><a href="/dashboard">fleet</a><a href="/docs">API</a></div>
+</header>
+
+<main>
+  <div class="panel">
+    <div class="panel-title"><span>Batteries with a memory</span></div>
+    <div id="list"><div class="empty">Loading…</div></div>
+  </div>
+  <div class="panel">
+    <div class="panel-title"><span>Battery</span></div>
+    <div id="detail"><div class="empty">Select a battery.</div></div>
+  </div>
+</main>
+
+<footer>
+  Capacity health is the shipped voltage-window estimator, unchanged across datasets: 1.7% median error on CALCE LCO cells,
+  3.0% on Oxford NMC/LCO pouch cells at 40 °C, 2.3–2.8% on LG M50T 21700 cells at 32–46 °C. It is weak on cold cells
+  (NASA, 4 °C: 12–14%), and confidence does not always flag that. The reference is the first discharges this service saw,
+  not necessarily the cell as new, so confidence is at most MEDIUM. Early remaining life is refused: two tested attempts failed.
+  See docs/validation_matrix.md.
+</footer>
+<div class="toast" id="toast"></div>
+
+<script>
+const CONF = { HIGH: '--high', MEDIUM: '--medium', LOW: '--low', NONE: '--none' };
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+let selected = null;
+
+async function getJSON(url) {
+  const r = await fetch(url);
+  if (!r.ok) { let d = r.statusText; try { d = (await r.json()).detail || d; } catch (e) {} throw new Error(`${r.status}: ${d}`); }
+  return r.json();
+}
+function toast(m) { const t = document.getElementById('toast'); t.textContent = m; t.style.display = 'block';
+  clearTimeout(toast.h); toast.h = setTimeout(() => t.style.display = 'none', 5000); }
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const pct = v => v == null ? '—' : (v * 100).toFixed(1) + '%';
+
+function chart(points, key, color, fmt, dots) {
+  const pts = points.filter(p => p[key] != null);
+  if (pts.length < 2) return '<div class="empty" style="padding:14px">not enough readings</div>';
+  const W = 640, H = 150, L = 46, R = 8, T = 8, B = 20;
+  const xs = pts.map(p => p.discharge), ys = pts.map(p => p[key]);
+  const x0 = Math.min(...xs), x1 = Math.max(...xs);
+  let y0 = Math.min(...ys), y1 = Math.max(...ys); const pad = (y1 - y0) * 0.08 || Math.abs(y1) * 0.05 || 1; y0 -= pad; y1 += pad;
+  const X = x => L + (x - x0) / Math.max(x1 - x0, 1) * (W - L - R);
+  const Y = y => T + (1 - (y - y0) / (y1 - y0)) * (H - T - B);
+  const grid = [0, 0.5, 1].map(f => { const v = y0 + f * (y1 - y0);
+    return `<line class="grid" x1="${L}" x2="${W - R}" y1="${Y(v)}" y2="${Y(v)}"/><text class="axis" x="${L - 6}" y="${Y(v) + 3}" text-anchor="end">${fmt(v)}</text>`; }).join('');
+  const xlab = `<text class="axis" x="${L}" y="${H - 4}">discharge ${x0}</text><text class="axis" x="${W - R}" y="${H - 4}" text-anchor="end">${x1}</text>`;
+  const marks = dots
+    ? pts.map(p => `<circle cx="${X(p.discharge).toFixed(1)}" cy="${Y(p[key]).toFixed(1)}" r="2" fill="${color}" fill-opacity="0.75"><title>discharge ${p.discharge}: ${fmt(p[key])}</title></circle>`).join('')
+    : `<path d="${pts.map((p, i) => `${i ? 'L' : 'M'}${X(p.discharge).toFixed(1)} ${Y(p[key]).toFixed(1)}`).join(' ')}" fill="none" stroke="${color}" stroke-width="2"/>`;
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img" aria-label="${key} by discharge">${grid}${xlab}${marks}</svg>`;
+}
+
+function renderList(rows) {
+  const el = document.getElementById('list');
+  if (!rows.length) {
+    el.innerHTML = `<div class="empty">No battery has a memory yet.<br>Run a telemetry capture, or load the demo:<br><code>python scripts/demo_battery_memory.py</code></div>`;
+    return;
+  }
+  el.innerHTML = `<table><thead><tr><th>Battery</th><th>Health</th><th>Confidence</th><th>Discharges</th></tr></thead><tbody>${
+    rows.map(r => `<tr data-id="${esc(r.battery_id)}" class="${r.battery_id === selected ? 'selected' : ''}">
+      <td class="mono">${esc(r.battery_id)}</td><td class="mono">${r.soh == null ? 'refused' : pct(r.soh)}</td>
+      <td><span class="badge ${r.confidence}">${r.confidence}</span></td><td class="mono">${r.discharges_remembered}</td></tr>`).join('')
+  }</tbody></table>`;
+  el.querySelectorAll('tbody tr').forEach(tr => tr.addEventListener('click', () => select(tr.dataset.id)));
+}
+
+function renderDetail(p) {
+  const growth = p.resistance_growth == null ? '—' : '×' + p.resistance_growth.toFixed(2);
+  const temps = p.readings.filter(r => r.temperature_c != null);
+  let note = p.soh == null
+    ? `<div class="note refuse"><b>Refused.</b> ${esc(p.refusal)}</div>`
+    : (p.confidence_reason ? `<div class="note">${esc(p.confidence_reason)}</div>` : '');
+  if (p.soh != null && p.discharges_since_reading > 0) {
+    note = `<div class="note refuse"><b>This reading is from discharge ${p.at_discharge}.</b> The ${p.discharges_since_reading}
+      discharge${p.discharges_since_reading === 1 ? '' : 's'} since could not be measured: ${esc(p.later_refusal)}.</div>` + note;
+  }
+  document.getElementById('detail').innerHTML = `
+    <div class="head"><span class="id">${esc(p.battery_id)}</span><span class="badge ${p.confidence}">${p.confidence} confidence</span></div>
+    <div class="stats">
+      <div class="stat"><div class="label">Capacity health</div><div class="value">${p.soh == null ? '—' : pct(p.soh)}</div>
+        <div class="sub">${p.soh == null ? '' : 'at discharge ' + p.at_discharge}${p.uncertainty == null ? '' : ' · ± ' + (p.uncertainty * 100).toFixed(1) + ' pts'}</div></div>
+      <div class="stat"><div class="label">Resistance growth</div><div class="value">${growth}</div>
+        <div class="sub">${p.resistance_now_ohm == null ? '' : (p.resistance_now_ohm * 1000).toFixed(1) + ' mΩ now'}</div></div>
+      <div class="stat"><div class="label">Discharges remembered</div><div class="value">${p.discharges_remembered}</div>
+        <div class="sub">${p.telemetry_pieces} log piece${p.telemetry_pieces === 1 ? '' : 's'}</div></div>
+      <div class="stat"><div class="label">Temperature seen</div><div class="value">${temps.length ? Math.min(...temps.map(t => t.temperature_c)).toFixed(0) + '–' + Math.max(...temps.map(t => t.temperature_c)).toFixed(0) + '°' : '—'}</div>
+        <div class="sub">${temps.length ? 'measured, per discharge' : 'no temperature channel'}</div></div>
+    </div>
+    ${note}
+    <div class="chart-block"><div class="chart-label"><span>Capacity health, each accepted discharge</span><span>relative to its first discharges</span></div>
+      ${chart(p.readings, 'soh', css('--accent'), v => (v * 100).toFixed(0) + '%', true)}</div>
+    <div class="chart-block"><div class="chart-label"><span>Resistance from the load step (trailing median)</span><span>mΩ</span></div>
+      ${chart(p.readings, 'resistance_trailing_ohm', css('--res'), v => (v * 1000).toFixed(0), false)}</div>
+    <div class="chart-block"><div class="chart-label"><span>Cell temperature during each discharge</span><span>°C</span></div>
+      ${chart(p.readings, 'temperature_c', css('--temp'), v => v.toFixed(0) + '°', true)}</div>`;
+}
+
+async function select(id) {
+  selected = id;
+  document.querySelectorAll('#list tbody tr').forEach(tr => tr.classList.toggle('selected', tr.dataset.id === id));
+  try { renderDetail(await getJSON(`/batteries/${encodeURIComponent(id)}/profile`)); }
+  catch (e) { toast(`Could not load ${id}: ${e.message}`); }
+}
+
+async function load() {
+  try {
+    const rows = await getJSON('/profiles');
+    renderList(rows);
+    if (rows.length) await select(rows.some(r => r.battery_id === selected) ? selected : rows[0].battery_id);
+  } catch (e) { toast(`Could not reach the API: ${e.message}`); }
+}
+document.getElementById('refresh').addEventListener('click', load);
+load();
+</script>
+</body>
+</html>
