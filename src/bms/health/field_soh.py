@@ -652,6 +652,15 @@ MIN_LEARNED_SPAN_V = 0.10
 MAX_LEARNED_SPAN_V = 0.30
 SCAN_STEP_V = 0.01
 MAX_WINDOW_STEEPNESS = 2.0
+# TOO FLAT, TOO: on a flat plateau a few millivolts of overpotential move a
+# window's edges across a large share of the charge, so its ratio stops
+# tracking capacity. LFP showed it: on 48 Severson LFP cells the learned
+# window reported MEDIUM confidence with a median error of 13 points
+# (reports/metrics/lfp_safety/). The flattest window ever validated is 0.44 V
+# per unit state of charge (CALCE, table above); a window flatter than this
+# round number below it is refused. Chosen from the validated cells, not
+# from LFP; tested on a separate LFP batch (scripts/run_lfp_safety_study.py).
+MIN_WINDOW_STEEPNESS = 0.40
 
 
 @dataclass(frozen=True)
@@ -718,6 +727,15 @@ def learn_usage_window(
                              f"charge - the knee of the curve, where voltage "
                              f"reflects resistance rather than capacity. A "
                              f"plateau window is under {MAX_WINDOW_STEEPNESS}.")
+    if steep < MIN_WINDOW_STEEPNESS:
+        return LearnedWindow(None, steep, band,
+                             f"the flattest window in this cell's usage band "
+                             f"({spec}) falls only {steep:.2f} V per unit state of "
+                             f"charge - flatter than any window validated "
+                             f"({MIN_WINDOW_STEEPNESS} minimum). On a flat curve, "
+                             f"as in LFP cells, millivolts of drift move the "
+                             f"window across much of the charge, so it cannot "
+                             f"track capacity.")
     return LearnedWindow(spec, steep, band)
 
 

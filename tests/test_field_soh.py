@@ -379,3 +379,19 @@ def test_implausibly_low_steps_are_screened_without_looking_ahead():
     assert np.allclose(out[[0, 1, 3, 5]], [0.028, 0.029, 0.030, 0.031])
     # Growth is not screened: CALCE cells genuinely grow several-fold.
     assert np.isfinite(screen_step_resistances([0.1, 0.1, 0.55])).all()
+
+
+def test_a_window_flatter_than_any_validated_one_is_refused():
+    from src.bms.health.field_soh import MIN_WINDOW_STEEPNESS, learn_usage_window
+    # A flat plateau: 0.25 V per unit state of charge across the whole usage
+    # band, below the 0.44 of the flattest validated window. No knee, so only
+    # the flatness gate can refuse it.
+    rows = []
+    for cycle in range(1, 11):
+        q = np.linspace(0, 1.0, 300)
+        v = 3.30 - 0.25 * q
+        rows.append(pd.DataFrame({"cell_id": "LFP", "cycle": cycle, "voltage_v": v, "capacity_ah_curve": q}))
+    learned = learn_usage_window(pd.concat(rows), rated_capacity_ah=1.0)
+    assert learned.spec is None
+    assert learned.steepness < MIN_WINDOW_STEEPNESS
+    assert "flatter than any window validated" in learned.refusal
