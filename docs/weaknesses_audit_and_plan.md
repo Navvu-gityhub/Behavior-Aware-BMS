@@ -81,3 +81,13 @@ T1 comes second, as its own experiment: confirmed, but on 3 cells. R2 comes thir
   SUCCESS needs all three. Baseline for comparison: coverage of the current +/- 2u.
 - **Regression.** Estimator unchanged. Test suite and pinned numbers must pass. Refusals are unchanged; a band is added only to readings that are already reported.
 - **If it fails.** Record it. Keep u for its real meaning (scatter) but stop presenting it as accuracy, and run C2 (out-of-envelope flag), which needs no band to be calibrated.
+
+## 4. Status of the C1 deciding set (checked 2026-10-09, before any C1 code)
+
+KIT cannot be obtained per cell.
+- **Log release (DOI 10.35097/1947):** a single streamed tar. Its only data member is `cell_logext.7z` at 59.9 GB. The server answers neither HEAD nor Range requests and delivered about 0.48 MB/s, so it is roughly 35 hours with no way to resume.
+- **Result release (DOI 10.35097/1969, 333 MB):** check-up capacity, impedance and pulses only, with no discharge curves, so BEACON's estimator cannot run on it.
+
+As written in section 3, the C1 deciding test on KIT is therefore **UNDECIDED**. No other dataset is substituted after the fact.
+
+**Proposed amendment, to be written in before any of its data is opened:** the University of Michigan NMC/graphite pouch-cell set (12 cells, 5 Ah, cycled at -5, 25 and 45 C; described in arXiv:2010.07460). It is hosted on Deep Blue behind a browser check, so it cannot be fetched by script. Its contents (discharge curves, rests, temperature channel, truth) are not yet confirmed. The same acceptance criteria would apply, with "cold" meaning the -5 C cells.
