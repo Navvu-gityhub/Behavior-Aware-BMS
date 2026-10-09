@@ -1,0 +1,2 @@
+set,cells,crossed,A_rel_error,B_rel_error,C_rel_error,C_bound_coverage,C_bound_over_life
+"development, leave-one-cell-out (Expt 4+5)",16,16,0.247,0.2,0.093,0.88,0.9
