@@ -28,7 +28,7 @@ def fetch_part(url: str, path: Path, start: int, end: int) -> str:
     have = path.stat().st_size if path.exists() else 0
     if have >= want:
         return f"{path.name} done"
-    for attempt in range(20):
+    for _attempt in range(20):
         try:
             req = urllib.request.Request(url, headers={"Range": f"bytes={start + have}-{end}"})
             with urllib.request.urlopen(req, timeout=120) as r, open(path, "ab") as f:
