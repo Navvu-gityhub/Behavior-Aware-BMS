@@ -46,6 +46,7 @@ import pandas as pd
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from src.bms.health.evidence import _capacity_status, temperature_flag  # noqa: E402
+from src.bms.health.field_soh import monotonic_time  # noqa: E402
 from src.bms.telemetry.cycles import cycles_to_frame, measure_cycles  # noqa: E402
 from src.bms.telemetry.pipeline import REST_THRESHOLD_A, _measure_field_soh  # noqa: E402
 
@@ -70,7 +71,9 @@ def load_batch(path: Path):
             qd = np.asarray(summary["QDischarge"]).ravel()
             frames, offset = [], 0.0
             for c in range(cycles["I"].shape[0]):
-                t = np.asarray(f[cycles["t"][c, 0]]).ravel() * 60.0          # minutes -> s
+                # minutes -> s; some cycles restart their clock mid-record, joined as
+                # the field path joins any logger's restarts (parsing only).
+                t = monotonic_time(np.asarray(f[cycles["t"][c, 0]]).ravel() * 60.0)
                 if t.size < 10:
                     continue
                 i = np.asarray(f[cycles["I"][c, 0]]).ravel() * RATED_AH     # C-rate -> A
