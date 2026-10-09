@@ -1,0 +1,5 @@
+data,points_high_medium,flagged,median_error_flagged,median_error_unflagged,errors_over_3pts,share_of_those_flagged
+CALCE (development),11123,1396,0.0484,0.0127,2808,0.39
+NASA (development),802,381,0.0531,0.0156,382,0.76
+Oxford (development),446,283,0.0469,0.0355,339,0.75
+M50T (deciding),1603,55,0.0284,0.0212,511,0.07
