@@ -63,8 +63,16 @@ the few steps found. The repair accepts a step from a quiet current (at most
 it left every CALCE validation number unchanged. Data, subset, arms and
 criteria are unchanged from the pre-registration (commit d9f37d0).
 
-Reading the verdict: the anchored correction is rejected - it is worse at
-10 C and no better at 25/40 C. The shipped estimator, untouched, measured all
+TEMPERATURE: the labels are the cooling-plate set points. The cells heat
+themselves at 1C; the data's own per-cycle summaries give a median
+discharge temperature of ~23 C for the '10 C' cells (14-31 C within a
+discharge), ~32 C for '25 C' and ~46 C for '40 C'. No cell discharged
+below ~14 C. This is therefore NOT a test of cold-temperature accuracy,
+and the anchored correction - built for NASA's 4 C failure - was tested
+here only at room-to-warm cell temperatures.
+
+Reading the verdict: the anchored correction gives no benefit at these
+temperatures - worse on the '10 C' (~23 C) cells, unchanged on the others. The shipped estimator, untouched, measured all
 eight cells of a fourth chemistry and format: 2.8% at 25 C, 2.3% at 40 C.
 The 10 C figure covers early life only, because the preset truth rule
 (full discharge >= 4.0 Ah) excludes discharges once a cold cell's capacity
