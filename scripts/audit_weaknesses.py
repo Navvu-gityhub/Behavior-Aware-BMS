@@ -34,7 +34,11 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from src.bms.health.field_soh import step_overpotential  # noqa: E402
 from src.bms.health.voltage_window import WindowSpec, window_charge  # noqa: E402
-from src.bms.io.load_nasa_pcoe import cohort_for, discharges_to_frames, load_nasa_pcoe_cell  # noqa: E402
+from src.bms.io.load_nasa_pcoe import (  # noqa: E402
+    cohort_for,
+    discharges_to_frames,
+    load_nasa_pcoe_cell,
+)
 
 OUT = Path("reports/metrics/audit")
 SPEC = WindowSpec(3.90, 3.60)

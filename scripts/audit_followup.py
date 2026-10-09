@@ -28,9 +28,17 @@ import pandas as pd
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from src.bms.health.field_soh import apply_field_gates, curves_from_telemetry, step_overpotential  # noqa: E402
+from src.bms.health.field_soh import (  # noqa: E402
+    apply_field_gates,
+    curves_from_telemetry,
+    step_overpotential,
+)
 from src.bms.health.voltage_window import WindowSpec, window_soh_table  # noqa: E402
-from src.bms.io.load_nasa_pcoe import cohort_for, discharges_to_frames, load_nasa_pcoe_cell  # noqa: E402
+from src.bms.io.load_nasa_pcoe import (  # noqa: E402
+    cohort_for,
+    discharges_to_frames,
+    load_nasa_pcoe_cell,
+)
 from src.bms.telemetry.cycles import cycles_to_frame, measure_cycles  # noqa: E402
 
 OUT = Path("reports/metrics/audit")
