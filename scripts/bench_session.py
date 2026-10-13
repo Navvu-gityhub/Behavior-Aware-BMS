@@ -28,6 +28,16 @@ ACCEPTANCE (docs/hardware_integration.md, "Physical acceptance checklist")
   reference (a USB capacity tester or a hobby charger that measures);
 - the capture replays to the same numbers.
 
+NO CAPACITY TESTER? --load-ohm
+------------------------------
+With a plain resistor as the load, the current can be computed a second way:
+the measured voltage divided by the load resistance, measured with a
+multimeter across the resistor and its leads (not the cell, not the shunt).
+The report integrates V/R over the largest discharge and compares it with
+the INA219's own current count. It is a partial cross-check, not a fully
+independent reference: both use the INA219's voltage. It does test the
+current channel - its shunt, its sign and its scale - against Ohm's law.
+
 The checklist states which channels the board declared in its HELLO. A board
 with stub sensors produces well-formed records that score (see "The trap" in
 that document), so a result is a hardware result only for the channels the
@@ -126,7 +136,23 @@ def phase_table(tel: pd.DataFrame) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
-def report(capture: Path, rated_ah: float, reference_mah: float | None) -> Path:
+def ohm_cross_check(tel: pd.DataFrame, load_ohm: float) -> tuple[float, float] | None:
+    """(INA219 mAh, V/R mAh) over the largest discharge phase."""
+    best = None
+    for p in segment_phases(tel, rest_threshold_a=REST_A):
+        if p.kind == "discharge" and (best is None or abs(p.charge_moved_ah) > abs(best.charge_moved_ah)):
+            best = p
+    if best is None:
+        return None
+    seg = tel.iloc[best.start_index:best.end_index + 1]
+    t = seg["test_time_s"].to_numpy(float)
+    v = seg["voltage_v"].to_numpy(float)
+    dt = np.diff(t)
+    vr_mah = float(np.sum(0.5 * (v[1:] + v[:-1]) / load_ohm * dt) / 3.6)
+    return abs(best.charge_moved_ah) * 1000, vr_mah
+
+
+def report(capture: Path, rated_ah: float, reference_mah: float | None, load_ohm: float | None = None) -> Path:
     result = replay_serial_capture(capture, rated_capacity_ah=rated_ah, require_full_coverage=False)
     tel = result.telemetry
     phases = phase_table(tel) if not tel.empty else pd.DataFrame()
@@ -144,6 +170,13 @@ def report(capture: Path, rated_ah: float, reference_mah: float | None) -> Path:
     else:
         checks.append(("Largest discharge vs an independent reference", None,
                        "no --reference-mah given: rerun with --report and your tester's reading"))
+    if load_ohm:
+        cc = ohm_cross_check(tel, load_ohm)
+        if cc:
+            ina, vr = cc
+            checks.append((f"Current sensor agrees with Ohm's law (V / {load_ohm} ohm) within {TOLERANCE:.0%}",
+                           abs(ina - vr) / vr <= TOLERANCE,
+                           f"INA219 {ina:.0f} mAh vs V/R {vr:.0f} mAh ({(ina - vr) / vr:+.1%})"))
     again = replay_serial_capture(capture, rated_capacity_ah=rated_ah, require_full_coverage=False)
     same = (again.telemetry.shape == tel.shape) and again.telemetry.equals(tel)
     checks.append(("Capture replays to the same numbers", same, "replayed twice, frames compared"))
@@ -171,13 +204,15 @@ def main() -> int:
     ap.add_argument("--hours", type=float, default=8.0)
     ap.add_argument("--capacity-ah", type=float, default=2.2)
     ap.add_argument("--reference-mah", type=float, default=None)
+    ap.add_argument("--load-ohm", type=float, default=None,
+                    help="load resistance measured with a multimeter, for the V/R cross-check")
     ap.add_argument("--cell-id", default="RIG_01")
     ap.add_argument("--min-voltage", type=float, default=3.0)
     ap.add_argument("--max-temp", type=float, default=45.0)
     a = ap.parse_args()
 
     if a.report:
-        print(report(a.report, a.capacity_ah, a.reference_mah).read_text(encoding="utf-8"))
+        print(report(a.report, a.capacity_ah, a.reference_mah, a.load_ohm).read_text(encoding="utf-8"))
         return 0
     capture = OUT / f"{datetime.now():%Y%m%d_%H%M%S}_{a.cell_id}.txt"
     if a.emulate:
@@ -196,7 +231,7 @@ def main() -> int:
         print("nothing was received; check the port, the baud rate and the cable")
         return 1
     print(f"\ncapture saved: {capture}\n")
-    print(report(capture, a.capacity_ah, a.reference_mah).read_text(encoding="utf-8"))
+    print(report(capture, a.capacity_ah, a.reference_mah, a.load_ohm).read_text(encoding="utf-8"))
     return 0
 
 
