@@ -28,6 +28,34 @@ acceptance list are in [`hardware_integration.md`](hardware_integration.md).
   and don't leave a charge running overnight unattended.
 - **Wires** must carry 1 A: no thin jumper wires in the load path.
 
+## No 5-10 W resistor? Three things still work
+
+1. **Stage 0 needs no load at all.** Check that both sensors run at once.
+2. **Record a TP4056 charge (no resistor).** Connect the TP4056 to VIN- and
+   run `bench_session.py`. The TP4056 holds about 1.0 A, then 4.2 V, and that
+   current passes through the INA219, so one charge checks:
+   - the current **sign** (it must read positive while charging);
+   - its **scale** (about 1.0 A in the steady part: the TP4056's own set
+     current, roughly +/-10%, a rough reference);
+   - the LM35 **warming**.
+3. **A load bank from 1/4 W resistors in parallel.** Each resistor must be
+   **at least 120 ohm** so it stays near 0.15 W, cool for a 1/4 W part. Each
+   120 ohm resistor adds about 30 mA:
+
+   | 120 ohm resistors in parallel | Total | Current | Hours to empty 2.2 Ah |
+   |---|---|---|---|
+   | 10 | 12 ohm | ~0.3 A | ~7 |
+   | 15 | 8 ohm | ~0.45 A | ~5 |
+   | 20 | 6 ohm | ~0.6 A | ~3.5 |
+
+   Measure the whole bank with a multimeter and pass it as `--load-ohm`. Even
+   0.3 A gives a resistance step of about 30 mV, well above the INA219's
+   4 mV resolution.
+
+**Other loads.** A small 3-5 V DC motor, fan or torch bulb (0.2-1 A) works for
+recording, since BEACON reads uneven current. Omit `--load-ohm`, because these
+are not fixed resistances. An LED alone is too small (~100 h per discharge).
+
 ## Wiring
 
 ```
