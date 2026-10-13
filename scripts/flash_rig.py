@@ -169,15 +169,25 @@ def _patch_esptool_open(esptool, baud: int) -> None:
     esptool.ESPLoader._set_port_baudrate = set_baudrate
 
 
-def _binary() -> Path:
-    """Compile and return the built image, so a flash is never stale."""
-    print("compiling ...")
+def _binary(real_sensors: bool = False, serial_baud: int = 9600) -> Path:
+    """Compile and return the built image, so a flash is never stale.
+
+    `real_sensors` builds with USE_REAL_SENSORS=1 (INA219 + LM35). Without it
+    the board emits the SYNTHETIC profile, which scores like a real cell - the
+    trap in docs/hardware_integration.md - so the build says which it is.
+    `serial_baud` is compiled in: this project's CH340 NodeMCU only works at
+    9600 or 19200, and the host must be run at the same rate.
+    """
+    flags = f"-DUSE_REAL_SENSORS={1 if real_sensors else 0} -DSERIAL_BAUD={serial_baud}"
+    print(f"compiling ... ({'REAL sensors' if real_sensors else 'SYNTHETIC data - not a hardware result'}, "
+          f"{serial_baud} baud)")
     build = REPO / "build" / "flash_rig"
     build.mkdir(parents=True, exist_ok=True)
     result = subprocess.run(
         ["arduino-cli", "compile", "--fqbn", FQBN,
+         "--build-property", f"compiler.cpp.extra_flags={flags}",
          "--output-dir", str(build), str(SKETCH)],
-        capture_output=True, text=True,
+        capture_output=True, text=True, encoding="utf-8", errors="replace",
     )
     if result.returncode != 0:
         print(result.stdout[-1200:])
@@ -258,7 +268,24 @@ def main(argv: list[str] | None = None) -> int:
         help="Skip auto-reset. Use when DTR/RTS is refused: hold FLASH, tap "
              "RST, release FLASH, then run this.",
     )
+    parser.add_argument(
+        "--real-sensors", action="store_true",
+        help="Build with the INA219 and LM35 (USE_REAL_SENSORS=1). Without "
+             "this the board sends synthetic data.",
+    )
+    parser.add_argument(
+        "--serial-baud", type=int, default=9600,
+        help="Baud rate compiled into the firmware (default 9600, the rate "
+             "this project's CH340 bridge accepts). Run the host at the same.",
+    )
+    parser.add_argument(
+        "--compile-only", action="store_true",
+        help="Compile and stop; no board needed.",
+    )
     args = parser.parse_args(argv)
+    if args.compile_only:
+        _binary(args.real_sensors, args.serial_baud)
+        return 0
 
     if args.probe_only:
         print(f"probing {args.port} ...")
@@ -271,7 +298,7 @@ def main(argv: list[str] | None = None) -> int:
 
     # Compile before touching the port: the first open after a replug is often
     # the only one that works, and it must be spent on the flash.
-    binary = _binary()
+    binary = _binary(args.real_sensors, args.serial_baud)
     esptool_py = _esptool_path()
     print(f"using {esptool_py.name}")
 
