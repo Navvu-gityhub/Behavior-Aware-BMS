@@ -1,0 +1,5 @@
+dataset,cells,cells_measured,median_cell_mae,median_share_read
+CALCE,22,18,0.0432,0.419
+M50T,8,8,0.0432,0.999
+NASA,31,8,0.1392,0.0
+Oxford,8,8,0.008,1.0
